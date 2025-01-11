@@ -4,11 +4,13 @@
 
 package frc.robot;
 
+import com.pathplanner.lib.commands.PathPlannerAuto;
+
 import edu.wpi.first.wpilibj.Joystick;
 import edu.wpi.first.wpilibj.XboxController;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
-import edu.wpi.first.wpilibj2.command.button.Trigger;
+import edu.wpi.first.wpilibj2.command.button.JoystickButton;
 import frc.robot.Constants.Constants.OperatorConstants;
 import frc.robot.Constants.SwerveConstants.OIConstants;
 import frc.robot.commands.SwerveJoystickCmd;
@@ -19,10 +21,6 @@ public class RobotContainer {
   private final SwerveSubsystem swerveSubsystem = new SwerveSubsystem();
   private final Joystick driverJoytick = new Joystick(OIConstants.kDriverControllerPort);
   private final XboxController controller = new XboxController(0);
-
-  private final CommandXboxController m_driverController =
-      new CommandXboxController(OperatorConstants.kDriverControllerPort);
-
 
   public RobotContainer() {
     swerveSubsystem.setDefaultCommand(new SwerveJoystickCmd(
@@ -36,11 +34,12 @@ public class RobotContainer {
   }
 
   private void configureBindings() {
-  
+    new JoystickButton(controller, XboxController.Button.kStart.value).onTrue(swerveSubsystem.runOnce(swerveSubsystem::zeroHeading));
+
   }
 
   public Command getAutonomousCommand() {
 
-    return null;
+    return new PathPlannerAuto("ExamplePath");
   }
 }

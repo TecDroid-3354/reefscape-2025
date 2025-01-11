@@ -50,6 +50,7 @@ public class SwerveJoystickCmd extends Command {
     public void changeFieldOriented(boolean fieldOrientedBtn) {
         if (fieldOrientedBtn) {
             fieldOrientedActived = !fieldOrientedActived;
+            swerveSubsystem.zeroHeading();
         }
     }
 

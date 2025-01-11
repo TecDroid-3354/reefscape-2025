@@ -67,8 +67,8 @@ public final class SwerveConstants {
         public static final double kPhysicalMaxSpeedMetersPerSecond = 5.0;
         public static final double kPhysicalMaxAngularSpeedRadiansPerSecond = 5 * 2 * Math.PI;
 
-        public static double kTeleDriveMaxSpeedMetersPerSecond = 5.0;
-        public static final double kTeleDriveMaxAngularSpeedRadiansPerSecond = kPhysicalMaxAngularSpeedRadiansPerSecond * .3;
+        public static final double kTeleDriveMaxSpeedMetersPerSecond = kPhysicalMaxSpeedMetersPerSecond * 0.75;
+        public static final double kTeleDriveMaxAngularSpeedRadiansPerSecond = kPhysicalMaxAngularSpeedRadiansPerSecond * .1;
         public static final double kTeleDriveMaxAccelerationUnitsPerSecond = 4.0;
         public static final double kTeleDriveMaxAngularAccelerationUnitsPerSecond = 4.0;
     }
