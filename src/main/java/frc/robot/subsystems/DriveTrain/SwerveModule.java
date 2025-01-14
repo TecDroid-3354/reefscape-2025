@@ -2,32 +2,32 @@ package frc.robot.subsystems.DriveTrain;
 
 import com.ctre.phoenix6.hardware.CANcoder;
 import com.revrobotics.RelativeEncoder;
-import com.revrobotics.servohub.ServoHub.ResetMode;
 import com.revrobotics.spark.SparkBase;
+import com.revrobotics.spark.SparkClosedLoopController;
 import com.revrobotics.spark.SparkMax;
 import com.revrobotics.spark.SparkBase.PersistMode;
 import com.revrobotics.spark.SparkLowLevel.MotorType;
 import com.revrobotics.spark.config.ClosedLoopConfig.FeedbackSensor;
-import com.revrobotics.spark.config.SparkBaseConfig;
 import com.revrobotics.spark.config.SparkBaseConfig.IdleMode;
 import com.revrobotics.spark.config.SparkMaxConfig;
 
-import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.kinematics.SwerveModulePosition;
 import edu.wpi.first.math.kinematics.SwerveModuleState;
-import frc.robot.Constants.SwerveConstants.DriveConstants;
 import frc.robot.Constants.SwerveConstants.ModuleConstants;
+
+import static java.lang.Math.PI;
 
 public class SwerveModule {
 
-    private final SparkMax driveMotor;
-    private final SparkMax turningMotor;
+    private final SparkMax driveController;
+    private final SparkMax turningController;
 
     private final RelativeEncoder driveEncoder;
     private final RelativeEncoder turningEncoder;
 
-    private final PIDController turningPidController;
+    private final SparkClosedLoopController turningClosedLoopController;
+    private final SparkClosedLoopController driveClosedLoopController;
 
     private final CANcoder absoluteEncoder;
     private final boolean absoluteEncoderReversed;
@@ -38,8 +38,11 @@ public class SwerveModule {
         this.absoluteEncoderReversed = absoluteEncoderReversed;
         absoluteEncoder = new CANcoder(absoluteEncoderId);
        
-        driveMotor = new SparkMax(driveMotorId, MotorType.kBrushless);
-        turningMotor = new SparkMax(turningMotorId, MotorType.kBrushless);
+        driveController = new SparkMax(driveMotorId, MotorType.kBrushless);
+        turningController = new SparkMax(turningMotorId, MotorType.kBrushless);
+
+        driveClosedLoopController = driveController.getClosedLoopController();
+        turningClosedLoopController = turningController.getClosedLoopController();
 
         // Drive Motor Spark config
         SparkMaxConfig driveMotorConfig = new SparkMaxConfig();
@@ -47,9 +50,9 @@ public class SwerveModule {
         driveMotorConfig.inverted(driveMotorReversed).idleMode(IdleMode.kBrake);
         driveMotorConfig.encoder.positionConversionFactor(ModuleConstants.kDriveEncoderRot2Meter)
             .velocityConversionFactor(ModuleConstants.kDriveEncoderRPM2MeterPerSec);
-        driveMotorConfig.closedLoop.feedbackSensor(FeedbackSensor.kPrimaryEncoder).pid(1.0, 0.0, 0.0);
-            
-        driveMotor.configure(driveMotorConfig, SparkBase.ResetMode.kNoResetSafeParameters, PersistMode.kPersistParameters);
+        driveMotorConfig.closedLoop.feedbackSensor(FeedbackSensor.kPrimaryEncoder).pid(1.0, 0.0, 0.0).velocityFF(0.1);
+
+        driveController.configure(driveMotorConfig, SparkBase.ResetMode.kNoResetSafeParameters, PersistMode.kPersistParameters);
 
         // Turning Motor Spark config
         SparkMaxConfig turningMotorConfig = new SparkMaxConfig();
@@ -57,16 +60,13 @@ public class SwerveModule {
         turningMotorConfig.inverted(turningMotorReversed).idleMode(IdleMode.kBrake);
         turningMotorConfig.encoder.positionConversionFactor(ModuleConstants.kTurningEncoderRot2Rad)
             .velocityConversionFactor(ModuleConstants.kTurningEncoderRPM2RadPerSec);
-        turningMotorConfig.closedLoop.feedbackSensor(FeedbackSensor.kPrimaryEncoder).pid(1.0, 0.0, 0.0);
+        turningMotorConfig.closedLoop.feedbackSensor(FeedbackSensor.kPrimaryEncoder).pid(1.0, 0.0, 0.0).positionWrappingEnabled(true).positionWrappingInputRange(-PI, PI);
             
-        turningMotor.configure(turningMotorConfig, SparkBase.ResetMode.kNoResetSafeParameters, PersistMode.kPersistParameters);
+        turningController.configure(turningMotorConfig, SparkBase.ResetMode.kNoResetSafeParameters, PersistMode.kPersistParameters);
 
-        driveEncoder = driveMotor.getEncoder();
-        turningEncoder = turningMotor.getEncoder();
+        driveEncoder = driveController.getEncoder();
+        turningEncoder = turningController.getEncoder();
 
-        turningPidController = new PIDController(ModuleConstants.kPTurning, 0, 0);
-        turningPidController.enableContinuousInput(-Math.PI, Math.PI);
-        
         resetEncoders();
     }
 
@@ -80,10 +80,6 @@ public class SwerveModule {
 
     public double getDriveVelocity() {
         return driveEncoder.getVelocity();
-    }
-
-    public double getTurningVelocity() {
-        return turningEncoder.getVelocity();
     }
 
     public double getAbsoluteEncoderRotations() {
@@ -116,12 +112,12 @@ public class SwerveModule {
         
         state.optimize(getState().angle);
 
-        driveMotor.set(state.speedMetersPerSecond / DriveConstants.kPhysicalMaxSpeedMetersPerSecond);
-        turningMotor.set(turningPidController.calculate(getTurningPosition(), state.angle.getRadians()));
+        driveClosedLoopController.setReference(state.speedMetersPerSecond, SparkBase.ControlType.kVelocity);
+        turningClosedLoopController.setReference(state.angle.getRadians(), SparkBase.ControlType.kPosition);
     }
 
     public void stop() {
-        driveMotor.set(0);
-        turningMotor.set(0);
+        driveController.set(0);
+        turningController.set(0);
     }
 }
