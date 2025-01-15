@@ -1,0 +1,14 @@
+IMPORTANTÍSIMO LEER
+
+Dentro de robot/commands:
+- El archivo que estuvo trabajando JP es Controller.java
+- El código de Santiago está en SwerveJoystickCmd.java
+
+
+Dentro de robot/subsystems:
+- La carpeta con el nombre DriveTrain tiene el código de Santiago
+- La carpeta con el nombre Swerve es el código que Melvin y Emilio empezamos de cero
+
+Dentro de robot/Constants:
+- Esta carpeta tiene las constantes que utilizó Santiago en su código
+- Las constantes de Melvin y yo están en el archivo Constants con path frc/robot/Constants.java (fuera de cualquier carpeta)
