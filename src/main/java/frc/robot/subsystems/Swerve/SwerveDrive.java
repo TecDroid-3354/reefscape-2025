@@ -58,7 +58,7 @@ public class SwerveDrive extends SubsystemBase {
     );
 
     private final PIDController rotationPidController = new PIDController(
-        0.0005, 
+        0.0055, 
         0.0, 
         0.0);
 
@@ -123,10 +123,10 @@ public class SwerveDrive extends SubsystemBase {
     
     public void drive(ChassisSpeeds chassisSpeeds, Rotation2d angleTarget) {
         /*Receives the chassisSpeeds, transform them into SwerveModuleStates and apply them to each module*/        
-        double rotationNormalizedPidOutput = MathUtil.clamp(
+        double rotationNormalizedPidOutput = -(MathUtil.clamp(
             rotationPidController.calculate(getGyroPosition().getDegrees(), angleTarget.getDegrees()),
             -1, 1
-        );
+        ));
 
         double angularVelocity = SwerveDriveUtil.denormalizeAngularVelocity(rotationNormalizedPidOutput);
 

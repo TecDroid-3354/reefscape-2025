@@ -32,7 +32,7 @@ public final class Constants {
 
       public final class PhysicsConstants {
         // Gear ratio * wheel radious * PI * (Convert inches to meters [0.0254]) / 60
-        // Subtract two decimals so it doesn't reech max speed.
+        // Subtract two decimals so it doesn't reach max speed.
         public static final double MAX_SPEED_METERS_PER_SECOND = 4.7;
 
         // Max velocity / wheel circumference * 360 for degrees.

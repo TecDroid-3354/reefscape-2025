@@ -51,6 +51,7 @@ public class RobotContainer {
    */
   private void configureBindings() {
     controller.x().onTrue(Commands.runOnce(swerveDriver::toggleOrientation));
+    controller.start().onTrue(Commands.runOnce(swerveDrive::zeroHeading, swerveDrive));
     swerveDrive.setDefaultCommand(Commands.print("a").andThen(Commands.run(() -> {
       swerveDriver.apply(swerveDrive);
     }, swerveDrive)));
