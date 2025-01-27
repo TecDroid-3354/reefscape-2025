@@ -1,17 +1,15 @@
 package net.tecdroid.subsystems.drivetrain;
 
-import java.util.function.Supplier;
-
-import static java.lang.Math.abs;
-import static java.lang.Math.atan2;
-
 import edu.wpi.first.math.Pair;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.wpilibj.shuffleboard.Shuffleboard;
 import edu.wpi.first.wpilibj.shuffleboard.ShuffleboardTab;
-import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 
+import java.util.function.Supplier;
+
+import static java.lang.Math.abs;
+import static java.lang.Math.atan2;
 import static net.tecdroid.subsystems.drivetrain.SwerveDriveUtil.denormalizeLinearVelocity;
 
 public class SwerveDriveDriver {
@@ -29,7 +27,7 @@ public class SwerveDriveDriver {
     DriveOrientation orientation = DriveOrientation.FIELD_ORIENTED;
 
     public SwerveDriveDriver(Supplier<Pair<Double, Double>> leftJoystick, Supplier<Pair<Double, Double>> rightJoystick) {
-        this.leftJoystick = leftJoystick;
+        this.leftJoystick  = leftJoystick;
         this.rightJoystick = rightJoystick;
 
         ShuffleboardTab tab = Shuffleboard.getTab("Swerve");
@@ -68,13 +66,9 @@ public class SwerveDriveDriver {
 
     }
 
-
     public void apply(SwerveDrive subsystem) {
-        ChassisSpeeds speeds = obtainTargetSpeeds(subsystem.getHeading());
-        Rotation2d direction = obtainTargetDirection();
-
-        SmartDashboard.putNumber("bbbbbbbb", previousDirection.getDegrees());
-
+        ChassisSpeeds speeds    = obtainTargetSpeeds((Rotation2d) subsystem.getHeading());
+        Rotation2d    direction = obtainTargetDirection();
 
         subsystem.drive(speeds, direction);
     }
@@ -89,7 +83,5 @@ public class SwerveDriveDriver {
     private boolean isRotationTargetWithinDeadband(double x, double y) {
         return abs(x) > CONTROLLER_DEADBAND || abs(y) > CONTROLLER_DEADBAND;
     }
-
-
 
 }
