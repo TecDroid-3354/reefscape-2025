@@ -2,10 +2,9 @@
 // Open Source Software; you can modify and/or share it under the terms of
 // the WPILib BSD license file in the root directory of this project.
 
-package frc.robot.subsystems.Swerve;
+package net.tecdroid.subsystems.drivetrain;
 
 import com.ctre.phoenix6.configs.CANcoderConfiguration;
-import com.ctre.phoenix6.configs.CustomParamsConfigs;
 import com.ctre.phoenix6.configs.MagnetSensorConfigs;
 import com.ctre.phoenix6.hardware.CANcoder;
 import com.ctre.phoenix6.signals.SensorDirectionValue;
@@ -24,8 +23,8 @@ import edu.wpi.first.math.kinematics.SwerveModulePosition;
 import edu.wpi.first.math.kinematics.SwerveModuleState;
 import edu.wpi.first.wpilibj.shuffleboard.Shuffleboard;
 import edu.wpi.first.wpilibj.shuffleboard.ShuffleboardTab;
-import frc.robot.Constants.SwerveConstants.Modules.UnitsConversion;
-import frc.robot.Constants.SwerveConstants.Modules.SparkPID;
+import net.tecdroid.constants.Constants.SwerveConstants.Modules.UnitsConversion;
+import net.tecdroid.constants.Constants.SwerveConstants.Modules.SparkPID;
 
 /** Add your docs here. */
 public class SwerveModule {

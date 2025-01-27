@@ -2,11 +2,11 @@
 // Open Source Software; you can modify and/or share it under the terms of
 // the WPILib BSD license file in the root directory of this project.
 
-package frc.robot;
+package net.tecdroid.core;
 
-import frc.robot.Constants.OperatorConstants;
-import frc.robot.subsystems.Swerve.SwerveDriveDriver;
-import frc.robot.subsystems.Swerve.SwerveDrive;
+import net.tecdroid.constants.Constants.OperatorConstants;
+import net.tecdroid.subsystems.drivetrain.SwerveDriveDriver;
+import net.tecdroid.subsystems.drivetrain.SwerveDrive;
 
 import edu.wpi.first.math.Pair;
 import edu.wpi.first.wpilibj2.command.Command;

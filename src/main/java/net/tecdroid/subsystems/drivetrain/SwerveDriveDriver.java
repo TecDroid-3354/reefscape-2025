@@ -1,4 +1,4 @@
-package frc.robot.subsystems.Swerve;
+package net.tecdroid.subsystems.drivetrain;
 
 import java.util.function.Supplier;
 
@@ -12,7 +12,7 @@ import edu.wpi.first.wpilibj.shuffleboard.Shuffleboard;
 import edu.wpi.first.wpilibj.shuffleboard.ShuffleboardTab;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 
-import static frc.robot.util.SwerveDriveUtil.denormalizeLinearVelocity;
+import static net.tecdroid.subsystems.drivetrain.SwerveDriveUtil.denormalizeLinearVelocity;
 
 public class SwerveDriveDriver {
     private static final double CONTROLLER_DEADBAND = 0.75;

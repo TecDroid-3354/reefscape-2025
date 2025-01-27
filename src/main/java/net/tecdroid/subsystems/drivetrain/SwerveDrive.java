@@ -2,7 +2,7 @@
 // Open Source Software; you can modify and/or share it under the terms of
 // the WPILib BSD license file in the root directory of this project.
 
-package frc.robot.subsystems.Swerve;
+package net.tecdroid.subsystems.drivetrain;
 
 import com.ctre.phoenix6.hardware.Pigeon2;
 
@@ -17,19 +17,17 @@ import edu.wpi.first.math.kinematics.SwerveDriveOdometry;
 import edu.wpi.first.math.kinematics.SwerveModulePosition;
 import edu.wpi.first.math.kinematics.SwerveModuleState;
 import edu.wpi.first.wpilibj.shuffleboard.Shuffleboard;
-import edu.wpi.first.wpilibj.shuffleboard.ShuffleboardComponent;
 import edu.wpi.first.wpilibj.shuffleboard.ShuffleboardTab;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 
-import frc.robot.Constants.SwerveConstants.Modules.SparkIDs;
-import frc.robot.Constants.SwerveConstants.Modules.ModulesRelativeEncodersIDs;
-import frc.robot.Constants.SwerveConstants.AbsoluteEncoderID;
-import frc.robot.util.SwerveDriveUtil;
+import net.tecdroid.constants.Constants.SwerveConstants.Modules.SparkIDs;
+import net.tecdroid.constants.Constants.SwerveConstants.Modules.ModulesRelativeEncodersIDs;
+import net.tecdroid.constants.Constants.SwerveConstants.AbsoluteEncoderID;
 
-import static frc.robot.Constants.SwerveConstants.Kinematics.TRACK_WIDTH;
-import static frc.robot.Constants.SwerveConstants.Kinematics.WHEEL_BASE;
-import static frc.robot.Constants.SwerveConstants.Modules.AbsoluteEncoders.*;
+import static net.tecdroid.constants.Constants.SwerveConstants.Kinematics.TRACK_WIDTH;
+import static net.tecdroid.constants.Constants.SwerveConstants.Kinematics.WHEEL_BASE;
+import static net.tecdroid.constants.Constants.SwerveConstants.Modules.AbsoluteEncoders.*;
 
 /** Add your docs here. */
 public class SwerveDrive extends SubsystemBase {

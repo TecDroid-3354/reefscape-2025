@@ -1,0 +1,77 @@
+package net.tecdroid.subsystems.drivetrain;
+
+import edu.wpi.first.math.geometry.Translation2d;
+import edu.wpi.first.units.measure.Angle;
+import edu.wpi.first.units.measure.AngularVelocity;
+import edu.wpi.first.units.measure.Distance;
+import edu.wpi.first.units.measure.LinearVelocity;
+import net.tecdroid.util.PidfConstants;
+import net.tecdroid.util.UnitHelpers;
+
+import static edu.wpi.first.units.Units.Inches;
+import static edu.wpi.first.units.Units.Minute;
+import static java.lang.Math.PI;
+import static net.tecdroid.constants.UnitConstants.FULL_ROTATION;
+
+public class SwerveDriveConstants {
+
+    // Measurements
+    public static final Distance TRACK_WIDTH            = Inches.of(22.23);
+    public static final Distance WHEEL_BASE             = Inches.of(22.23);
+    public static final Distance DIAGONAL_LENGTH        = UnitHelpers.hypot(TRACK_WIDTH, WHEEL_BASE);
+    public static final Distance ROBOT_XY_CIRCUMFERENCE = DIAGONAL_LENGTH.times(PI);
+
+    public static final Translation2d[] MODULE_OFFSETS = {
+            new Translation2d(TRACK_WIDTH.div(+2), WHEEL_BASE.div(-2)), // FR |        2 ← 1
+            new Translation2d(TRACK_WIDTH.div(+2), WHEEL_BASE.div(+2)), // FL |        ↓   ↑
+            new Translation2d(TRACK_WIDTH.div(-2), WHEEL_BASE.div(-2)), // BL |        3 → 4
+            new Translation2d(TRACK_WIDTH.div(-2), WHEEL_BASE.div(+2)), // BR | Quadrant Convention
+    };
+
+    // Module
+    public static final Distance WHEEL_DIAMETER      = Inches.of(4);
+    public static final Distance WHEEL_CIRCUMFERENCE = WHEEL_DIAMETER.times(PI);
+
+    public static final double DRIVE_MOTOR_GEAR_RATIO = 6.120;
+    public static final double STEER_MOTOR_GEAR_RATIO = 150.0 / 7.0;
+
+    public static final Distance       DRIVE_ENCODER_PCF = WHEEL_CIRCUMFERENCE.div(DRIVE_MOTOR_GEAR_RATIO);
+    public static final LinearVelocity DRIVE_ENCODER_VCF = DRIVE_ENCODER_PCF.per(Minute);
+
+    public static final Angle           STEER_ENCODER_PCF = FULL_ROTATION.div(DRIVE_MOTOR_GEAR_RATIO);
+    public static final AngularVelocity STEER_ENCODER_VCF = STEER_ENCODER_PCF.per(Minute);
+
+    public static final class Id {
+        private static final int ABS_ENCODER_ID_OFFSET      = 0;
+        private static final int DRIVE_CONTROLLER_ID_OFFSET = 1;
+        private static final int STEER_CONTROLLER_ID_OFFSET = 2;
+
+        private static final int FRONT_RIGHT_MODULE = 10;
+        private static final int FRONT_LEFT_MODULE  = 20;
+        private static final int BACK_LEFT_MODULE   = 30;
+        private static final int BACK_RIGHT_MODULE  = 40;
+
+        public static final int FRONT_RIGHT_DRIVE = FRONT_RIGHT_MODULE + DRIVE_CONTROLLER_ID_OFFSET;
+        public static final int FRONT_LEFT_DRIVE  = FRONT_LEFT_MODULE + DRIVE_CONTROLLER_ID_OFFSET;
+        public static final int BACK_LEFT_DRIVE   = BACK_LEFT_MODULE + DRIVE_CONTROLLER_ID_OFFSET;
+        public static final int BACK_RIGHT_DRIVE  = BACK_RIGHT_MODULE + DRIVE_CONTROLLER_ID_OFFSET;
+
+        public static final int FRONT_RIGHT_STEER = FRONT_RIGHT_MODULE + STEER_CONTROLLER_ID_OFFSET;
+        public static final int FRONT_LEFT_STEER  = FRONT_LEFT_MODULE + STEER_CONTROLLER_ID_OFFSET;
+        public static final int BACK_LEFT_STEER   = BACK_LEFT_MODULE + STEER_CONTROLLER_ID_OFFSET;
+        public static final int BACK_RIGHT_STEER  = BACK_RIGHT_MODULE + STEER_CONTROLLER_ID_OFFSET;
+
+        public static final int FRONT_RIGHT_ABSOLUTE_ENCODER = FRONT_RIGHT_MODULE + ABS_ENCODER_ID_OFFSET;
+        public static final int FRONT_LEFT_ABSOLUTE_ENCODER  = FRONT_LEFT_MODULE + ABS_ENCODER_ID_OFFSET;
+        public static final int BACK_LEFT_ABSOLUTE_ENCODER   = BACK_LEFT_MODULE + ABS_ENCODER_ID_OFFSET;
+        public static final int BACK_RIGHT_ABSOLUTE_ENCODER  = BACK_RIGHT_MODULE + ABS_ENCODER_ID_OFFSET;
+    }
+
+    public static final class Pidf {
+        public static final PidfConstants DRIVE = new PidfConstants(0.008, 0.0, 0.012, 0.2);
+        public static final PidfConstants STEER = new PidfConstants(0.005, 0.0, 0.002, 0.0);
+        public static final PidfConstants ANGLE = new PidfConstants(0.005, 0.0, 0.002, 0.0);
+        public static final PidfConstants ALIGN = new PidfConstants(0.005, 0.0, 0.002, 0.0);
+    }
+
+}
