@@ -1,10 +1,8 @@
 package net.tecdroid.subsystems.drivetrain;
 
-import edu.wpi.first.math.Pair;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
-import edu.wpi.first.wpilibj.shuffleboard.Shuffleboard;
-import edu.wpi.first.wpilibj.shuffleboard.ShuffleboardTab;
+import org.joml.Vector2d;
 
 import java.util.function.Supplier;
 
@@ -19,56 +17,45 @@ public class SwerveDriveDriver {
         FIELD_ORIENTED, ROBOT_ORIENTED
     }
 
-    Supplier<Pair<Double, Double>> leftJoystick;
-    Supplier<Pair<Double, Double>> rightJoystick;
+    Supplier<Vector2d> leftJoystick;
+    Supplier<Vector2d> rightJoystick;
 
     Rotation2d previousDirection = new Rotation2d();
 
     DriveOrientation orientation = DriveOrientation.FIELD_ORIENTED;
 
-    public SwerveDriveDriver(Supplier<Pair<Double, Double>> leftJoystick, Supplier<Pair<Double, Double>> rightJoystick) {
-        this.leftJoystick  = leftJoystick;
+    public SwerveDriveDriver(Supplier<Vector2d> linearVelocitySource, Supplier<Vector2d> rightJoystick) {
+        this.leftJoystick  = linearVelocitySource;
         this.rightJoystick = rightJoystick;
-
-        ShuffleboardTab tab = Shuffleboard.getTab("Swerve");
-        tab.addDouble("Driver Target Angle", () -> previousDirection.getDegrees());
-
     }
 
     private ChassisSpeeds obtainTargetSpeeds(Rotation2d currentAngle) {
-        Pair<Double, Double> left = leftJoystick.get();
+        Vector2d left = lstickAsLvec();
 
-        // The x for the robot is the y for the controller
-        double vx = denormalizeLinearVelocity(left.getSecond());
-        // The y for the robot is the x for the controller
-        double vy = denormalizeLinearVelocity(left.getFirst());
+        double vx = denormalizeLinearVelocity(left.x());
+        double vy = denormalizeLinearVelocity(left.y());
 
-        if (orientation == DriveOrientation.FIELD_ORIENTED) {
-            return ChassisSpeeds.fromFieldRelativeSpeeds(vx, vy, 0.0, currentAngle);
-        }
-
-        return new ChassisSpeeds(vx, vy, 0.0);
+        return isFieldOriented() ?
+               ChassisSpeeds.fromFieldRelativeSpeeds(vx, vy, 0.0, currentAngle)
+                                 : new ChassisSpeeds(vx, vy, 0.0);
     }
 
-    private Rotation2d obtainTargetDirection() {
-        Pair<Double, Double> right = rightJoystick.get();
-
-        if (!isRotationTargetWithinDeadband(right.getFirst(), -right.getSecond())) {
+    private Rotation2d obtainTargetDirection(Vector2d direction) {
+        if (!isRotationTargetWithinDeadband(direction.x(), direction.y())) {
             return previousDirection;
         }
 
-        Rotation2d target = Rotation2d.fromRadians(atan2(right.getSecond(), right.getFirst()))
+        Rotation2d target = Rotation2d.fromRadians(atan2(direction.y(), direction.x()))
                                       .rotateBy(Rotation2d.fromDegrees(-90))
-                                      .unaryMinus(); //Didn't have right the conventions, should delete it now
+                                      .unaryMinus();
         previousDirection = target;
 
         return target;
-
     }
 
     public void apply(SwerveDrive subsystem) {
         ChassisSpeeds speeds    = obtainTargetSpeeds((Rotation2d) subsystem.getHeading());
-        Rotation2d    direction = obtainTargetDirection();
+        Rotation2d    direction = obtainTargetDirection(rstickAsRvec());
 
         subsystem.drive(speeds, direction);
     }
@@ -82,6 +69,20 @@ public class SwerveDriveDriver {
 
     private boolean isRotationTargetWithinDeadband(double x, double y) {
         return abs(x) > CONTROLLER_DEADBAND || abs(y) > CONTROLLER_DEADBAND;
+    }
+
+    private boolean isFieldOriented() {
+        return orientation == DriveOrientation.FIELD_ORIENTED;
+    }
+
+    private Vector2d lstickAsLvec() {
+        Vector2d left = leftJoystick.get();
+        return new Vector2d(-left.y(), -left.x());
+    }
+
+    private Vector2d rstickAsRvec() {
+        Vector2d right = rightJoystick.get();
+        return new Vector2d(-right.y(), right.x());
     }
 
 }

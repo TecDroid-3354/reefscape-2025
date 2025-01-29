@@ -25,7 +25,6 @@ import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.units.measure.AngularVelocity;
 import edu.wpi.first.units.measure.Distance;
 import edu.wpi.first.units.measure.LinearVelocity;
-import lombok.Getter;
 
 import static edu.wpi.first.units.Units.Degrees;
 import static net.tecdroid.constants.UnitConstants.QUARTER_ROTATION;
@@ -38,8 +37,7 @@ public class SwerveModule {
                          double magnetOffset) {
     }
 
-    @Getter
-    Translation2d offset;
+    private final Translation2d offset;
 
     private final SparkMax                  driveController;
     private final RelativeEncoder           driveEncoder;
@@ -163,6 +161,10 @@ public class SwerveModule {
         steerClosedLoopController.setReference(desiredState.angle.getDegrees(), ControlType.kPosition);
     }
 
+    public void seed() {
+        setRelativeEncoderPosition(getAbsoluteEncoderPosition());
+    }
+
     public SwerveModuleState getState() {
         return new SwerveModuleState(getDriveVelocity(), (Rotation2d) getSteerPosition());
     }
@@ -171,8 +173,7 @@ public class SwerveModule {
         return new SwerveModulePosition(getDrivePosition(), (Rotation2d) getSteerPosition());
     }
 
-    public void seed() {
-        setRelativeEncoderPosition(getAbsoluteEncoderPosition());
+    public Translation2d getOffset() {
+        return offset;
     }
-
 }

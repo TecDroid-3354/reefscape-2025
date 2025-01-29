@@ -73,7 +73,7 @@ dependencies {
     testImplementation 'org.junit.jupiter:junit-jupiter:5.10.1'
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 
-    compileOnly 'org.projectlombok:lombok:1.18.36'
+    implementation 'org.projectlombok:lombok:1.18.36'
     implementation 'org.joml:joml:1.10.8'
 }
 
