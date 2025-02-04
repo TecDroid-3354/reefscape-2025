@@ -52,81 +52,18 @@ public class SwerveModule {
     public SwerveModule(Config config) {
         this.offset = config.offset();
 
-        // Setting the controller, encoder and closed loop controller for the speed motor
-        // Speed Controller, Sensor & PIDController
-        driveController = new SparkMax(config.driveControllerId(), MotorType.kBrushless);
-        driveController.clearFaults();
-
-        // Spark configuration (Idle mode, PIDF, Continous Input)
-        SparkMaxConfig driveConfig = new SparkMaxConfig();
-
-        driveConfig
-                .idleMode(IdleMode.kBrake)
-                .closedLoopRampRate(0.25);
-
-        driveConfig.encoder
-                .positionConversionFactor(DRIVE_ENCODER_PCF.in(MEASUREMENT_DISTANCE_UNIT))
-                .velocityConversionFactor(DRIVE_ENCODER_VCF.in(MEASUREMENT_LINEAR_VELOCITY_UNIT));
-
-        driveConfig.closedLoop
-                .pidf(
-                        Pidf.DRIVE.p(),
-                        Pidf.DRIVE.i(),
-                        Pidf.DRIVE.d(),
-                        Pidf.DRIVE.f()
-                );
-
-        // Apply the configuration
-        driveController.configure(driveConfig, SparkBase.ResetMode.kResetSafeParameters, PersistMode.kNoPersistParameters);
-
+        this.driveController = new SparkMax(config.driveControllerId(), MotorType.kBrushless);
         this.driveEncoder              = driveController.getEncoder();
         this.driveClosedLoopController = driveController.getClosedLoopController();
+        this.configureDriveInterface();
 
-        // ! Setting rotation spark basic configuration, including PID and idleMode & clear sticky faults
-        // Rotation Controller, Sensor & PIDController
-        steerController = new SparkMax(config.steerControllerId(), MotorType.kBrushless);
-        steerController.clearFaults();
-
-        SparkMaxConfig steerConfig = new SparkMaxConfig();
-
-        steerConfig
-                .idleMode(IdleMode.kBrake)
-                .inverted(true);
-
-        steerConfig.encoder
-                .positionConversionFactor(STEER_ENCODER_PCF.in(MEASUREMENT_ANGLE_UNIT))
-                .velocityConversionFactor(STEER_ENCODER_VCF.in(MEASUREMENT_ANGULAR_VELOCITY_UNIT));
-
-        steerConfig.closedLoop
-                // Position wrapping —— Range resets when it surpasses either parameter
-                .positionWrappingEnabled(true)
-                .positionWrappingInputRange(0.0, QUARTER_ROTATION.in(Degrees))
-                .pidf(
-                        Pidf.STEER.p(),
-                        Pidf.STEER.i(),
-                        Pidf.STEER.d(),
-                        Pidf.STEER.f()
-                );
-
-        // Setting the configuration up for rotation spark & clear sticky faults
-        steerController.configure(steerConfig, SparkBase.ResetMode.kResetSafeParameters, PersistMode.kNoPersistParameters);
-
+        this.steerController = new SparkMax(config.steerControllerId(), MotorType.kBrushless);
         this.steerEncoder              = steerController.getEncoder();
         this.steerClosedLoopController = steerController.getClosedLoopController();
+        this.configureSteerInterface();
 
-        CANcoderConfiguration absoluteEncoderConfig              = new CANcoderConfiguration();
-        MagnetSensorConfigs   absoluteEncoderMagnetSensorConfigs = new MagnetSensorConfigs();
         absoluteEncoder = new CANcoder(config.absoluteEncoderId());
-        absoluteEncoder.clearStickyFaults();
-
-        absoluteEncoderMagnetSensorConfigs
-                .withSensorDirection(SensorDirectionValue.CounterClockwise_Positive)
-                .withMagnetOffset(config.magnetOffset());
-
-        absoluteEncoderConfig.withMagnetSensor(absoluteEncoderMagnetSensorConfigs);
-
-        absoluteEncoder.getConfigurator()
-                       .apply(absoluteEncoderConfig);
+        this.configureAbsoluteEncoderInterface(config);
 
     }
 
@@ -176,4 +113,71 @@ public class SwerveModule {
     public Translation2d getOffset() {
         return offset;
     }
+
+    private void configureDriveInterface() {
+        SparkMaxConfig driveConfig = new SparkMaxConfig();
+
+        driveController.clearFaults();
+
+        driveConfig
+                .idleMode(IdleMode.kBrake)
+                .closedLoopRampRate(0.25);
+
+        driveConfig.encoder
+                .positionConversionFactor(DRIVE_ENCODER_PCF.in(MEASUREMENT_DISTANCE_UNIT))
+                .velocityConversionFactor(DRIVE_ENCODER_VCF.in(MEASUREMENT_LINEAR_VELOCITY_UNIT));
+
+        driveConfig.closedLoop
+                .pidf(
+                        Pidf.DRIVE.p(),
+                        Pidf.DRIVE.i(),
+                        Pidf.DRIVE.d(),
+                        Pidf.DRIVE.f()
+                );
+
+        driveController.configure(driveConfig, SparkBase.ResetMode.kResetSafeParameters, PersistMode.kNoPersistParameters);
+    }
+
+    private void configureSteerInterface() {
+        SparkMaxConfig steerConfig = new SparkMaxConfig();
+
+        steerConfig
+                .idleMode(IdleMode.kBrake)
+                .inverted(true);
+
+        steerConfig.encoder
+                .positionConversionFactor(STEER_ENCODER_PCF.in(MEASUREMENT_ANGLE_UNIT))
+                .velocityConversionFactor(STEER_ENCODER_VCF.in(MEASUREMENT_ANGULAR_VELOCITY_UNIT));
+
+        steerConfig.closedLoop
+                .positionWrappingEnabled(true)
+                .positionWrappingInputRange(0.0, QUARTER_ROTATION.in(Degrees))
+                .pidf(
+                        Pidf.STEER.p(),
+                        Pidf.STEER.i(),
+                        Pidf.STEER.d(),
+                        Pidf.STEER.f()
+                );
+
+        this.steerController.clearFaults();
+        this.steerController.configure(steerConfig, SparkBase.ResetMode.kResetSafeParameters, PersistMode.kNoPersistParameters);
+
+    }
+
+    private void configureAbsoluteEncoderInterface(Config config) {
+        CANcoderConfiguration absoluteEncoderConfig              = new CANcoderConfiguration();
+        MagnetSensorConfigs   absoluteEncoderMagnetSensorConfigs = new MagnetSensorConfigs();
+
+        absoluteEncoderMagnetSensorConfigs
+                .withSensorDirection(SensorDirectionValue.CounterClockwise_Positive)
+                .withMagnetOffset(config.magnetOffset());
+
+        absoluteEncoderConfig.withMagnetSensor(absoluteEncoderMagnetSensorConfigs);
+
+        this.absoluteEncoder.clearStickyFaults();
+        this.absoluteEncoder.getConfigurator()
+                       .apply(absoluteEncoderConfig);
+    }
+
+
 }
