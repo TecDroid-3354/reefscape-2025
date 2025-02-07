@@ -1,15 +1,13 @@
 package net.tecdroid.subsystems.drivetrain;
 
 import edu.wpi.first.math.geometry.Translation2d;
-import edu.wpi.first.units.measure.Angle;
-import edu.wpi.first.units.measure.AngularVelocity;
-import edu.wpi.first.units.measure.Distance;
-import edu.wpi.first.units.measure.LinearVelocity;
+import edu.wpi.first.units.measure.*;
+import net.tecdroid.util.GearRatio;
 import net.tecdroid.util.PidfConstants;
+import net.tecdroid.util.SvaConstants;
 import net.tecdroid.util.UnitHelpers;
 
-import static edu.wpi.first.units.Units.Inches;
-import static edu.wpi.first.units.Units.Minute;
+import static edu.wpi.first.units.Units.*;
 import static java.lang.Math.PI;
 import static net.tecdroid.constants.UnitConstants.FULL_ROTATION;
 
@@ -20,21 +18,28 @@ public class SwerveDriveConstants {
     // Measurements
     private static final Distance TRACK_WIDTH            = Inches.of(22.23);
     private static final Distance WHEEL_BASE             = Inches.of(22.23);
-    private static final Distance DIAGONAL_LENGTH        = UnitHelpers.hypot(TRACK_WIDTH, WHEEL_BASE);
-    private static final Distance ROBOT_XY_CIRCUMFERENCE = DIAGONAL_LENGTH.times(PI);
+
+    // Obtained empirically through speedometer
+    private static final AngularVelocity MAX_ANGULAR_VELOCITY = DegreesPerSecond.of(723.6);
 
     // Module
     private static final Distance WHEEL_DIAMETER      = Inches.of(4);
     private static final Distance WHEEL_CIRCUMFERENCE = WHEEL_DIAMETER.times(PI);
 
-    private static final double DRIVE_MOTOR_GEAR_RATIO = 6.120;
-    private static final double STEER_MOTOR_GEAR_RATIO = 150.0 / 7.0;
+    private static final GearRatio DRIVE_GR = new GearRatio(6.12, 1.0);
+    private static final GearRatio STEER_GR = 150.0 / 7.0;
 
-    public static final Distance       DRIVE_ENCODER_PCF = WHEEL_CIRCUMFERENCE.div(DRIVE_MOTOR_GEAR_RATIO);
-    public static final LinearVelocity DRIVE_ENCODER_VCF = DRIVE_ENCODER_PCF.per(Minute);
+    public static final Distance       DRIVE_PCF = WHEEL_CIRCUMFERENCE.div(DRIVE_GR);
+    public static final LinearVelocity DRIVE_VCF = DRIVE_PCF.per(Minute);
 
-    public static final Angle           STEER_ENCODER_PCF = FULL_ROTATION.div(DRIVE_MOTOR_GEAR_RATIO);
-    public static final AngularVelocity STEER_ENCODER_VCF = STEER_ENCODER_PCF.per(Minute);
+    public static final Angle           STEER_PCF = FULL_ROTATION.div(DRIVE_GR);
+    public static final AngularVelocity STEER_VCF = STEER_PCF.per(Minute);
+
+    public static final Current DRIVE_CR = Amps.of(40.0);
+    public static final Current STEER_CR = Amps.of(30.0);
+
+    public static final Time DRIVE_RR = Seconds.of(0.1);
+    public static final Time STEER_RR = Seconds.of(0.1);
 
     public static final class ModuleConfig {
         private static final int ABS_ENCODER_ID_OFFSET      = 0;
@@ -84,6 +89,10 @@ public class SwerveDriveConstants {
         public static final PidfConstants STEER = new PidfConstants(0.005, 0.0, 0.002, 0.0);
         public static final PidfConstants ANGLE = new PidfConstants(0.0055, 0.0, 0.002, 0.0);
         public static final PidfConstants ALIGN = new PidfConstants(0.005, 0.0, 0.002, 0.0);
+    }
+
+    public static final class Sva {
+        public static final SvaConstants DRIVE = new SvaConstants(0.0, 0.0, 0.0);
     }
 
     public static final SwerveDrive.Config CONFIG = new SwerveDrive.Config(ModuleConfig.CONFIGURATIONS, GYRO_ID);

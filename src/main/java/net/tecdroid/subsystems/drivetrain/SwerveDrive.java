@@ -16,7 +16,7 @@ import edu.wpi.first.wpilibj2.command.SubsystemBase;
 
 import java.util.Arrays;
 
-import static net.tecdroid.conventions.MeasurementConventions.MEASUREMENT_ANGLE_UNIT;
+import static net.tecdroid.conventions.MeasurementConventions.MADU;
 import static net.tecdroid.subsystems.drivetrain.SwerveDriveConstants.Pidf;
 
 public class SwerveDrive extends SubsystemBase {
@@ -70,7 +70,7 @@ public class SwerveDrive extends SubsystemBase {
 
     public void drive(ChassisSpeeds chassisSpeeds, Rotation2d angleTarget) {
         double rotationNormalizedPidOutput = -(MathUtil.clamp(
-                turnPidController.calculate(getHeading().in(MEASUREMENT_ANGLE_UNIT), angleTarget.getDegrees()),
+                turnPidController.calculate(getHeading().in(MADU), angleTarget.getDegrees()),
                 -1, 1
         ));
 
