@@ -8,6 +8,7 @@ import com.ctre.phoenix6.configs.*;
 import com.ctre.phoenix6.controls.VelocityVoltage;
 import com.ctre.phoenix6.hardware.CANcoder;
 import com.ctre.phoenix6.hardware.TalonFX;
+import com.ctre.phoenix6.signals.NeutralModeValue;
 import com.ctre.phoenix6.signals.SensorDirectionValue;
 import com.revrobotics.RelativeEncoder;
 import com.revrobotics.spark.SparkBase;
@@ -22,17 +23,17 @@ import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.kinematics.SwerveModulePosition;
 import edu.wpi.first.math.kinematics.SwerveModuleState;
-import edu.wpi.first.units.measure.Angle;
-import edu.wpi.first.units.measure.AngularVelocity;
-import edu.wpi.first.units.measure.Distance;
-import edu.wpi.first.units.measure.LinearVelocity;
+import edu.wpi.first.units.measure.*;
+import edu.wpi.first.util.sendable.Sendable;
+import edu.wpi.first.util.sendable.SendableBuilder;
+import edu.wpi.first.wpilibj.shuffleboard.ShuffleboardTab;
 
 import static edu.wpi.first.units.Units.*;
 import static net.tecdroid.constants.UnitConstants.QUARTER_ROTATION;
 import static net.tecdroid.conventions.MeasurementConventions.*;
 import static net.tecdroid.subsystems.drivetrain.SwerveDriveConstants.*;
 
-public class SwerveModule {
+public class SwerveModule implements Sendable {
 
     public record Config(Translation2d offset, int driveControllerId, int steerControllerId, int absoluteEncoderId,
                          double magnetOffset) {
@@ -78,6 +79,11 @@ public class SwerveModule {
         return DRIVE_VCF.times(motorAngularVelocity);
     }
 
+    public LinearAcceleration getDriveAcceleration() {
+        final double motorAngularAcceleration = driveTalon.getAcceleration().getValue().in(RotationsPerSecondPerSecond);
+        return DRIVE_ACF.times(motorAngularAcceleration);
+    }
+
     public Angle getSteerPosition() {
         return MADU.of(steerEncoder.getPosition());
     }
@@ -86,19 +92,20 @@ public class SwerveModule {
         return MAVU.of(steerEncoder.getVelocity());
     }
 
-    public void setRelativeEncoderPosition(Rotation2d rotation) {
-        steerEncoder.setPosition(rotation.getDegrees());
+    public void setRelativeEncoderPosition(Angle rotation) {
+        steerEncoder.setPosition(rotation.in(MADU));
     }
 
     public void setDesiredState(SwerveModuleState desiredState) {
         desiredState.optimize((Rotation2d) getSteerPosition());
-        final VelocityVoltage targetVelocity = new VelocityVoltage(MetersPerSecond.of(desiredState.speedMetersPerSecond)).withSlot(0);
-        driveClosedLoopController.setReference(desiredState.speedMetersPerSecond, ControlType.kVelocity);
-        driveTalon.setCon
+        //VelocityVoltage(MetersPerSecond.of(desiredState.speedMetersPerSecond))
+        final VelocityVoltage targetVelocity = new VelocityVoltage(desiredState.speedMetersPerSecond).withSlot(0);
+        driveTalon.setNeutralMode(NeutralModeValue.Coast);
         steerClosedLoopController.setReference(desiredState.angle.getDegrees(), ControlType.kPosition);
     }
 
     public void seed() {
+        // Either change getAbsoluteSteerPosition to Rotation2d, or change setRelativeEncoderPosition to take Angle (done)
         setRelativeEncoderPosition(getAbsoluteSteerPosition());
     }
 
@@ -173,5 +180,12 @@ public class SwerveModule {
         this.absoluteEncoder.getConfigurator().apply(absoluteEncoderConfig);
     }
 
+    @Override
+    public void initSendable(SendableBuilder sendableBuilder) {
+        sendableBuilder.addDoubleProperty("Acceleration (m s^-2)", () -> getDriveAcceleration().in(MLAU), (double m) -> {});
+        sendableBuilder.addDoubleProperty("Position (m)", () -> getDrivePosition().in(MLDU), (double m) -> {});
+        sendableBuilder.addDoubleProperty("Velocity (m s^-1)", () -> getDriveVelocity().in(MLVU), (double m) -> {});
+        sendableBuilder.addDoubleProperty("Azimuth (deg)", () -> getSteerPosition().in(MADU), (double m) -> {});
+    }
 
 }

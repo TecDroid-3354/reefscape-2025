@@ -3,13 +3,17 @@ package net.tecdroid.subsystems.drivetrain;
 import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.units.measure.AngularVelocity;
 import edu.wpi.first.units.measure.LinearVelocity;
+import net.tecdroid.util.GearRatio;
 
 import javax.sound.sampled.Line;
 
+import static edu.wpi.first.units.Units.Meters;
 import static edu.wpi.first.units.Units.MetersPerSecond;
 import static net.tecdroid.constants.Constants.SwerveConstants.Modules.PhysicsConstants.MAX_SPEED_METERS_PER_SECOND;
 import static net.tecdroid.constants.Constants.SwerveConstants.Modules.PhysicsConstants.MAX_ANGULAR_VELOCITY_DEGREES_PER_SECOND;
 import static net.tecdroid.subsystems.drivetrain.SwerveDriveConstants.DRIVE_VCF;
+import static net.tecdroid.subsystems.drivetrain.SwerveDriveConstants.WHEEL_DIAMETER;
+import static net.tecdroid.subsystems.drivetrain.SwerveDriveConstants.DRIVE_GR;
 
 public class SwerveDriveUtil {
     public static double denormalizeLinearVelocity(double normalizedSpeeds) {
@@ -22,7 +26,7 @@ public class SwerveDriveUtil {
     }
 
     public static AngularVelocity driveVelocityToAngularVelocity(LinearVelocity velocity) {
-        final double velocityMs = velocity.in(MetersPerSecond);
+        final double velocityMs = (velocity.in(MetersPerSecond) / WHEEL_DIAMETER.in(Meters));
         return DRIVE_VCF.div(velocityMs);
     }
 

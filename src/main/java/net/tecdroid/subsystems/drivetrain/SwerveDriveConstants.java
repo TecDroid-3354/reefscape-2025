@@ -5,7 +5,6 @@ import edu.wpi.first.units.measure.*;
 import net.tecdroid.util.GearRatio;
 import net.tecdroid.util.PidfConstants;
 import net.tecdroid.util.SvaConstants;
-import net.tecdroid.util.UnitHelpers;
 
 import static edu.wpi.first.units.Units.*;
 import static java.lang.Math.PI;
@@ -23,16 +22,17 @@ public class SwerveDriveConstants {
     private static final AngularVelocity MAX_ANGULAR_VELOCITY = DegreesPerSecond.of(723.6);
 
     // Module
-    private static final Distance WHEEL_DIAMETER      = Inches.of(4);
+    public static final Distance WHEEL_DIAMETER      = Inches.of(4);
     private static final Distance WHEEL_CIRCUMFERENCE = WHEEL_DIAMETER.times(PI);
 
-    private static final GearRatio DRIVE_GR = new GearRatio(6.12, 1.0);
-    private static final GearRatio STEER_GR = 150.0 / 7.0;
+    public static final GearRatio DRIVE_GR = new GearRatio(6.12, 1.0);
+    private static final GearRatio STEER_GR = new GearRatio(150.0, 7.0);
 
-    public static final Distance       DRIVE_PCF = WHEEL_CIRCUMFERENCE.div(DRIVE_GR);
-    public static final LinearVelocity DRIVE_VCF = DRIVE_PCF.per(Minute);
+    public static final Distance           DRIVE_PCF = WHEEL_CIRCUMFERENCE.div(DRIVE_GR.getRatio());
+    public static final LinearVelocity     DRIVE_VCF = DRIVE_PCF.per(Minute);
+    public static final LinearAcceleration DRIVE_ACF = DRIVE_VCF.per(Second);
 
-    public static final Angle           STEER_PCF = FULL_ROTATION.div(DRIVE_GR);
+    public static final Angle           STEER_PCF = FULL_ROTATION.div(DRIVE_GR.getRatio());
     public static final AngularVelocity STEER_VCF = STEER_PCF.per(Minute);
 
     public static final Current DRIVE_CR = Amps.of(40.0);
