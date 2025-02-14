@@ -14,6 +14,7 @@ import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.kinematics.*;
 import edu.wpi.first.units.measure.Angle;
+import edu.wpi.first.units.measure.AngularVelocity;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
@@ -22,9 +23,11 @@ import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
 
 import java.util.Arrays;
 
+import static edu.wpi.first.units.Units.RadiansPerSecond;
 import static edu.wpi.first.units.Units.Volts;
 import static net.tecdroid.conventions.MeasurementConventions.MADU;
 import static net.tecdroid.subsystems.drivetrain.SwerveDriveConstants.Pidf;
+import static net.tecdroid.subsystems.drivetrain.SwerveDriveUtil.denormalizeAngularVelocity;
 
 public class SwerveDrive extends SubsystemBase {
     public record Config(SwerveModule.Config[] moduleConfigs, int gyroId) {
@@ -130,9 +133,9 @@ public class SwerveDrive extends SubsystemBase {
                 -1, 1
         ));
 
-        double angularVelocity = SwerveDriveUtil.denormalizeAngularVelocity(rotationNormalizedPidOutput);
+        AngularVelocity angularVelocity = denormalizeAngularVelocity(rotationNormalizedPidOutput);
 
-        chassisSpeeds.omegaRadiansPerSecond = Math.toRadians(angularVelocity);
+        chassisSpeeds.omegaRadiansPerSecond = angularVelocity.in(RadiansPerSecond);
         drive(chassisSpeeds);
     }
 

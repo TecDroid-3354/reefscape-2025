@@ -130,7 +130,7 @@ public class SwerveModule implements Sendable {
 
         SmartDashboard.putNumber("Requested Velocity rps", targetVelocity.in(RotationsPerSecond));
 
-        steerClosedLoopController.setReference(0.0, ControlType.kPosition);
+        steerClosedLoopController.setReference(desiredState.angle.getDegrees(), ControlType.kPosition);
 
         VelocityVoltage request = new VelocityVoltage(targetVelocity).withSlot(0);;
         driveTalon.setControl(request);

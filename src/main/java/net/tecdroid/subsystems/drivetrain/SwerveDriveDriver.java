@@ -2,6 +2,7 @@ package net.tecdroid.subsystems.drivetrain;
 
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
+import edu.wpi.first.units.measure.AngularVelocity;
 import edu.wpi.first.units.measure.LinearVelocity;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import org.joml.Vector2d;
@@ -11,6 +12,8 @@ import java.util.function.Supplier;
 import static edu.wpi.first.units.Units.*;
 import static java.lang.Math.abs;
 import static java.lang.Math.atan2;
+import static net.tecdroid.subsystems.drivetrain.SwerveDriveConstants.CONTROLLER_OUTPUT_FACTOR;
+import static net.tecdroid.subsystems.drivetrain.SwerveDriveUtil.denormalizeAngularVelocity;
 import static net.tecdroid.subsystems.drivetrain.SwerveDriveUtil.denormalizeLinearVelocity;
 
 public class SwerveDriveDriver {
@@ -34,15 +37,19 @@ public class SwerveDriveDriver {
 
     private ChassisSpeeds obtainTargetSpeeds(Rotation2d currentAngle) {
         Vector2d left = lstickAsLvec();
+        Vector2d right = rstickAsRvec();
 
         LinearVelocity vx = denormalizeLinearVelocity(left.x());
         LinearVelocity vy = denormalizeLinearVelocity(left.y());
 
+        AngularVelocity w = denormalizeAngularVelocity(right.y());
+
         SmartDashboard.putNumber("Target vx", vx.in(MetersPerSecond));
         SmartDashboard.putNumber("Target vy", vy.in(MetersPerSecond));
+        SmartDashboard.putNumber("Target w ", w.in(DegreesPerSecond));
 
-        return isFieldOriented() ? ChassisSpeeds.fromFieldRelativeSpeeds(vx, vy, RadiansPerSecond.of(0.0), currentAngle)
-                                 : new ChassisSpeeds(vx, vy, RadiansPerSecond.of(0.0));
+        return isFieldOriented() ? ChassisSpeeds.fromFieldRelativeSpeeds(vx, vy, w, currentAngle)
+                                 : new ChassisSpeeds(vx, vy, w);
     }
 
     private Rotation2d obtainTargetDirection(Vector2d direction) {
@@ -59,10 +66,8 @@ public class SwerveDriveDriver {
     }
 
     public void apply(SwerveDrive subsystem) {
-        ChassisSpeeds speeds    = obtainTargetSpeeds(new Rotation2d(subsystem.getHeading()));
-        Rotation2d    direction = obtainTargetDirection(rstickAsRvec());
-
-        subsystem.drive(speeds, direction);
+        ChassisSpeeds speeds = obtainTargetSpeeds(new Rotation2d(subsystem.getHeading()));
+        subsystem.drive(speeds);
     }
 
     public void toggleOrientation() {
@@ -84,14 +89,16 @@ public class SwerveDriveDriver {
         Vector2d left = leftJoystick.get();
         double x = -left.y();
         double y = -left.x();
-        return new Vector2d(abs(x) > CONTROLLER_DEADBAND ? x : 0, abs(y) > CONTROLLER_DEADBAND ? y : 0);
+        return new Vector2d(abs(x) > CONTROLLER_DEADBAND ? x : 0, abs(y) > CONTROLLER_DEADBAND ? y : 0)
+                .mul(CONTROLLER_OUTPUT_FACTOR);
     }
 
     private Vector2d rstickAsRvec() {
         Vector2d right = rightJoystick.get();
         double x = -right.y();
         double y = -right.x();
-        return new Vector2d(abs(x) > CONTROLLER_DEADBAND ? x : 0, abs(y) > CONTROLLER_DEADBAND ? y : 0);
+        return new Vector2d(abs(x) > CONTROLLER_DEADBAND ? x : 0, abs(y) > CONTROLLER_DEADBAND ? y : 0)
+                .mul(CONTROLLER_OUTPUT_FACTOR);
     }
 
 }

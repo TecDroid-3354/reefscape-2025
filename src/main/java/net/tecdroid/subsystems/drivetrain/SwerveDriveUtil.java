@@ -9,7 +9,11 @@ import static net.tecdroid.subsystems.drivetrain.SwerveDriveConstants.*;
 
 public class SwerveDriveUtil {
     public static LinearVelocity denormalizeLinearVelocity(double normalizedSpeeds) {
-        return DRIVE_MAX_LINEAR_VELOCITY.times(normalizedSpeeds);
+        return DRIVE_MOTOR_MAX_LINEAR_VELOCITY.times(normalizedSpeeds);
+    }
+
+    public static AngularVelocity denormalizeAngularVelocity(double normalizedSpeeds) {
+        return SWERVE_DRIVE_MAX_MAX_ANGULAR_VELOCITY.times(normalizedSpeeds);
     }
 
     public static AngularVelocity convertFromDriveLinearVelocityToDriveAngularVelocity(LinearVelocity linearVelocity) {
@@ -18,10 +22,6 @@ public class SwerveDriveUtil {
 
     public static LinearVelocity convertFromWheelAngularVelocityToWheelLinearVelocity(AngularVelocity angularVelocity) {
         return WHEEL_CIRCUMFERENCE.times(angularVelocity.in(RotationsPerSecond)).per(Second);
-    }
-
-    public static double denormalizeAngularVelocity(double normalizedSpeeds) {
-        return normalizedSpeeds * MAX_ANGULAR_VELOCITY_DEGREES_PER_SECOND;
     }
 
     public static AngularVelocity convertFromWheelLinearVelocityToDriveAngularVelocity(LinearVelocity linearVelocity) {

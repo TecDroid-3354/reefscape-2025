@@ -44,7 +44,7 @@ public class RobotContainer {
         // Configure the trigger bindings
         swerveDriver = new SwerveDriveDriver(
                 () -> new Vector2d(controller.getLeftX(), controller.getLeftY()),
-                () -> new Vector2d(controller.getRightX(), controller.getRightY()).mul(0)
+                () -> new Vector2d(controller.getRightX(), controller.getRightY())
         );
 
         configureBindings();

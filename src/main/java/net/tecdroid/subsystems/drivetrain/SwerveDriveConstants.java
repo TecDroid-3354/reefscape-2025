@@ -36,9 +36,10 @@ public class SwerveDriveConstants {
     static final Angle           STEER_PCF = FULL_ROTATION.div(STEER_GR.getRatio());
     static final AngularVelocity STEER_VCF = STEER_PCF.per(Minute);
 
-    static final double DRIVE_MAX_POWER_FACTOR = 0.9;
-    static final AngularVelocity DRIVE_MAX_ANGULAR_VELOCITY = KRAKEN_MAX_RPM.times(DRIVE_MAX_POWER_FACTOR);
-    static final LinearVelocity DRIVE_MAX_LINEAR_VELOCITY = WHEEL_CIRCUMFERENCE.times(DRIVE_GR.apply(KRAKEN_MAX_RPM.in(RotationsPerSecond))).per(Second);
+    static final double CONTROLLER_OUTPUT_FACTOR = 0.86;
+    static final AngularVelocity DRIVE_MOTOR_MAX_ANGULAR_VELOCITY = KRAKEN_MAX_RPM;
+    static final LinearVelocity DRIVE_MOTOR_MAX_LINEAR_VELOCITY = WHEEL_CIRCUMFERENCE.times(DRIVE_GR.apply(KRAKEN_MAX_RPM.in(RotationsPerSecond))).per(Second);
+    static final AngularVelocity SWERVE_DRIVE_MAX_MAX_ANGULAR_VELOCITY = DegreesPerSecond.of(723.0);
 
     static final Current DRIVE_CR = Amps.of(40.0);
     static final Current STEER_CR = Amps.of(30.0);
@@ -79,7 +80,7 @@ public class SwerveDriveConstants {
         static final Translation2d FRONT_RIGHT_MODULE_OFFSET = new Translation2d(TRACK_WIDTH.div(+2), WHEEL_BASE.div(-2)); // FR |      2 ← 1
         static final Translation2d FRONT_LEFT_MODULE_OFFSET  = new Translation2d(TRACK_WIDTH.div(+2), WHEEL_BASE.div(+2)); // FL |      ↓   ↑
         static final Translation2d BACK_LEFT_MODULE_OFFSET   = new Translation2d(TRACK_WIDTH.div(-2), WHEEL_BASE.div(-2)); // BL |      3 → 4
-        static final Translation2d BACK_RIGHT_MODULE_OFFSET  = new Translation2d(TRACK_WIDTH.div(-2), WHEEL_BASE.div(+2)); // BR | Quadrant Convention
+        static final Translation2d BACK_RIGHT_MODULE_OFFSET  = new Translation2d(TRACK_WIDTH.div(-2), WHEEL_BASE.div(-2)); // BR | Quadrant Convention
 
         static final SwerveModule.Config FRONT_RIGHT = new SwerveModule.Config(FRONT_RIGHT_MODULE_OFFSET, FRONT_RIGHT_DRIVE, FRONT_RIGHT_STEER, FRONT_RIGHT_ABSOLUTE_ENCODER, FRONT_RIGHT_MAGNET_OFFSET, false); // false
         static final SwerveModule.Config FRONT_LEFT  = new SwerveModule.Config(FRONT_LEFT_MODULE_OFFSET, FRONT_LEFT_DRIVE, FRONT_LEFT_STEER, FRONT_LEFT_ABSOLUTE_ENCODER, FRONT_LEFT_MAGNET_OFFSET, false); // true
