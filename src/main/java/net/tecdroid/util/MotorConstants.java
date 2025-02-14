@@ -1,6 +1,10 @@
 package net.tecdroid.util;
 
+import edu.wpi.first.units.measure.AngularVelocity;
+
+import static edu.wpi.first.units.Units.*;
+
 public class MotorConstants {
-    public static final double NEO_MAX_RPM    = 5_676;
-    public static final double KRAKEN_MAX_RPM = 6_000;
+    public static final AngularVelocity NEO_MAX_RPM    = RotationsPerSecond.of(94.6);
+    public static final AngularVelocity KRAKEN_MAX_RPM = RotationsPerSecond.of(100.0);
 }

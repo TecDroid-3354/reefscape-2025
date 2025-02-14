@@ -1,33 +1,36 @@
 package net.tecdroid.subsystems.drivetrain;
 
-import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.units.measure.AngularVelocity;
 import edu.wpi.first.units.measure.LinearVelocity;
-import net.tecdroid.util.GearRatio;
 
-import javax.sound.sampled.Line;
-
-import static edu.wpi.first.units.Units.Meters;
-import static edu.wpi.first.units.Units.MetersPerSecond;
-import static net.tecdroid.constants.Constants.SwerveConstants.Modules.PhysicsConstants.MAX_SPEED_METERS_PER_SECOND;
+import static edu.wpi.first.units.Units.*;
 import static net.tecdroid.constants.Constants.SwerveConstants.Modules.PhysicsConstants.MAX_ANGULAR_VELOCITY_DEGREES_PER_SECOND;
-import static net.tecdroid.subsystems.drivetrain.SwerveDriveConstants.DRIVE_VCF;
-import static net.tecdroid.subsystems.drivetrain.SwerveDriveConstants.WHEEL_DIAMETER;
-import static net.tecdroid.subsystems.drivetrain.SwerveDriveConstants.DRIVE_GR;
+import static net.tecdroid.subsystems.drivetrain.SwerveDriveConstants.*;
 
 public class SwerveDriveUtil {
-    public static double denormalizeLinearVelocity(double normalizedSpeeds) {
-        return normalizedSpeeds * MAX_SPEED_METERS_PER_SECOND;
-        
+    public static LinearVelocity denormalizeLinearVelocity(double normalizedSpeeds) {
+        return DRIVE_MAX_LINEAR_VELOCITY.times(normalizedSpeeds);
+    }
+
+    public static AngularVelocity convertFromDriveLinearVelocityToDriveAngularVelocity(LinearVelocity linearVelocity) {
+        return RotationsPerSecond.of(DRIVE_GR.unapply(linearVelocity.in(MetersPerSecond) / WHEEL_CIRCUMFERENCE.in(Meters)));
+    }
+
+    public static LinearVelocity convertFromWheelAngularVelocityToWheelLinearVelocity(AngularVelocity angularVelocity) {
+        return WHEEL_CIRCUMFERENCE.times(angularVelocity.in(RotationsPerSecond)).per(Second);
     }
 
     public static double denormalizeAngularVelocity(double normalizedSpeeds) {
         return normalizedSpeeds * MAX_ANGULAR_VELOCITY_DEGREES_PER_SECOND;
     }
 
-    public static AngularVelocity driveVelocityToAngularVelocity(LinearVelocity velocity) {
-        final double velocityMs = (velocity.in(MetersPerSecond) / WHEEL_DIAMETER.in(Meters));
-        return DRIVE_VCF.div(velocityMs);
+    public static AngularVelocity convertFromWheelLinearVelocityToDriveAngularVelocity(LinearVelocity linearVelocity) {
+        return RotationsPerSecond.of(DRIVE_GR.unapply(linearVelocity.in(MetersPerSecond) / WHEEL_CIRCUMFERENCE.in(Meters)));
     }
+
+//    public static AngularVelocity driveVelocityToAngularVelocity(LinearVelocity velocity) {
+//        final double velocityMs = (velocity.in(MetersPerSecond) / WHEEL_DIAMETER.in(Meters));
+//        return DRIVE_VCF.div(velocityMs);
+//    }
 
 }

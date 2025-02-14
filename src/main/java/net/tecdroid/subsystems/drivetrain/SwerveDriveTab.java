@@ -6,7 +6,7 @@ import edu.wpi.first.wpilibj.shuffleboard.ShuffleboardTab;
 public class SwerveDriveTab {
     private static final String TAB_NAME = "Swerve Drive";
 
-    private static final int MODULE_HEIGHT = 2;
+    private static final int MODULE_HEIGHT = 3;
     private static final int MODULE_WIDTH  = 2;
     private static final int MODULE_STRAFE = 2;
 
@@ -21,13 +21,13 @@ public class SwerveDriveTab {
     }
 
     public void publishDrive(SwerveDrive swerveDrive) {
-        tab.add(swerveDrive).withSize(DRIVE_WIDTH, DRIVE_HEIGHT)
+        tab.add("Swerve", swerveDrive).withSize(DRIVE_WIDTH, DRIVE_HEIGHT)
                             .withPosition(0, 3);
     }
 
     public void publishModules(SwerveModule... modules) {
         for (SwerveModule module : modules) {
-            tab.add(module).withSize(MODULE_WIDTH, MODULE_HEIGHT)
+            tab.add("Module: " + module.getModuleDigit(), module).withSize(MODULE_WIDTH, MODULE_HEIGHT)
                            .withPosition(moduleCount * MODULE_STRAFE, 0);
 
             moduleCount++;

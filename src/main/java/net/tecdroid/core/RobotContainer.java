@@ -4,15 +4,24 @@
 
 package net.tecdroid.core;
 
+import com.ctre.phoenix6.SignalLogger;
+import com.ctre.phoenix6.controls.VoltageOut;
+import edu.wpi.first.units.measure.AngularVelocity;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
+import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
 import net.tecdroid.constants.Constants.OperatorConstants;
 import net.tecdroid.subsystems.drivetrain.SwerveDrive;
 import net.tecdroid.subsystems.drivetrain.SwerveDriveConstants;
 import net.tecdroid.subsystems.drivetrain.SwerveDriveDriver;
+import net.tecdroid.subsystems.drivetrain.SwerveTuner;
 import org.joml.Vector2d;
+
+import static edu.wpi.first.units.Units.*;
+import static net.tecdroid.subsystems.drivetrain.SwerveDriveUtil.convertFromWheelLinearVelocityToDriveAngularVelocity;
 
 /**
  * This class is where the bulk of the robot should be declared. Since Command-based is a
@@ -24,19 +33,18 @@ public class RobotContainer {
     // The robot's subsystems and commands are defined here...
     SwerveDrive       swerveDrive = new SwerveDrive(SwerveDriveConstants.CONFIG);
     SwerveDriveDriver swerveDriver;
+    SwerveTuner tuner = new SwerveTuner(swerveDrive);
 
     private final CommandXboxController controller =
             new CommandXboxController(OperatorConstants.kDriverControllerPort);
-
     /**
      * The container for the robot. Contains subsystems, OI devices, and commands.
      */
     public RobotContainer() {
         // Configure the trigger bindings
-
         swerveDriver = new SwerveDriveDriver(
-                () -> new Vector2d(-controller.getLeftX(), -controller.getLeftY()),
-                () -> new Vector2d(-controller.getRightX(), -controller.getRightY())
+                () -> new Vector2d(controller.getLeftX(), controller.getLeftY()),
+                () -> new Vector2d(controller.getRightX(), controller.getRightY()).mul(0)
         );
 
         configureBindings();
@@ -52,14 +60,7 @@ public class RobotContainer {
      * joysticks}.
      */
     private void configureBindings() {
-        controller.x()
-                  .onTrue(Commands.runOnce(swerveDriver::toggleOrientation));
-        controller.start()
-                  .onTrue(Commands.runOnce(swerveDrive::zeroHeading, swerveDrive));
-        swerveDrive.setDefaultCommand(Commands.print("a")
-                                              .andThen(Commands.run(() -> {
-                                                  swerveDriver.apply(swerveDrive);
-                                              }, swerveDrive)));
+        swerveDrive.setDefaultCommand(Commands.run(() -> { swerveDriver.apply(swerveDrive); }, swerveDrive));
     }
 
     /**
