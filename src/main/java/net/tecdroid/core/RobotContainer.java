@@ -2,7 +2,6 @@ package net.tecdroid.core;
 
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
-import net.tecdroid.constants.Constants.OperatorConstants;
 import net.tecdroid.subsystems.drivetrain.SwerveDrive;
 import net.tecdroid.subsystems.drivetrain.SwerveDriveConstants;
 
