@@ -25,6 +25,7 @@ import edu.wpi.first.math.kinematics.SwerveModuleState;
 import edu.wpi.first.units.measure.*;
 import edu.wpi.first.util.sendable.Sendable;
 import edu.wpi.first.util.sendable.SendableBuilder;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import net.tecdroid.constants.UnitConstants;
 import net.tecdroid.util.*;
 import net.tecdroid.util.geometry.Wheel;
@@ -69,7 +70,7 @@ public class SwerveModule implements Sendable {
     }
 
     public void setTargetState(SwerveModuleState newState) {
-        newState.optimize(new Rotation2d(getSteerShaftAngularPosition()));
+        newState.optimize(new Rotation2d(getSteerWheelAngularPosition()));
         this.targetState = newState;
 
         final Angle requestedAngle = newState.angle.getMeasure();
@@ -79,7 +80,7 @@ public class SwerveModule implements Sendable {
         final LinearVelocity requestedVelocity = MetersPerSecond.of(newState.speedMetersPerSecond);
         final AngularVelocity shaftVelocity = config.physical.driveGearing.unapply(config.physical.wheel.linearVelocityToAngularVelocity(requestedVelocity));
         driveInterface.setControl(new VelocityVoltage(shaftVelocity).withSlot(0));
-    }
+}
 
     public void matchSteeringEncoderToAbsoluteEncoder() {
         steerEncoder.setPosition(getAbsoluteSteerShaftPosition().in(Rotations));
@@ -169,9 +170,9 @@ public class SwerveModule implements Sendable {
                          .withKA(config.control.driveSvag.getA());
 
         driveConfig.MotorOutput.withInverted(config.state.driveDirection.getDirection()
-                                                                        .toInvertedValue());
+                                                                        .toInvertedValue())
+                               .withNeutralMode(NeutralModeValue.Brake);
 
-        this.driveInterface.setNeutralMode(NeutralModeValue.Coast);
         this.driveInterface.clearStickyFaults();
         this.driveInterface.getConfigurator().apply(driveConfig);
     }
@@ -181,9 +182,10 @@ public class SwerveModule implements Sendable {
 
         steerConfig
                 .idleMode(IdleMode.kBrake)
-                .inverted(config.state.driveDirection.getDirection()
-                                                     .toTrueMeansCounterclockwise())
+                .inverted(config.state.driveDirection.matches(NeoMotor.INSTANCE.getRotationalConvention()))
                 .smartCurrentLimit((int)config.limits.steerCurrentLimit.in(Amps));
+
+        steerConfig.encoder.positionConversionFactor(1).velocityConversionFactor(1);
 
         steerConfig.closedLoop
                 .positionWrappingEnabled(true)
@@ -206,7 +208,7 @@ public class SwerveModule implements Sendable {
     private void configureAbsoluteEncoderInterface() {
         CANcoderConfiguration absoluteEncoderConfig = new CANcoderConfiguration();
 
-        absoluteEncoderConfig.MagnetSensor.withSensorDirection(config.state.steerDirection.getDirection().toSensorDirectionValue())
+        absoluteEncoderConfig.MagnetSensor.withSensorDirection(config.state.steerDirection.getDirection().opposite().toSensorDirectionValue())
                                           .withMagnetOffset(config.state.magnetOffset);
 
         this.absoluteEncoder.clearStickyFaults();
@@ -219,13 +221,12 @@ public class SwerveModule implements Sendable {
 
     @Override
     public void initSendable(SendableBuilder sendableBuilder) {
-        sendableBuilder.addDoubleProperty("Position (m)", () -> getDriveWheelLinearDisplacement().in(Meters), (double m) -> {});
+        sendableBuilder.addDoubleProperty("Abs Azimuth Shaft (rot)", () -> getAbsoluteSteerShaftPosition().in(Rotations), (double m) -> {});
+        sendableBuilder.addDoubleProperty("Azimuth Shaft (rot)", () -> getSteerShaftAngularPosition().in(Rotations), (double m) -> {});
+        sendableBuilder.addDoubleProperty("Abs Azimuth", () -> getAbsoluteSteerWheelPosition().in(Degrees), (double m) -> {});
+        sendableBuilder.addDoubleProperty("Azimuth", () -> getSteerWheelAngularPosition().in(Degrees), (double m) -> {});
         sendableBuilder.addDoubleProperty("Wheel Velocity (m s^-1)", () -> getDriveWheelLinearVelocity().in(MetersPerSecond), (double m) -> {});
-        sendableBuilder.addDoubleProperty("Wheel Velocity (rps)", () -> getDriveWheelAngularVelocity().in(RotationsPerSecond), (double m) -> {});
-        sendableBuilder.addDoubleProperty("Drive Velocity (rps)", () -> getDriveShaftAngularVelocity().in(RotationsPerSecond), (double m) -> {});
         sendableBuilder.addDoubleProperty("Target Azimuth (deg)", () -> targetState.angle.getDegrees(), (double m) -> {});
         sendableBuilder.addDoubleProperty("Target Velocity (m s^-1)", () -> targetState.speedMetersPerSecond, (double m) -> {});
-        sendableBuilder.addDoubleProperty("Azimuth (deg)", () -> getSteerShaftAngularPosition().in(Degrees), (double m) -> {});
-        sendableBuilder.addDoubleProperty("Power (%)", driveInterface::get, (double m) -> {});
     }
 }

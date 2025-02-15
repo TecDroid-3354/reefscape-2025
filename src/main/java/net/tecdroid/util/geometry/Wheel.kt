@@ -15,8 +15,8 @@ class Wheel private constructor(val radius: Distance) {
     fun angularDisplacementToLinearDisplacement(angle: Angle): Distance = circumference.times(angle.`in`(Rotations))
     fun angularVelocityToLinearVelocity(angularVelocity: AngularVelocity): LinearVelocity = circumference.times(angularVelocity.`in`(RotationsPerSecond)).per(Second)
 
-    fun linearDisplacementToAngularDisplacement(distance: Distance): Angle = Rotations.of(distance.div(circumference).magnitude())
-    fun linearVelocityToAngularVelocity(linearVelocity: LinearVelocity): AngularVelocity = Rotations.of(linearVelocity.div(circumference).magnitude()).per(Second)
+    fun linearDisplacementToAngularDisplacement(distance: Distance): Angle = Rotations.of(distance.div(circumference).baseUnitMagnitude())
+    fun linearVelocityToAngularVelocity(linearVelocity: LinearVelocity): AngularVelocity = Rotations.of(linearVelocity.div(circumference).baseUnitMagnitude()).per(Second)
 
     companion object {
         fun fromRadius(radius: Distance) = Wheel(radius)

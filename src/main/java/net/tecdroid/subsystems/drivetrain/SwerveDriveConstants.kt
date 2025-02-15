@@ -93,8 +93,16 @@ object SwerveDriveConstants {
         val drivePidf: PidfCoefficients = PidfCoefficients(0.001 * 0.0, 0.0, 0.00, 0.0)
         val driveSvag: SvagGains = SvagGains(0.132, 0.12, 0.01, 0.0)
 
-        val steerPidf: PidfCoefficients = PidfCoefficients(0.01, 0.0, 0.001, 0.0)
+        val steerPidf: PidfCoefficients = PidfCoefficients(0.1, 0.0, 0.01, 0.0)
         val steerSvag: SvagGains = SvagGains(0.0, 0.0, 0.0, 0.0)
+    }
+
+    internal object AutoConstants {
+        val forwardPidf: PidfCoefficients = PidfCoefficients(0.0003, 0.0, 0.0, 0.0)
+
+        val sidewaysPidf: PidfCoefficients = PidfCoefficients(0.0003, 0.0, 0.0, 0.0)
+
+        val rotationPidf: PidfCoefficients = PidfCoefficients(0.00008, 0.0, 0.0, 0.0)
     }
 
     internal object ModuleConfig {
@@ -124,23 +132,23 @@ object SwerveDriveConstants {
 
         private val frontRightStateConfig: StateConfig = StateConfig(
             ModuleState.frontRightMagnetOffset,
-            RotationalDirection.Counterclockwise,
-            RotationalDirection.Counterclockwise
+            RotationalConvention.clockwise(),
+            RotationalConvention.clockwise()
         )
         private val frontLeftStateConfig: StateConfig = StateConfig(
             ModuleState.frontLeftMagnetOffset,
-            RotationalDirection.Counterclockwise,
-            RotationalDirection.Counterclockwise
+            RotationalConvention.clockwise(),
+            RotationalConvention.clockwise()
         )
         private val backLeftStateConfig: StateConfig = StateConfig(
             ModuleState.backLeftMagnetOffset,
-            RotationalDirection.Counterclockwise,
-            RotationalDirection.Counterclockwise
+            RotationalConvention.clockwise(),
+            RotationalConvention.clockwise()
         )
         private val backRightStateConfig: StateConfig = StateConfig(
             ModuleState.backRightMagnetOffset,
-            RotationalDirection.Counterclockwise,
-            RotationalDirection.Counterclockwise
+            RotationalConvention.clockwise(),
+            RotationalConvention.clockwise()
         )
 
         private val frontRightPhysicalDescription: PhysicalDescription =

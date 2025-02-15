@@ -4,6 +4,7 @@ import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.units.measure.AngularVelocity;
 import edu.wpi.first.units.measure.LinearVelocity;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 
 import java.util.function.Supplier;
 
@@ -29,7 +30,7 @@ public class SwerveDriveDriver {
         this.angularVelocitySupplier  = RadiansPerSecond::zero;
     }
 
-    private ChassisSpeeds obtainTargetSpeeds(Rotation2d currentAngle) {
+    public ChassisSpeeds obtainTargetSpeeds(Rotation2d currentAngle) {
         LinearVelocity vx = forwardsVelocitySupplier.get();
         LinearVelocity vy = sidewaysVelocitySupplier.get();
         AngularVelocity w = angularVelocitySupplier.get();
@@ -49,4 +50,15 @@ public class SwerveDriveDriver {
         return orientation == DriveOrientation.FIELD_ORIENTED;
     }
 
+    public void setForwardsVelocitySupplier(Supplier<LinearVelocity> forwardsVelocitySupplier) {
+        this.forwardsVelocitySupplier = forwardsVelocitySupplier;
+    }
+
+    public void setSidewaysVelocitySupplier(Supplier<LinearVelocity> sidewaysVelocitySupplier) {
+        this.sidewaysVelocitySupplier = sidewaysVelocitySupplier;
+    }
+
+    public void setAngularVelocitySupplier(Supplier<AngularVelocity> angularVelocitySupplier) {
+        this.angularVelocitySupplier = angularVelocitySupplier;
+    }
 }

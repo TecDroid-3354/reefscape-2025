@@ -17,6 +17,8 @@ enum class RotationalDirection {
     fun isClockwise() = this == Clockwise
     fun isCounterClockwise() = this == Clockwise
 
+    fun opposite() = if (this == Clockwise) Counterclockwise else Clockwise
+
     fun toTrueMeansClockwise() = isClockwise()
     fun toTrueMeansCounterclockwise() = isCounterClockwise()
 
