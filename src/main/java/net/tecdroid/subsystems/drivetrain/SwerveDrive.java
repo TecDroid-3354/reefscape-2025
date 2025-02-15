@@ -12,12 +12,15 @@ import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.kinematics.*;
 import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
+import net.tecdroid.util.CanId;
 
 import java.util.Arrays;
 
 public class SwerveDrive extends SubsystemBase {
-    public record Config(SwerveModule.Config[] moduleConfigs, int gyroId) {
-    }
+    public record ModuleConfig(SwerveModule.Config[] moduleConfigs) {}
+
+    public record IdentifierConfig(CanId imuId) {}
+    public record Config(ModuleConfig moduleConfig, IdentifierConfig identifierConfig) {}
 
     private final SwerveModule[] modules;
     private final Pigeon2        gyro;
@@ -27,12 +30,16 @@ public class SwerveDrive extends SubsystemBase {
 
     private Pose2d pose;
 
+    private final Config config;
+
     public SwerveDrive(Config config) {
-        this.modules = Arrays.stream(config.moduleConfigs())
+        this.config = config;
+
+        this.modules = Arrays.stream(config.moduleConfig.moduleConfigs())
                              .map(SwerveModule::new)
                              .toArray(SwerveModule[]::new);
 
-        this.gyro = new Pigeon2(config.gyroId());
+        this.gyro = new Pigeon2(config.identifierConfig.imuId().getId());
         this.configureImuInterface();
 
         this.kinematics = new SwerveDriveKinematics(

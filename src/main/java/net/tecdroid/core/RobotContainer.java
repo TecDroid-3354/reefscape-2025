@@ -9,7 +9,7 @@ import net.tecdroid.subsystems.drivetrain.SwerveDriveConstants;
 public class RobotContainer {
     private final Controller controller = new Controller(GenericConstants.INSTANCE.getDriverControllerId());
 
-    private final SwerveDrive swerveDrive = new SwerveDrive(SwerveDriveConstants.CONFIG);
+    private final SwerveDrive swerveDrive = new SwerveDrive(SwerveDriveConstants.swerveDriveConfig);
 
     public RobotContainer() {
         configureBindings();

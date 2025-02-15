@@ -25,20 +25,16 @@ import edu.wpi.first.math.kinematics.SwerveModuleState;
 import edu.wpi.first.units.measure.*;
 import edu.wpi.first.util.sendable.Sendable;
 import edu.wpi.first.util.sendable.SendableBuilder;
-import net.tecdroid.util.RotationDirection;
-import net.tecdroid.util.CanId;
-import net.tecdroid.util.GearRatio;
-import net.tecdroid.util.PidfCoefficients;
-import net.tecdroid.util.SvagGains;
+import net.tecdroid.constants.UnitConstants;
+import net.tecdroid.util.*;
 import net.tecdroid.util.geometry.Wheel;
 
 import static edu.wpi.first.units.Units.*;
-import static net.tecdroid.constants.UnitConstants.HALF_ROTATION;
 
 public class SwerveModule implements Sendable {
 
     public record IdentifierConfig(CanId driveId, CanId steerId, CanId absoluteEncoderId) {}
-    public record StateConfig(Angle magnetOffset, RotationDirection driveDirection, RotationDirection steerDirection) {}
+    public record StateConfig(Angle magnetOffset, RotationalConvention driveDirection, RotationalConvention steerDirection) {}
     public record PhysicalDescription(Translation2d offset, GearRatio driveGearing, GearRatio steerGearing, Wheel wheel) {}
     public record ControlConfig(PidfCoefficients drivePidf, SvagGains driveSvag, PidfCoefficients steerPidf, SvagGains steerSvag) {}
     public record LimitConfig(Current driveCurrentLimit, Time driveRampRate, Current steerCurrentLimit) {}
@@ -172,7 +168,8 @@ public class SwerveModule implements Sendable {
                          .withKV(config.control.driveSvag.getV())
                          .withKA(config.control.driveSvag.getA());
 
-        driveConfig.MotorOutput.withInverted(config.state.driveDirection.toInvertedValue());
+        driveConfig.MotorOutput.withInverted(config.state.driveDirection.getDirection()
+                                                                        .toInvertedValue());
 
         this.driveInterface.setNeutralMode(NeutralModeValue.Coast);
         this.driveInterface.clearStickyFaults();
@@ -184,14 +181,15 @@ public class SwerveModule implements Sendable {
 
         steerConfig
                 .idleMode(IdleMode.kBrake)
-                .inverted(config.state.driveDirection.toTrueMeansCounterclockwisePositive())
+                .inverted(config.state.driveDirection.getDirection()
+                                                     .toTrueMeansCounterclockwise())
                 .smartCurrentLimit((int)config.limits.steerCurrentLimit.in(Amps));
 
         steerConfig.closedLoop
                 .positionWrappingEnabled(true)
                 .positionWrappingInputRange(
                         0.0,
-                        config.physical.steerGearing.unapply(HALF_ROTATION.in(Rotations))
+                        config.physical.steerGearing.unapply(UnitConstants.INSTANCE.getHalfRotation().in(Rotations))
                 )
                 .pidf(
                         config.control.steerPidf.getP(),
@@ -208,7 +206,7 @@ public class SwerveModule implements Sendable {
     private void configureAbsoluteEncoderInterface() {
         CANcoderConfiguration absoluteEncoderConfig = new CANcoderConfiguration();
 
-        absoluteEncoderConfig.MagnetSensor.withSensorDirection(config.state.steerDirection.toSensorDirectionValue())
+        absoluteEncoderConfig.MagnetSensor.withSensorDirection(config.state.steerDirection.getDirection().toSensorDirectionValue())
                                           .withMagnetOffset(config.state.magnetOffset);
 
         this.absoluteEncoder.clearStickyFaults();

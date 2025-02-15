@@ -1,8 +1,9 @@
 package net.tecdroid.input
 
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController
-import net.tecdroid.util.ConventionEnforcer
-import net.tecdroid.util.NumericId
+import net.tecdroid.util.*
+
+object WpiLibControllerReferenceFrame: ReferenceFrame2d(Axis2d.Y, LongitudinalDirection.Back, Axis2d.X, TransversalDirection.Right)
 
 /**
  * Overrides the default behavior of existing WPILib controllers in order to follow the team's standard conventions
