@@ -5,13 +5,10 @@
 package net.tecdroid.subsystems.drivetrain;
 
 import com.ctre.phoenix6.configs.*;
-import com.ctre.phoenix6.controls.Follower;
 import com.ctre.phoenix6.controls.VelocityVoltage;
 import com.ctre.phoenix6.hardware.CANcoder;
 import com.ctre.phoenix6.hardware.TalonFX;
-import com.ctre.phoenix6.signals.InvertedValue;
 import com.ctre.phoenix6.signals.NeutralModeValue;
-import com.ctre.phoenix6.signals.SensorDirectionValue;
 import com.revrobotics.RelativeEncoder;
 import com.revrobotics.spark.SparkBase;
 import com.revrobotics.spark.SparkBase.ControlType;
@@ -28,30 +25,28 @@ import edu.wpi.first.math.kinematics.SwerveModuleState;
 import edu.wpi.first.units.measure.*;
 import edu.wpi.first.util.sendable.Sendable;
 import edu.wpi.first.util.sendable.SendableBuilder;
-import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
+import net.tecdroid.conventions.RotationDirection;
+import net.tecdroid.util.CanId;
+import net.tecdroid.util.GearRatio;
+import net.tecdroid.util.PidfCoefficients;
+import net.tecdroid.util.SvagGains;
+import net.tecdroid.util.geometry.Wheel;
 
 import static edu.wpi.first.units.Units.*;
 import static net.tecdroid.constants.UnitConstants.HALF_ROTATION;
-import static net.tecdroid.conventions.MeasurementConventions.MADU;
-import static net.tecdroid.conventions.MeasurementConventions.MAVU;
-import static net.tecdroid.subsystems.drivetrain.SwerveDriveConstants.*;
-import static net.tecdroid.subsystems.drivetrain.SwerveDriveUtil.*;
 
 public class SwerveModule implements Sendable {
 
-    private SwerveModuleState targetState = new SwerveModuleState();
+    public record IdentifierConfig(CanId driveId, CanId steerId, CanId absoluteEncoderId) {}
+    public record StateConfig(Angle magnetOffset, RotationDirection driveDirection, RotationDirection steerDirection) {}
+    public record PhysicalDescription(Translation2d offset, GearRatio driveGearing, GearRatio steerGearing, Wheel wheel) {}
+    public record ControlConfig(PidfCoefficients drivePidf, SvagGains driveSvag, PidfCoefficients steerPidf, SvagGains steerSvag) {}
+    public record LimitConfig(Current driveCurrentLimit, Time driveRampRate, Current steerCurrentLimit) {}
+    public record Config(IdentifierConfig identifiers, StateConfig state, PhysicalDescription physical, ControlConfig control, LimitConfig limits) {}
 
-    public void setModulePower(Double power) {
-        driveTalon.set(power);
-    }
+    private final Config config;
 
-    public record Config(Translation2d offset, int driveControllerId, int steerControllerId, int absoluteEncoderId,
-                         double magnetOffset, boolean driveInverted) {
-    }
-
-    private final Translation2d offset;
-
-    private final TalonFX driveTalon;
+    private final TalonFX driveInterface;
 
     private final SparkMax                  steerController;
     private final RelativeEncoder           steerEncoder;
@@ -59,125 +54,129 @@ public class SwerveModule implements Sendable {
 
     private final CANcoder absoluteEncoder;
 
+    private SwerveModuleState targetState = new SwerveModuleState();
+
     public SwerveModule(Config config) {
-        this.offset = config.offset();
+        this.config = config;
 
-        this.driveTalon = new TalonFX(config.driveControllerId());
-        this.configureDriveInterface(config);
+        this.driveInterface = new TalonFX(config.identifiers.driveId.getId());
+        this.configureDriveInterface();
 
-        this.steerController           = new SparkMax(config.steerControllerId(), MotorType.kBrushless);
+        this.steerController           = new SparkMax(config.identifiers.steerId.getId(), MotorType.kBrushless);
         this.steerEncoder              = steerController.getEncoder();
         this.steerClosedLoopController = steerController.getClosedLoopController();
         this.configureSteerInterface();
 
-        this.absoluteEncoder = new CANcoder(config.absoluteEncoderId());
-        this.configureAbsoluteEncoderInterface(config);
+        this.absoluteEncoder = new CANcoder(config.identifiers.absoluteEncoderId.getId());
+        this.configureAbsoluteEncoderInterface();
 
     }
 
-    public Angle getAbsoluteSteerPosition() {
+    public void setTargetState(SwerveModuleState newState) {
+        newState.optimize(new Rotation2d(getSteerShaftAngularPosition()));
+        this.targetState = newState;
+
+        final Angle requestedAngle = newState.angle.getMeasure();
+        final Angle shaftAngle = config.physical.steerGearing.unapply(requestedAngle);
+        steerClosedLoopController.setReference(shaftAngle.in(Rotations), ControlType.kPosition);
+
+        final LinearVelocity requestedVelocity = MetersPerSecond.of(newState.speedMetersPerSecond);
+        final AngularVelocity shaftVelocity = config.physical.driveGearing.unapply(config.physical.wheel.linearVelocityToAngularVelocity(requestedVelocity));
+        driveInterface.setControl(new VelocityVoltage(shaftVelocity).withSlot(0));
+    }
+
+    public void matchSteeringEncoderToAbsoluteEncoder() {
+        steerEncoder.setPosition(getAbsoluteSteerShaftPosition().in(Rotations));
+    }
+
+    // ///////////////// //
+    // Getters + Setters //
+    // ///////////////// //
+
+    public Angle getAbsoluteSteerWheelPosition() {
         return absoluteEncoder.getPosition().getValue();
     }
 
-    public Distance getDrivePosition() {
-        final double motorRotations = driveTalon.getPosition().getValue().in(Rotations);
-        return DRIVE_PCF.times(motorRotations);
+    public Angle getAbsoluteSteerShaftPosition() {
+        return config.physical.steerGearing.unapply(getAbsoluteSteerWheelPosition());
     }
 
-    public AngularVelocity getDriveAngularVelocity() {
-        return driveTalon.getVelocity().getValue();
+    public Angle getDriveShaftPosition() {
+        return driveInterface.getPosition().getValue();
     }
 
-    public AngularVelocity getWheelAngularVelocity() {
-        return getDriveAngularVelocity().div(DRIVE_GR.getRatio());
+    public Angle getDriveWheelAngularDisplacement() {
+        return config.physical.driveGearing.apply(getDriveShaftPosition());
     }
 
-    public LinearVelocity getWheelLinearVelocity() {
-        return convertFromWheelAngularVelocityToWheelLinearVelocity(getWheelAngularVelocity());
+    public Distance getDriveWheelLinearDisplacement() {
+        return config.physical.wheel.angularDisplacementToLinearDisplacement(getDriveWheelAngularDisplacement());
     }
 
-    public LinearAcceleration getWheelAcceleration() {
-        final double motorAngularAcceleration = driveTalon.getAcceleration().getValue().in(RotationsPerSecondPerSecond);
-        return DRIVE_ACF.times(motorAngularAcceleration);
+    public AngularVelocity getDriveShaftAngularVelocity() {
+        return driveInterface.getVelocity().getValue();
     }
 
-    public Angle getSteerPosition() {
-        return Degrees.of(steerEncoder.getPosition());
+    public AngularVelocity getDriveWheelAngularVelocity() {
+        return config.physical.driveGearing.apply(getDriveShaftAngularVelocity());
     }
 
-    public AngularVelocity getSteerVelocity() {
-        return DegreesPerSecond.of(steerEncoder.getVelocity());
+    public LinearVelocity getDriveWheelLinearVelocity() {
+        return config.physical.wheel.angularVelocityToLinearVelocity(getDriveWheelAngularVelocity());
     }
 
-    public void setRelativeEncoderPosition(Angle rotation) {
-        steerEncoder.setPosition(rotation.in(Degrees));
+    public Angle getSteerShaftAngularPosition() {
+        return Rotations.of(steerEncoder.getPosition());
     }
 
-    public void setAngle(Angle angle) {
-        setDesiredState(new SwerveModuleState(0, new Rotation2d(angle)));
-    }
-
-    // TESTING
-    public void setModuleVoltage(double voltage) {
-        driveTalon.setVoltage(voltage);
-    }
-
-    public void setDesiredState(SwerveModuleState desiredState) {
-        desiredState.optimize(new Rotation2d(getSteerPosition()));
-        this.targetState = desiredState;
-        //VelocityVoltage(MetersPerSecond.of(desiredState.speedMetersPerSecond))
-        final AngularVelocity targetVelocity = convertFromWheelLinearVelocityToDriveAngularVelocity(MetersPerSecond.of(desiredState.speedMetersPerSecond));
-
-        SmartDashboard.putNumber("Requested Velocity rps", targetVelocity.in(RotationsPerSecond));
-
-        steerClosedLoopController.setReference(desiredState.angle.getDegrees(), ControlType.kPosition);
-
-        VelocityVoltage request = new VelocityVoltage(targetVelocity).withSlot(0);;
-        driveTalon.setControl(request);
-
-    }
-
-    public void seed() {
-        // Either change getAbsoluteSteerPosition to Rotation2d, or change setRelativeEncoderPosition to take Angle (done)
-        setRelativeEncoderPosition(getAbsoluteSteerPosition());
+    public Angle getSteerWheelAngularPosition() {
+        return config.physical.steerGearing.apply(getSteerShaftAngularPosition());
     }
 
     public SwerveModuleState getState() {
-        return new SwerveModuleState(getWheelLinearVelocity(), new Rotation2d(getSteerPosition()));
+        return new SwerveModuleState(getDriveWheelLinearVelocity(), new Rotation2d(getSteerShaftAngularPosition()));
     }
 
     public SwerveModulePosition getPosition() {
-        return new SwerveModulePosition(getDrivePosition(), new Rotation2d(getSteerPosition()));
+        return new SwerveModulePosition(getDriveWheelLinearDisplacement(), new Rotation2d(getSteerShaftAngularPosition()));
     }
 
-    public Translation2d getOffset() {
-        return offset;
+    public SwerveModuleState getTargetState() {
+        return targetState;
     }
 
-    private void configureDriveInterface(Config cfg) {
-        TalonFXConfiguration config = new TalonFXConfiguration();
+    public Translation2d getOffsetFromCenter() {
+        return config.physical.offset();
+    }
 
-        config.Audio.withBeepOnBoot(true)
+    // ///////////// //
+    // Configuration //
+    // ///////////// //
+
+    private void configureDriveInterface() {
+        TalonFXConfiguration driveConfig = new TalonFXConfiguration();
+
+        driveConfig.Audio.withBeepOnBoot(true)
                     .withBeepOnConfig(true)
                     .withAllowMusicDurDisable(true);
 
-        config.ClosedLoopRamps.withVoltageClosedLoopRampPeriod(DRIVE_RR);
+        driveConfig.ClosedLoopRamps.withVoltageClosedLoopRampPeriod(config.limits.driveRampRate);
 
-        config.CurrentLimits.withSupplyCurrentLimit(DRIVE_CR)
+        driveConfig.CurrentLimits.withSupplyCurrentLimit(config.limits.driveCurrentLimit)
                             .withSupplyCurrentLimitEnable(true);
 
-        config.Slot0.withKP(Pidf.DRIVE.p())
-                    .withKI(Pidf.DRIVE.i())
-                    .withKD(Pidf.DRIVE.d())
-                    .withKS(Sva.DRIVE.s())
-                    .withKV(Sva.DRIVE.v())
-                    .withKA(Sva.DRIVE.a());
+        driveConfig.Slot0.withKP(config.control.drivePidf.getP())
+                         .withKI(config.control.drivePidf.getI())
+                         .withKD(config.control.drivePidf.getD())
+                         .withKS(config.control.driveSvag.getS())
+                         .withKV(config.control.driveSvag.getV())
+                         .withKA(config.control.driveSvag.getA());
 
-        config.MotorOutput.withInverted(cfg.driveInverted ? InvertedValue.CounterClockwise_Positive : InvertedValue.Clockwise_Positive);
+        driveConfig.MotorOutput.withInverted(config.state.driveDirection.toInvertedValue());
 
-        this.driveTalon.setNeutralMode(NeutralModeValue.Coast);
-        this.driveTalon.clearStickyFaults();
-        this.driveTalon.getConfigurator().apply(config);
+        this.driveInterface.setNeutralMode(NeutralModeValue.Coast);
+        this.driveInterface.clearStickyFaults();
+        this.driveInterface.getConfigurator().apply(driveConfig);
     }
 
     private void configureSteerInterface() {
@@ -185,20 +184,20 @@ public class SwerveModule implements Sendable {
 
         steerConfig
                 .idleMode(IdleMode.kBrake)
-                .inverted(true);
-
-        steerConfig.encoder
-                .positionConversionFactor(STEER_PCF.in(MADU))
-                .velocityConversionFactor(STEER_VCF.in(MAVU));
+                .inverted(config.state.driveDirection.isCounterClockwisePositive())
+                .smartCurrentLimit((int)config.limits.steerCurrentLimit.in(Amps));
 
         steerConfig.closedLoop
                 .positionWrappingEnabled(true)
-                .positionWrappingInputRange(0.0, HALF_ROTATION.in(Degrees))
+                .positionWrappingInputRange(
+                        0.0,
+                        config.physical.steerGearing.unapply(HALF_ROTATION.in(Rotations))
+                )
                 .pidf(
-                        Pidf.STEER.p(),
-                        Pidf.STEER.i(),
-                        Pidf.STEER.d(),
-                        Pidf.STEER.f()
+                        config.control.steerPidf.getP(),
+                        config.control.steerPidf.getI(),
+                        config.control.steerPidf.getD(),
+                        config.control.steerPidf.getF()
                 );
 
         this.steerController.clearFaults();
@@ -206,34 +205,29 @@ public class SwerveModule implements Sendable {
 
     }
 
-    private void configureAbsoluteEncoderInterface(Config config) {
+    private void configureAbsoluteEncoderInterface() {
         CANcoderConfiguration absoluteEncoderConfig = new CANcoderConfiguration();
 
-        absoluteEncoderConfig.MagnetSensor.withSensorDirection(SensorDirectionValue.CounterClockwise_Positive)
-                                          .withMagnetOffset(config.magnetOffset());
+        absoluteEncoderConfig.MagnetSensor.withSensorDirection(config.state.steerDirection.toSensorDirectionValue())
+                                          .withMagnetOffset(config.state.magnetOffset);
 
         this.absoluteEncoder.clearStickyFaults();
         this.absoluteEncoder.getConfigurator().apply(absoluteEncoderConfig);
     }
 
+    // //// //
+    // Data //
+    // //// //
+
     @Override
     public void initSendable(SendableBuilder sendableBuilder) {
-        sendableBuilder.addDoubleProperty("Position (m)", () -> getDrivePosition().in(Meters), (double m) -> {});
-        sendableBuilder.addDoubleProperty("Wheel Velocity (m s^-1)", () -> getWheelLinearVelocity().in(MetersPerSecond), (double m) -> {});
-        sendableBuilder.addDoubleProperty("Wheel Velocity (rps)", () -> getWheelAngularVelocity().in(RotationsPerSecond), (double m) -> {});
-        sendableBuilder.addDoubleProperty("Drive Velocity (rps)", () -> getDriveAngularVelocity().in(RotationsPerSecond), (double m) -> {});
+        sendableBuilder.addDoubleProperty("Position (m)", () -> getDriveWheelLinearDisplacement().in(Meters), (double m) -> {});
+        sendableBuilder.addDoubleProperty("Wheel Velocity (m s^-1)", () -> getDriveWheelLinearVelocity().in(MetersPerSecond), (double m) -> {});
+        sendableBuilder.addDoubleProperty("Wheel Velocity (rps)", () -> getDriveWheelAngularVelocity().in(RotationsPerSecond), (double m) -> {});
+        sendableBuilder.addDoubleProperty("Drive Velocity (rps)", () -> getDriveShaftAngularVelocity().in(RotationsPerSecond), (double m) -> {});
         sendableBuilder.addDoubleProperty("Target Azimuth (deg)", () -> targetState.angle.getDegrees(), (double m) -> {});
         sendableBuilder.addDoubleProperty("Target Velocity (m s^-1)", () -> targetState.speedMetersPerSecond, (double m) -> {});
-        sendableBuilder.addDoubleProperty("Azimuth (deg)", () -> getSteerPosition().in(Degrees), (double m) -> {});
-        sendableBuilder.addDoubleProperty("Power (%)", driveTalon::get, (double m) -> {});
+        sendableBuilder.addDoubleProperty("Azimuth (deg)", () -> getSteerShaftAngularPosition().in(Degrees), (double m) -> {});
+        sendableBuilder.addDoubleProperty("Power (%)", driveInterface::get, (double m) -> {});
     }
-
-    public int getModuleDigit() {
-        return steerController.getDeviceId() / 10;
-    }
-
-    public void linkModule(SwerveModule module) {
-        driveTalon.setControl(new Follower(module.driveTalon.getDeviceID(), false));
-    }
-
 }
