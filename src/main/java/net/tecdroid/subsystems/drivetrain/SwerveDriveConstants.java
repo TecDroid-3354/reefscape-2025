@@ -2,7 +2,7 @@ package net.tecdroid.subsystems.drivetrain;
 
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.units.measure.*;
-import net.tecdroid.conventions.RotationDirection;
+import net.tecdroid.util.RotationDirection;
 import net.tecdroid.util.*;
 import net.tecdroid.util.geometry.Rectangle;
 import net.tecdroid.util.geometry.Square;

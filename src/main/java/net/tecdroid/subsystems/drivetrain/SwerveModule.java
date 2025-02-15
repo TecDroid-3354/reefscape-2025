@@ -25,7 +25,7 @@ import edu.wpi.first.math.kinematics.SwerveModuleState;
 import edu.wpi.first.units.measure.*;
 import edu.wpi.first.util.sendable.Sendable;
 import edu.wpi.first.util.sendable.SendableBuilder;
-import net.tecdroid.conventions.RotationDirection;
+import net.tecdroid.util.RotationDirection;
 import net.tecdroid.util.CanId;
 import net.tecdroid.util.GearRatio;
 import net.tecdroid.util.PidfCoefficients;
@@ -184,7 +184,7 @@ public class SwerveModule implements Sendable {
 
         steerConfig
                 .idleMode(IdleMode.kBrake)
-                .inverted(config.state.driveDirection.isCounterClockwisePositive())
+                .inverted(config.state.driveDirection.toTrueMeansCounterclockwisePositive())
                 .smartCurrentLimit((int)config.limits.steerCurrentLimit.in(Amps));
 
         steerConfig.closedLoop
