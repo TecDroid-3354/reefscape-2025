@@ -7,34 +7,29 @@ import edu.wpi.first.units.measure.LinearVelocity;
 
 import java.util.function.Supplier;
 
-import static edu.wpi.first.units.Units.*;
+import static edu.wpi.first.units.Units.MetersPerSecond;
+import static edu.wpi.first.units.Units.RadiansPerSecond;
 
 public class SwerveDriveDriver {
 
-    public enum DriveOrientation {
-        FIELD_ORIENTED, ROBOT_ORIENTED
-    }
-
-    DriveOrientation orientation = DriveOrientation.FIELD_ORIENTED;
-
-    Supplier<LinearVelocity> forwardsVelocitySupplier;
-    Supplier<LinearVelocity> sidewaysVelocitySupplier;
+    Supplier<LinearVelocity>  forwardsVelocitySupplier;
+    Supplier<LinearVelocity>  sidewaysVelocitySupplier;
     Supplier<AngularVelocity> angularVelocitySupplier;
-
+    DriveOrientation orientation = DriveOrientation.FIELD_ORIENTED;
 
     public SwerveDriveDriver() {
         this.forwardsVelocitySupplier = MetersPerSecond::zero;
         this.sidewaysVelocitySupplier = MetersPerSecond::zero;
-        this.angularVelocitySupplier  = RadiansPerSecond::zero;
+        this.angularVelocitySupplier = RadiansPerSecond::zero;
     }
 
     public ChassisSpeeds obtainTargetSpeeds(Rotation2d currentAngle) {
-        LinearVelocity vx = forwardsVelocitySupplier.get();
-        LinearVelocity vy = sidewaysVelocitySupplier.get();
-        AngularVelocity w = angularVelocitySupplier.get();
+        LinearVelocity  vx = forwardsVelocitySupplier.get();
+        LinearVelocity  vy = sidewaysVelocitySupplier.get();
+        AngularVelocity w  = angularVelocitySupplier.get();
 
-        return isFieldOriented() ? ChassisSpeeds.fromFieldRelativeSpeeds(vx, vy, w, currentAngle)
-                                 : new ChassisSpeeds(vx, vy, w);
+        return isFieldOriented() ? ChassisSpeeds.fromFieldRelativeSpeeds(vx, vy, w, currentAngle) :
+            new ChassisSpeeds(vx, vy, w);
     }
 
     public void toggleOrientation() {
@@ -58,5 +53,10 @@ public class SwerveDriveDriver {
 
     public void setAngularVelocitySupplier(Supplier<AngularVelocity> angularVelocitySupplier) {
         this.angularVelocitySupplier = angularVelocitySupplier;
+    }
+
+    public enum DriveOrientation {
+        FIELD_ORIENTED,
+        ROBOT_ORIENTED
     }
 }

@@ -13,7 +13,7 @@ import static edu.wpi.first.units.Units.DegreesPerSecond;
 import static edu.wpi.first.units.Units.MetersPerSecond;
 
 public class RobotContainer {
-    private final Controller controller = new Controller(GenericConstants.INSTANCE.getDriverControllerId());
+    private final Controller  controller  = new Controller(GenericConstants.INSTANCE.getDriverControllerId());
     private final SwerveDrive swerveDrive = new SwerveDrive(SwerveDriveConstants.INSTANCE.getSwerveDriveConfig());
 
     public RobotContainer() {
@@ -24,13 +24,9 @@ public class RobotContainer {
         swerveDrive.matchModuleSteeringEncodersToAbsoluteEncoders();
 
         swerveDrive.setDefaultCommand(Commands.run(() -> {
-            swerveDrive.drive(
-                    new ChassisSpeeds(
-                            MetersPerSecond.of(controller.getLeftY() * 3.0),
-                            MetersPerSecond.of(controller.getLeftX() * 3.0),
-                            DegreesPerSecond.of(controller.getRightX() * 720)
-                    )
-            );
+            swerveDrive.drive(new ChassisSpeeds(MetersPerSecond.of(controller.getLeftY() * 3.0),
+                                                MetersPerSecond.of(controller.getLeftX() * 3.0),
+                                                DegreesPerSecond.of(controller.getRightX() * 720)));
         }, swerveDrive));
     }
 
@@ -42,11 +38,10 @@ public class RobotContainer {
         swerveDrive.matchModuleSteeringEncodersToAbsoluteEncoders();
         var tab = Shuffleboard.getTab("Tab");
 
-        int i =  0;
+        int i = 0;
         for (var module : swerveDrive.getModules()) {
             tab.add("Module " + i, module);
             i++;
         }
     }
-
 }
