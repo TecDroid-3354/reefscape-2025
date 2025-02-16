@@ -8,14 +8,14 @@ import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.kinematics.*;
 import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
-import net.tecdroid.util.CanId;
+import net.tecdroid.util.NumericId;
 
 import java.util.Arrays;
 
 public class SwerveDrive extends SubsystemBase {
     public record ModuleConfig(SwerveModule.Config[] moduleConfigs) {}
 
-    public record IdentifierConfig(CanId imuId) {}
+    public record IdentifierConfig(NumericId imuId) {}
     public record Config(ModuleConfig moduleConfig, IdentifierConfig identifierConfig) {}
 
     private final SwerveModule[] modules;

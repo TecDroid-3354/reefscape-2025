@@ -17,9 +17,7 @@ open class NumericId(val id: Int) {
     fun toCanId() = CanId(id)
 }
 
-class CanId(id: Int): NumericId(id) {
-    constructor(numericId: NumericId) : this(numericId.id)
-}
+typealias CanId = NumericId
 
 class DigitId(id: Int) : NumericId(id) {
     init {

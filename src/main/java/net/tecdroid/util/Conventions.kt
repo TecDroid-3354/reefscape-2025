@@ -2,6 +2,7 @@ package net.tecdroid.util
 
 import com.ctre.phoenix6.signals.InvertedValue
 import com.ctre.phoenix6.signals.SensorDirectionValue
+import edu.wpi.first.units.Units.RotationsPerSecond
 import edu.wpi.first.units.measure.Angle
 import edu.wpi.first.units.measure.Distance
 import net.tecdroid.util.LongitudinalDirection.*
@@ -20,6 +21,8 @@ enum class RotationalDirection {
     fun matches(other: RotationalDirection) = this == other
     fun differs(other: RotationalDirection) = !matches(other)
 
+    fun opposite() = if (isClockwise()) Counterclockwise else Clockwise
+
     fun toSensorDirectionValue() = if (this == Clockwise) SensorDirectionValue.Clockwise_Positive else SensorDirectionValue.CounterClockwise_Positive
     fun toInvertedValue() = if (this == Clockwise) InvertedValue.Clockwise_Positive else InvertedValue.CounterClockwise_Positive
 }
@@ -27,6 +30,10 @@ enum class RotationalDirection {
 class RotationalConvention(val direction: RotationalDirection) {
     fun clockwise(angle: Angle): Angle = if (direction == Clockwise) angle else angle.times(-1.0)
     fun counterclockwise(angle: Angle): Angle = if (direction == Counterclockwise) angle else angle.times(-1.0)
+
+    fun positiveDirection(): RotationalDirection = direction
+    fun negativeDirection(): RotationalDirection = direction.opposite()
+
     fun convertTo(other: RotationalConvention, angle: Angle) = if (this.direction == other.direction) angle else angle.times(-1.0)
 
     companion object {

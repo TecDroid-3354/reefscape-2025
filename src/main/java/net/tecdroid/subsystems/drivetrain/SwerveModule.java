@@ -29,12 +29,56 @@ import static edu.wpi.first.units.Units.*;
 
 public class SwerveModule implements Sendable {
 
-    public record IdentifierConfig(CanId driveId, CanId steerId, CanId absoluteEncoderId) {}
-    public record StateConfig(Angle magnetOffset, RotationalDirection driveShaftPositiveDirection, RotationalDirection steerShaftPositiveDirection) {}
+    /**
+     * Stores the device IDs of the module's electronic components
+     * @param driveId The ID of the drive motor controller
+     * @param steerId The ID of the steer motor controller
+     * @param absoluteEncoderId The ID of the absolute encoder
+     */
+    public record LinkedIdentifiers(NumericId driveId, NumericId steerId, NumericId absoluteEncoderId) {}
+
+    /**
+     * Stores the considerations that must be taken into account due to the module's physical state
+     * @param absoluteEncoderOffset The magnet offset of the absolute encoder
+     * @param driveWheelPositiveDirection The direction in which the drive wheel must turn when it receives a positive input
+     * @param steerWheelPositiveDirection The direction in which the steer wheel must turn when it receives a positive input
+     */
+    public record StateConsiderations(Angle absoluteEncoderOffset, RotationalDirection driveWheelPositiveDirection, RotationalDirection steerWheelPositiveDirection) {}
+
+    /**
+     * Stores characteristics relating to the module's physical description
+     * @param offset The module's offset from the center of the drivetrain
+     * @param driveGearing The gearing between the drive shaft and the wheel
+     * @param steerGearing The gearing between the steer shaft and the wheel
+     * @param wheel The wheel's physical description
+     */
     public record PhysicalDescription(Translation2d offset, GearRatio driveGearing, GearRatio steerGearing, Wheel wheel) {}
-    public record ControlConfig(PidfCoefficients drivePidf, SvagGains driveSvag, PidfCoefficients steerPidf, SvagGains steerSvag) {}
-    public record LimitConfig(Current driveCurrentLimit, Time driveRampRate, Current steerCurrentLimit) {}
-    public record Config(IdentifierConfig identifiers, StateConfig state, PhysicalDescription physical, ControlConfig control, LimitConfig limits) {}
+
+    /**
+     * Stores the control constants that will be applied to the module's motion
+     * @param drivePidf The PIDF feedback coefficients used to control the driving motion
+     * @param driveSvag The SVAG feedforward gains used to control the driving motion
+     * @param steerPidf The PIDF feedback coefficients used to control the steering motion
+     * @param steerSvag The SVAG feedforward gains used to control the steering motion
+     */
+    public record ControlConstants(PidfCoefficients drivePidf, SvagGains driveSvag, PidfCoefficients steerPidf, SvagGains steerSvag) {}
+
+    /**
+     * Stores limits that regulate the module's motion
+     * @param driveCurrentLimit The current limit for the driving motor
+     * @param steerCurrentLimit The current limit for the steering motor
+     */
+    public record Limits(Current driveCurrentLimit, Current steerCurrentLimit) {}
+
+    /**
+     * Stores the module's configuration parameters
+     * @param identifiers The identifier config
+     * @param state The state config
+     * @param physical The physical config
+     * @param control The control config
+     * @param limits The limt config
+     */
+    public record Config(LinkedIdentifiers identifiers, StateConsiderations state, PhysicalDescription physical, ControlConstants control, Limits limits) {}
 
     private final Config config;
 
@@ -69,12 +113,12 @@ public class SwerveModule implements Sendable {
         this.targetState = newState;
 
         final Angle requestedAngle = newState.angle.getMeasure();
-        final Angle shaftAngle = config.physical.steerGearing.unapply(requestedAngle);
-        steerClosedLoopController.setReference(shaftAngle.in(Rotations), ControlType.kPosition);
+        final Angle shaftAngle = steerWheelAngularPositionToSteerShaftAngularPosition(requestedAngle);
+        this.steerClosedLoopController.setReference(shaftAngle.in(Rotations), ControlType.kPosition);
 
         final LinearVelocity requestedVelocity = MetersPerSecond.of(newState.speedMetersPerSecond);
-        final AngularVelocity shaftVelocity = config.physical.driveGearing.unapply(config.physical.wheel.linearVelocityToAngularVelocity(requestedVelocity));
-        driveInterface.setControl(new VelocityVoltage(shaftVelocity).withSlot(0));
+        final AngularVelocity shaftVelocity = driveWheelLinearVelocityToDriveShaftAngularVelocity(requestedVelocity);
+        this.driveInterface.setControl(new VelocityVoltage(shaftVelocity).withSlot(0));
     }
 
     public void matchSteeringEncoderToAbsoluteEncoder() {
@@ -152,8 +196,6 @@ public class SwerveModule implements Sendable {
                     .withBeepOnConfig(true)
                     .withAllowMusicDurDisable(true);
 
-        driveConfig.ClosedLoopRamps.withVoltageClosedLoopRampPeriod(config.limits.driveRampRate);
-
         driveConfig.CurrentLimits.withSupplyCurrentLimit(config.limits.driveCurrentLimit)
                             .withSupplyCurrentLimitEnable(true);
 
@@ -165,7 +207,11 @@ public class SwerveModule implements Sendable {
                          .withKA(config.control.driveSvag.getA());
 
         driveConfig.MotorOutput.withNeutralMode(NeutralModeValue.Brake)
-                               .withInverted(config.state.driveShaftPositiveDirection.toInvertedValue());
+                               .withInverted(
+                                       config.physical.driveGearing.transformRotation(
+                                               config.state.driveWheelPositiveDirection
+                                       ).toInvertedValue()
+                               );
 
         this.driveInterface.clearStickyFaults();
         this.driveInterface.getConfigurator().apply(driveConfig);
@@ -176,8 +222,11 @@ public class SwerveModule implements Sendable {
 
         steerConfig
                 .idleMode(IdleMode.kBrake)
-                .inverted(config.state.steerShaftPositiveDirection.matches(Motors.INSTANCE.getNeo().getRotationalConvention()
-                                                                                          .getDirection()))
+                .inverted(
+                        config.physical.steerGearing.transformRotation(
+                            config.state.steerWheelPositiveDirection
+                        ).differs(Motors.INSTANCE.getNeo().getRotationalConvention().positiveDirection())
+                )
                 .smartCurrentLimit((int)config.limits.steerCurrentLimit.in(Amps));
 
         steerConfig.encoder.positionConversionFactor(1.0).velocityConversionFactor(1.0);
@@ -203,8 +252,8 @@ public class SwerveModule implements Sendable {
     private void configureAbsoluteEncoderInterface() {
         CANcoderConfiguration absoluteEncoderConfig = new CANcoderConfiguration();
 
-        absoluteEncoderConfig.MagnetSensor.withSensorDirection(config.state.steerShaftPositiveDirection.toSensorDirectionValue())
-                                          .withMagnetOffset(config.state.magnetOffset);
+        absoluteEncoderConfig.MagnetSensor.withSensorDirection(config.state.steerWheelPositiveDirection.toSensorDirectionValue())
+                                          .withMagnetOffset(config.state.absoluteEncoderOffset);
 
         this.absoluteEncoder.clearStickyFaults();
         this.absoluteEncoder.getConfigurator().apply(absoluteEncoderConfig);
@@ -220,5 +269,17 @@ public class SwerveModule implements Sendable {
         sendableBuilder.addDoubleProperty("Rel Azimuth (deg)", () -> getSteerWheelAngularPosition().in(Degrees), (double m) -> {});
         sendableBuilder.addDoubleProperty("Tgt Azimuth (deg)", () -> targetState.angle.getDegrees(), (double m) -> {});
 
+    }
+
+    // //////////// //
+    // Conversions //
+    // //////////// //
+
+    private Angle steerWheelAngularPositionToSteerShaftAngularPosition(Angle steerWheelAngle) {
+        return config.physical.steerGearing.unapply(steerWheelAngle);
+    }
+
+    private AngularVelocity driveWheelLinearVelocityToDriveShaftAngularVelocity(LinearVelocity driveWheelVelocity) {
+        return config.physical.driveGearing.unapply(config.physical.wheel.linearVelocityToAngularVelocity(driveWheelVelocity));
     }
 }

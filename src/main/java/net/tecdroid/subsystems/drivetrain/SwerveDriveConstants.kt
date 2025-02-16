@@ -43,20 +43,20 @@ object SwerveDriveConstants {
         private val steerControllerDigit: DigitId = DigitId(2)
         private val absoluteEncoderDigit: DigitId = DigitId(3)
 
-        val frontRightDriveController: CanId = joinDigits(frontRightModule, driveControllerDigit).toCanId()
-        val frontLeftDriveController: CanId = joinDigits(frontLeftModule, driveControllerDigit).toCanId()
-        val backLeftDriveController: CanId = joinDigits(backLeftModule, driveControllerDigit).toCanId()
-        val backRightDriveController: CanId = joinDigits(backRightModule, driveControllerDigit).toCanId()
+        val frontRightDriveController: CanId = joinDigits(frontRightModule, driveControllerDigit)
+        val frontLeftDriveController: CanId = joinDigits(frontLeftModule, driveControllerDigit)
+        val backLeftDriveController: CanId = joinDigits(backLeftModule, driveControllerDigit)
+        val backRightDriveController: CanId = joinDigits(backRightModule, driveControllerDigit)
 
-        val frontRightSteerController: CanId = joinDigits(frontRightModule, steerControllerDigit).toCanId()
-        val frontLeftSteerController: CanId = joinDigits(frontLeftModule, steerControllerDigit).toCanId()
-        val backLeftSteerController: CanId = joinDigits(backLeftModule, steerControllerDigit).toCanId()
-        val backRightSteerController: CanId = joinDigits(backRightModule, steerControllerDigit).toCanId()
+        val frontRightSteerController: CanId = joinDigits(frontRightModule, steerControllerDigit)
+        val frontLeftSteerController: CanId = joinDigits(frontLeftModule, steerControllerDigit)
+        val backLeftSteerController: CanId = joinDigits(backLeftModule, steerControllerDigit)
+        val backRightSteerController: CanId = joinDigits(backRightModule, steerControllerDigit)
 
-        val frontRightAbsoluteEncoder: CanId = joinDigits(frontRightModule, absoluteEncoderDigit).toCanId()
-        val frontLeftAbsoluteEncoder: CanId = joinDigits(frontLeftModule, absoluteEncoderDigit).toCanId()
-        val backLeftAbsoluteEncoder: CanId = joinDigits(backLeftModule, absoluteEncoderDigit).toCanId()
-        val backRightAbsoluteEncoder: CanId = joinDigits(backRightModule, absoluteEncoderDigit).toCanId()
+        val frontRightAbsoluteEncoder: CanId = joinDigits(frontRightModule, absoluteEncoderDigit)
+        val frontLeftAbsoluteEncoder: CanId = joinDigits(frontLeftModule, absoluteEncoderDigit)
+        val backLeftAbsoluteEncoder: CanId = joinDigits(backLeftModule, absoluteEncoderDigit)
+        val backRightAbsoluteEncoder: CanId = joinDigits(backRightModule, absoluteEncoderDigit)
     }
 
     internal object ModuleState {
@@ -95,50 +95,58 @@ object SwerveDriveConstants {
     }
 
     internal object ModuleConfig {
-        private val frontRightIdConfig: IdentifierConfig = IdentifierConfig(
-            Ids.frontRightDriveController,
-            Ids.frontRightSteerController,
-            Ids.frontRightAbsoluteEncoder
-        )
+        private val frontRightLinkedIdentifiers: LinkedIdentifiers =
+            LinkedIdentifiers(
+                Ids.frontRightDriveController,
+                Ids.frontRightSteerController,
+                Ids.frontRightAbsoluteEncoder
+            )
 
-        private val frontLeftIdConfig: IdentifierConfig = IdentifierConfig(
-            Ids.frontLeftDriveController,
-            Ids.frontLeftSteerController,
-            Ids.frontLeftAbsoluteEncoder
-        )
+        private val frontLeftLinkedIdentifiers: LinkedIdentifiers =
+            LinkedIdentifiers(
+                Ids.frontLeftDriveController,
+                Ids.frontLeftSteerController,
+                Ids.frontLeftAbsoluteEncoder
+            )
 
-        private val backLeftIdConfig: IdentifierConfig = IdentifierConfig(
-            Ids.backLeftDriveController,
-            Ids.backLeftSteerController,
-            Ids.backLeftAbsoluteEncoder
-        )
+        private val backLeftLinkedIdentifiers: LinkedIdentifiers =
+            LinkedIdentifiers(
+                Ids.backLeftDriveController,
+                Ids.backLeftSteerController,
+                Ids.backLeftAbsoluteEncoder
+            )
 
-        private val backRightIdConfig: IdentifierConfig = IdentifierConfig(
-            Ids.backRightDriveController,
-            Ids.backRightSteerController,
-            Ids.backRightAbsoluteEncoder
-        )
+        private val backRightLinkedIdentifiers: LinkedIdentifiers =
+            LinkedIdentifiers(
+                Ids.backRightDriveController,
+                Ids.backRightSteerController,
+                Ids.backRightAbsoluteEncoder
+            )
 
-        private val frontRightStateConfig: StateConfig = StateConfig(
-            ModuleState.frontRightMagnetOffset,
-            RotationalDirection.Clockwise,
-            RotationalDirection.Clockwise
-        )
-        private val frontLeftStateConfig: StateConfig = StateConfig(
-            ModuleState.frontLeftMagnetOffset,
-            RotationalDirection.Clockwise,
-            RotationalDirection.Clockwise
-        )
-        private val backLeftStateConfig: StateConfig = StateConfig(
-            ModuleState.backLeftMagnetOffset,
-            RotationalDirection.Clockwise,
-            RotationalDirection.Clockwise
-        )
-        private val backRightStateConfig: StateConfig = StateConfig(
-            ModuleState.backRightMagnetOffset,
-            RotationalDirection.Clockwise,
-            RotationalDirection.Clockwise
-        )
+        private val frontRightStateConsiderations: StateConsiderations =
+            StateConsiderations(
+                ModuleState.frontRightMagnetOffset,
+                RotationalDirection.Clockwise,
+                RotationalDirection.Clockwise
+            )
+        private val frontLeftStateConsiderations: StateConsiderations =
+            StateConsiderations(
+                ModuleState.frontLeftMagnetOffset,
+                RotationalDirection.Clockwise,
+                RotationalDirection.Clockwise
+            )
+        private val backLeftStateConsiderations: StateConsiderations =
+            StateConsiderations(
+                ModuleState.backLeftMagnetOffset,
+                RotationalDirection.Clockwise,
+                RotationalDirection.Clockwise
+            )
+        private val backRightStateConsiderations: StateConsiderations =
+            StateConsiderations(
+                ModuleState.backRightMagnetOffset,
+                RotationalDirection.Clockwise,
+                RotationalDirection.Clockwise
+            )
 
         private val frontRightPhysicalDescription: PhysicalDescription =
             PhysicalDescription(ModuleState.frontRightModuleOffset, driveGearRatio, steerGearRatio, wheel)
@@ -152,43 +160,47 @@ object SwerveDriveConstants {
         private val backRightPhysicalDescription: PhysicalDescription =
             PhysicalDescription(ModuleState.backRightModuleOffset, driveGearRatio, steerGearRatio, wheel)
 
-        private val moduleControlConfig: ControlConfig = ControlConfig(
-            ControlConstants.drivePidf,
-            ControlConstants.driveSvag,
-            ControlConstants.steerPidf,
-            ControlConstants.steerSvag
-        )
+        private val moduleControlConfig: SwerveModule.ControlConstants =
+            ControlConstants(
+                ControlConstants.drivePidf,
+                ControlConstants.driveSvag,
+                ControlConstants.steerPidf,
+                ControlConstants.steerSvag
+            )
 
-        private val moduleLimitConfig: LimitConfig =
-            LimitConfig(driveMotorCurrentLimit, driveMotorRampRate, steerMotorCurrentLimit)
+        private val moduleLimitConfig: Limits =
+            Limits(
+                driveMotorCurrentLimit,
+                steerMotorCurrentLimit
+            )
 
         private val frontRight: Config = Config(
-            frontRightIdConfig,
-            frontRightStateConfig,
+            frontRightLinkedIdentifiers,
+            frontRightStateConsiderations,
             frontRightPhysicalDescription,
             moduleControlConfig,
             moduleLimitConfig
         )
 
         private val frontLeft: Config = Config(
-            frontLeftIdConfig,
-            frontLeftStateConfig,
+            frontLeftLinkedIdentifiers,
+            frontLeftStateConsiderations,
             frontLeftPhysicalDescription,
             moduleControlConfig,
             moduleLimitConfig
         )
 
         private val backLeft: Config = Config(
-            backLeftIdConfig,
-            backLeftStateConfig,
+            backLeftLinkedIdentifiers,
+            backLeftStateConsiderations,
             backLeftPhysicalDescription,
             moduleControlConfig,
             moduleLimitConfig
         )
 
         private val backRight: Config = Config(
-            backRightIdConfig,
-            backRightStateConfig,
+            backRightLinkedIdentifiers,
+            backRightStateConsiderations,
             backRightPhysicalDescription,
             moduleControlConfig,
             moduleLimitConfig
