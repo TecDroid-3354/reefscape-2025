@@ -24,8 +24,8 @@ object SwerveDriveConstants {
     // Module Characteristics //
     val wheel: Wheel = fromRadius(Inches.of(2.0))
 
-    val driveGearRatio: GearRatio = GearRatio(6.12, 1.0)
-    val steerGearRatio: GearRatio = GearRatio(150.0, 7.0)
+    val driveGearRatio: GearRatio = GearRatio(6.12, 1.0, 4)
+    val steerGearRatio: GearRatio = GearRatio(150.0, 7.0, 2)
 
     // Limits //
     val driveMotorCurrentLimit: Current = Units.Amps.of(40.0)
@@ -87,7 +87,7 @@ object SwerveDriveConstants {
     }
 
     internal object ControlConstants {
-        val drivePidf: PidfCoefficients = PidfCoefficients(0.001 * 0.0, 0.0, 0.00, 0.0)
+        val drivePidf: PidfCoefficients = PidfCoefficients(0.0, 0.0, 0.00, 0.0)
         val driveSvag: SvagGains = SvagGains(0.132, 0.12, 0.01, 0.0)
 
         val steerPidf: PidfCoefficients = PidfCoefficients(0.1, 0.0, 0.01, 0.0)
@@ -127,25 +127,25 @@ object SwerveDriveConstants {
             StateConsiderations(
                 ModuleState.frontRightMagnetOffset,
                 RotationalDirection.Clockwise,
-                RotationalDirection.Clockwise
+                RotationalDirection.Counterclockwise
             )
         private val frontLeftStateConsiderations: StateConsiderations =
             StateConsiderations(
                 ModuleState.frontLeftMagnetOffset,
                 RotationalDirection.Clockwise,
-                RotationalDirection.Clockwise
+                RotationalDirection.Counterclockwise
             )
         private val backLeftStateConsiderations: StateConsiderations =
             StateConsiderations(
                 ModuleState.backLeftMagnetOffset,
                 RotationalDirection.Clockwise,
-                RotationalDirection.Clockwise
+                RotationalDirection.Counterclockwise
             )
         private val backRightStateConsiderations: StateConsiderations =
             StateConsiderations(
                 ModuleState.backRightMagnetOffset,
                 RotationalDirection.Clockwise,
-                RotationalDirection.Clockwise
+                RotationalDirection.Counterclockwise
             )
 
         private val frontRightPhysicalDescription: PhysicalDescription =
