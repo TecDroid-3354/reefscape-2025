@@ -90,6 +90,10 @@ public class SwerveModule implements Sendable {
 
     private final CANcoder absoluteEncoder;
 
+    /**
+     * Represents a single module in a swerve drive
+     * @param config The configuration for this module
+     */
     public SwerveModule(Config config) {
         this.config = config;
 
@@ -103,82 +107,134 @@ public class SwerveModule implements Sendable {
 
         this.absoluteEncoder = new CANcoder(config.identifiers.absoluteEncoderId.getId());
         this.configureAbsoluteEncoderInterface();
-
     }
 
+    /**
+     * Sets the module's target velocity
+     * @param velocity The velocity
+     */
     public void setTargetVelocity(LinearVelocity velocity) {
-        final AngularVelocity driveShaftVelocity = driveWheelLinearVelocityToDriveShaftAngularVelocity(velocity);
-        this.driveInterface.setControl(new VelocityVoltage(driveShaftVelocity).withSlot(0));
+        final AngularVelocity driveShaftVelocity = wheelLinearVelocityToDriveMotorShaftAngularVelocity(velocity);
+        driveInterface.setControl(new VelocityVoltage(driveShaftVelocity).withSlot(0));
     }
 
+    /**
+     * Sets the module's target angle
+     * @param angle The angle
+     */
     public void setTargetAngle(Angle angle) {
-        final Angle steerShaftAngle = steerWheelAngularPositionToSteerShaftAngularPosition(angle);
-        this.steerClosedLoopController.setReference(steerShaftAngle.in(Rotations), ControlType.kPosition);
+        final Angle steerShaftAngle = wheelAzimuthToSteerMotorShaftAzimuth(angle);
+        steerClosedLoopController.setReference(steerShaftAngle.in(Rotations), ControlType.kPosition);
     }
 
+    /**
+     * Sets the module's target state, optimizing it prior
+     * @param targetState The state
+     */
     public void setTargetState(SwerveModuleState targetState) {
-        targetState.optimize(new Rotation2d((getSteerWheelAngularPosition())));
-
+        optimizeState(targetState);
         setTargetVelocity(MetersPerSecond.of(targetState.speedMetersPerSecond));
         setTargetAngle(targetState.angle.getMeasure());
     }
 
+    /**
+     * Assigns the position of the absolute encoder to the steering encoder
+     */
     public void matchSteeringEncoderToAbsoluteEncoder() {
-        steerEncoder.setPosition(getAbsoluteSteerShaftPosition().in(Rotations));
+        steerEncoder.setPosition(getAbsoluteSteerShaftAzimuth().in(Rotations));
     }
 
     // ///////////////// //
     // Getters + Setters //
     // ///////////////// //
 
-    public Angle getAbsoluteSteerWheelPosition() {
-        return absoluteEncoder.getPosition().getValue();
-    }
-
-    public Angle getAbsoluteSteerShaftPosition() {
-        return config.physical.steerGearing.unapply(getAbsoluteSteerWheelPosition());
-    }
-
-    public Angle getDriveShaftPosition() {
+    /**
+     * @return The accumulated angular displacement of the drive motor shaft
+     */
+    public Angle getDriveMotorShaftPosition() {
         return driveInterface.getPosition().getValue();
     }
 
-    public Angle getDriveWheelAngularDisplacement() {
-        return config.physical.driveGearing.apply(getDriveShaftPosition());
+    /**
+     * @return The accumulated angular displacement of the module's wheel
+     */
+    public Angle getWheelAngularDisplacement() {
+        return config.physical.driveGearing.apply(getDriveMotorShaftPosition());
     }
 
-    public Distance getDriveWheelLinearDisplacement() {
-        return config.physical.wheel.angularDisplacementToLinearDisplacement(getDriveWheelAngularDisplacement());
+    /**
+     * @return The accumulated linear displacement of the module's wheel
+     */
+    public Distance getWheelLinearDisplacement() {
+        return config.physical.wheel.angularDisplacementToLinearDisplacement(getWheelAngularDisplacement());
     }
 
-    public AngularVelocity getDriveShaftAngularVelocity() {
+    /**
+     * @return The angular velocity of the module's drive motor shaft
+     */
+    public AngularVelocity getDriveMotorShaftAngularVelocity() {
         return driveInterface.getVelocity().getValue();
     }
 
-    public AngularVelocity getDriveWheelAngularVelocity() {
-        return config.physical.driveGearing.apply(getDriveShaftAngularVelocity());
+    /**
+     * @return The angular velocity of the module's wheel
+     */
+    public AngularVelocity getWheelAngularVelocity() {
+        return config.physical.driveGearing.apply(getDriveMotorShaftAngularVelocity());
     }
 
-    public LinearVelocity getDriveWheelLinearVelocity() {
-        return config.physical.wheel.angularVelocityToLinearVelocity(getDriveWheelAngularVelocity());
+    /**
+     * @return The linear velocity of the module's wheel
+     */
+    public LinearVelocity getWheelLinearVelocity() {
+        return config.physical.wheel.angularVelocityToLinearVelocity(getWheelAngularVelocity());
     }
 
-    public Angle getSteerShaftAngularPosition() {
+    /**
+     * @return The azimuth of the module's wheel (as indicated by absolute encoder)
+     */
+    public Angle getAbsoluteWheelAzimuth() {
+        return absoluteEncoder.getPosition().getValue();
+    }
+
+    /**
+     * @return The azimuth of the module's steer motor shaft (as indicated by absolute encoder)
+     */
+    public Angle getAbsoluteSteerShaftAzimuth() {
+        return config.physical.steerGearing.unapply(getAbsoluteWheelAzimuth());
+    }
+
+    /**
+     * @return The azimuth of the module's steer motor shaft
+     */
+    public Angle getSteerShaftAzimuth() {
         return Rotations.of(steerEncoder.getPosition());
     }
 
-    public Angle getSteerWheelAngularPosition() {
-        return config.physical.steerGearing.apply(getSteerShaftAngularPosition());
+    /**
+     * @return The azimuth of the module's wheel
+     */
+    public Angle getWheelAzimuth() {
+        return config.physical.steerGearing.apply(getSteerShaftAzimuth());
     }
 
+    /**
+     * @return The state of the module
+     */
     public SwerveModuleState getState() {
-        return new SwerveModuleState(getDriveWheelLinearVelocity(), new Rotation2d(getSteerShaftAngularPosition()));
+        return new SwerveModuleState(getWheelLinearVelocity(), new Rotation2d(getSteerShaftAzimuth()));
     }
 
+    /**
+     * @return The position of the module
+     */
     public SwerveModulePosition getPosition() {
-        return new SwerveModulePosition(getDriveWheelLinearDisplacement(), new Rotation2d(getSteerShaftAngularPosition()));
+        return new SwerveModulePosition(getWheelLinearDisplacement(), new Rotation2d(getSteerShaftAzimuth()));
     }
 
+    /**
+     * @return The offset from the center of the robot
+     */
     public Translation2d getOffsetFromCenter() {
         return config.physical.offset();
     }
@@ -187,6 +243,9 @@ public class SwerveModule implements Sendable {
     // Configuration //
     // ///////////// //
 
+    /**
+     * Configures the module's drive interface, that is, the controller that will take care of driving the wheel's velocity
+     */
     private void configureDriveInterface() {
         TalonFXConfiguration driveConfig = new TalonFXConfiguration();
 
@@ -211,10 +270,13 @@ public class SwerveModule implements Sendable {
                                        ).toInvertedValue()
                                );
 
-        this.driveInterface.clearStickyFaults();
-        this.driveInterface.getConfigurator().apply(driveConfig);
+        driveInterface.clearStickyFaults();
+        driveInterface.getConfigurator().apply(driveConfig);
     }
 
+    /**
+     * Configures the module's steer interface, that is, the controller that will take care of driving the wheel's azimuth
+     */
     private void configureSteerInterface() {
         SparkMaxConfig steerConfig = new SparkMaxConfig();
 
@@ -242,11 +304,14 @@ public class SwerveModule implements Sendable {
                         config.control.steerPidf.getF()
                 );
 
-        this.steerController.clearFaults();
-        this.steerController.configure(steerConfig, SparkBase.ResetMode.kResetSafeParameters, PersistMode.kNoPersistParameters);
+        steerController.clearFaults();
+        steerController.configure(steerConfig, SparkBase.ResetMode.kResetSafeParameters, PersistMode.kNoPersistParameters);
 
     }
 
+    /**
+     * Configures the module's absolute encoder
+     */
     private void configureAbsoluteEncoderInterface() {
         CANcoderConfiguration absoluteEncoderConfig = new CANcoderConfiguration();
 
@@ -263,8 +328,8 @@ public class SwerveModule implements Sendable {
 
     @Override
     public void initSendable(SendableBuilder sendableBuilder) {
-        sendableBuilder.addDoubleProperty("Abs Azimuth (deg)", () -> getAbsoluteSteerWheelPosition().in(Degrees), (double m) -> {});
-        sendableBuilder.addDoubleProperty("Rel Azimuth (deg)", () -> getSteerWheelAngularPosition().in(Degrees), (double m) -> {});
+        sendableBuilder.addDoubleProperty("Abs Azimuth (deg)", () -> getAbsoluteWheelAzimuth().in(Degrees), (double m) -> {});
+        sendableBuilder.addDoubleProperty("Rel Azimuth (deg)", () -> getWheelAzimuth().in(Degrees), (double m) -> {});
 
     }
 
@@ -272,19 +337,33 @@ public class SwerveModule implements Sendable {
     // Conversions //
     // //////////// //
 
-    private Angle steerWheelAngularPositionToSteerShaftAngularPosition(Angle steerWheelAngle) {
-        return config.physical.steerGearing.unapply(steerWheelAngle);
+    /**
+     * Converts from a wheel azimuth to a steer motor shaft azimuth
+     * @param wheelAzimuth The wheel azimuth
+     * @return The steer motor shaft azimuth
+     */
+    private Angle wheelAzimuthToSteerMotorShaftAzimuth(Angle wheelAzimuth) {
+        return config.physical.steerGearing.unapply(wheelAzimuth);
     }
 
-    private AngularVelocity driveWheelLinearVelocityToDriveShaftAngularVelocity(LinearVelocity driveWheelVelocity) {
-        return config.physical.driveGearing.unapply(config.physical.wheel.linearVelocityToAngularVelocity(driveWheelVelocity));
+    /**
+     * Converts from a wheel linear velocity to a drive motor shaft angular velocity
+     * @param wheelVelocity The wheel velocity
+     * @return The drive motor shaft angular velocity
+     */
+    private AngularVelocity wheelLinearVelocityToDriveMotorShaftAngularVelocity(LinearVelocity wheelVelocity) {
+        return config.physical.driveGearing.unapply(config.physical.wheel.linearVelocityToAngularVelocity(wheelVelocity));
     }
 
     // ///////// //
     // Utilities //
     // ///////// //
 
+    /**
+     * Optimizes a swerve module state
+     * @param state The state to optimize
+     */
     private void optimizeState(SwerveModuleState state) {
-        state.optimize(new Rotation2d((getSteerWheelAngularPosition())));
+        state.optimize(new Rotation2d(getWheelAzimuth()));
     }
 }
