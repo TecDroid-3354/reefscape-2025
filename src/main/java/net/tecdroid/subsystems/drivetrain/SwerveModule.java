@@ -90,8 +90,6 @@ public class SwerveModule implements Sendable {
 
     private final CANcoder absoluteEncoder;
 
-    private SwerveModuleState targetState = new SwerveModuleState();
-
     public SwerveModule(Config config) {
         this.config = config;
 
@@ -108,17 +106,21 @@ public class SwerveModule implements Sendable {
 
     }
 
-    public void setTargetState(SwerveModuleState newState) {
-        newState.optimize(new Rotation2d((getSteerWheelAngularPosition())));
-        this.targetState = newState;
+    public void setTargetVelocity(LinearVelocity velocity) {
+        final AngularVelocity driveShaftVelocity = driveWheelLinearVelocityToDriveShaftAngularVelocity(velocity);
+        this.driveInterface.setControl(new VelocityVoltage(driveShaftVelocity).withSlot(0));
+    }
 
-        final Angle requestedAngle = newState.angle.getMeasure();
-        final Angle shaftAngle = steerWheelAngularPositionToSteerShaftAngularPosition(requestedAngle);
-        this.steerClosedLoopController.setReference(shaftAngle.in(Rotations), ControlType.kPosition);
+    public void setTargetAngle(Angle angle) {
+        final Angle steerShaftAngle = steerWheelAngularPositionToSteerShaftAngularPosition(angle);
+        this.steerClosedLoopController.setReference(steerShaftAngle.in(Rotations), ControlType.kPosition);
+    }
 
-        final LinearVelocity requestedVelocity = MetersPerSecond.of(newState.speedMetersPerSecond);
-        final AngularVelocity shaftVelocity = driveWheelLinearVelocityToDriveShaftAngularVelocity(requestedVelocity);
-        this.driveInterface.setControl(new VelocityVoltage(shaftVelocity).withSlot(0));
+    public void setTargetState(SwerveModuleState targetState) {
+        targetState.optimize(new Rotation2d((getSteerWheelAngularPosition())));
+
+        setTargetVelocity(MetersPerSecond.of(targetState.speedMetersPerSecond));
+        setTargetAngle(targetState.angle.getMeasure());
     }
 
     public void matchSteeringEncoderToAbsoluteEncoder() {
@@ -175,10 +177,6 @@ public class SwerveModule implements Sendable {
 
     public SwerveModulePosition getPosition() {
         return new SwerveModulePosition(getDriveWheelLinearDisplacement(), new Rotation2d(getSteerShaftAngularPosition()));
-    }
-
-    public SwerveModuleState getTargetState() {
-        return targetState;
     }
 
     public Translation2d getOffsetFromCenter() {
@@ -267,7 +265,6 @@ public class SwerveModule implements Sendable {
     public void initSendable(SendableBuilder sendableBuilder) {
         sendableBuilder.addDoubleProperty("Abs Azimuth (deg)", () -> getAbsoluteSteerWheelPosition().in(Degrees), (double m) -> {});
         sendableBuilder.addDoubleProperty("Rel Azimuth (deg)", () -> getSteerWheelAngularPosition().in(Degrees), (double m) -> {});
-        sendableBuilder.addDoubleProperty("Tgt Azimuth (deg)", () -> targetState.angle.getDegrees(), (double m) -> {});
 
     }
 
@@ -281,5 +278,13 @@ public class SwerveModule implements Sendable {
 
     private AngularVelocity driveWheelLinearVelocityToDriveShaftAngularVelocity(LinearVelocity driveWheelVelocity) {
         return config.physical.driveGearing.unapply(config.physical.wheel.linearVelocityToAngularVelocity(driveWheelVelocity));
+    }
+
+    // ///////// //
+    // Utilities //
+    // ///////// //
+
+    private void optimizeState(SwerveModuleState state) {
+        state.optimize(new Rotation2d((getSteerWheelAngularPosition())));
     }
 }
