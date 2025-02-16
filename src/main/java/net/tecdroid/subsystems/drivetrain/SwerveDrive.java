@@ -61,9 +61,9 @@ public class SwerveDrive extends SubsystemBase {
         }
     }
 
-    // ///// //
-    // Drive //
-    // ///// //
+    // //////// //
+    // Odometry //
+    // //////// //
 
     public void updateOdometry() {
         odometry.update(new Rotation2d(getHeading()), getModulePositions());
@@ -105,6 +105,10 @@ public class SwerveDrive extends SubsystemBase {
         return Arrays.stream(modules).map(SwerveModule::getPosition).toArray(SwerveModulePosition[]::new);
     }
 
+    // ///////////// //
+    // Configuration //
+    // ///////////// //
+
     public void configureImuInterface() {
         Pigeon2Configuration imuConfiguration = new Pigeon2Configuration();
 
@@ -118,10 +122,6 @@ public class SwerveDrive extends SubsystemBase {
 
     public record IdentifierConfig(NumericId imuId) {
     }
-
-    // ///////////// //
-    // Configuration //
-    // ///////////// //
 
     public record Config(ModuleConfig moduleConfig, IdentifierConfig identifierConfig) {
     }

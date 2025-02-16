@@ -193,6 +193,62 @@ public class SwerveModule implements Sendable {
         return config.physical.offset();
     }
 
+    // /////////// //
+    // Conversions //
+    // /////////// //
+
+    /**
+     * Converts from a wheel azimuth to a steer motor shaft azimuth
+     *
+     * @param wheelAzimuth The wheel azimuth
+     *
+     * @return The steer motor shaft azimuth
+     */
+    private Angle wheelAzimuthToSteerMotorShaftAzimuth(Angle wheelAzimuth) {
+        return config.physical.steerGearing.unapply(wheelAzimuth);
+    }
+
+    /**
+     * Converts from a wheel linear velocity to a drive motor shaft angular velocity
+     *
+     * @param wheelVelocity The wheel velocity
+     *
+     * @return The drive motor shaft angular velocity
+     */
+    private AngularVelocity wheelLinearVelocityToDriveMotorShaftAngularVelocity(LinearVelocity wheelVelocity) {
+        return config.physical.driveGearing.unapply(config.physical.wheel.linearVelocityToAngularVelocity(wheelVelocity));
+    }
+
+    // //////// //
+    // Sendable //
+    // //////// //
+
+    @Override
+    public void initSendable(SendableBuilder sendableBuilder) {
+        sendableBuilder.addDoubleProperty("Abs Azimuth (deg)", () -> getAbsoluteWheelAzimuth().in(Degrees), (double m) -> {
+        });
+        sendableBuilder.addDoubleProperty("Rel Azimuth (deg)", () -> getWheelAzimuth().in(Degrees), (double m) -> {
+        });
+
+    }
+
+    // //// //
+    // Misc //
+    // //// //
+
+    /**
+     * Optimizes a swerve module state
+     *
+     * @param state The state to optimize
+     */
+    private void optimizeState(SwerveModuleState state) {
+        state.optimize(new Rotation2d(getWheelAzimuth()));
+    }
+
+    // ///////////// //
+    // Configuration //
+    // ///////////// //
+
     /**
      * Configures the module's drive interface, that is, the controller that will take care of driving the wheel's velocity
      */
@@ -262,49 +318,9 @@ public class SwerveModule implements Sendable {
                 .apply(absoluteEncoderConfig);
     }
 
-    @Override
-    public void initSendable(SendableBuilder sendableBuilder) {
-        sendableBuilder.addDoubleProperty("Abs Azimuth (deg)", () -> getAbsoluteWheelAzimuth().in(Degrees), (double m) -> {
-        });
-        sendableBuilder.addDoubleProperty("Rel Azimuth (deg)", () -> getWheelAzimuth().in(Degrees), (double m) -> {
-        });
-
-    }
-
-    /**
-     * Converts from a wheel azimuth to a steer motor shaft azimuth
-     *
-     * @param wheelAzimuth The wheel azimuth
-     *
-     * @return The steer motor shaft azimuth
-     */
-    private Angle wheelAzimuthToSteerMotorShaftAzimuth(Angle wheelAzimuth) {
-        return config.physical.steerGearing.unapply(wheelAzimuth);
-    }
-
-    /**
-     * Converts from a wheel linear velocity to a drive motor shaft angular velocity
-     *
-     * @param wheelVelocity The wheel velocity
-     *
-     * @return The drive motor shaft angular velocity
-     */
-    private AngularVelocity wheelLinearVelocityToDriveMotorShaftAngularVelocity(LinearVelocity wheelVelocity) {
-        return config.physical.driveGearing.unapply(config.physical.wheel.linearVelocityToAngularVelocity(wheelVelocity));
-    }
-
-    // ///////////// //
-    // Configuration //
-    // ///////////// //
-
-    /**
-     * Optimizes a swerve module state
-     *
-     * @param state The state to optimize
-     */
-    private void optimizeState(SwerveModuleState state) {
-        state.optimize(new Rotation2d(getWheelAzimuth()));
-    }
+    // ///////////////////// //
+    // Configuration Classes //
+    // ///////////////////// //
 
     /**
      * Stores the device IDs of the module's electronic components
@@ -327,10 +343,6 @@ public class SwerveModule implements Sendable {
                                       RotationalDirection steerWheelPositiveDirection) {
     }
 
-    // //// //
-    // Data //
-    // //// //
-
     /**
      * Stores characteristics relating to the module's physical description
      *
@@ -342,10 +354,6 @@ public class SwerveModule implements Sendable {
     public record PhysicalDescription(Translation2d offset, GearRatio driveGearing, GearRatio steerGearing,
                                       Wheel wheel) {
     }
-
-    // //////////// //
-    // Conversions //
-    // //////////// //
 
     /**
      * Stores the control constants that will be applied to the module's motion
@@ -367,10 +375,6 @@ public class SwerveModule implements Sendable {
      */
     public record Limits(Current driveCurrentLimit, Current steerCurrentLimit) {
     }
-
-    // ///////// //
-    // Utilities //
-    // ///////// //
 
     /**
      * Stores the module's configuration parameters
