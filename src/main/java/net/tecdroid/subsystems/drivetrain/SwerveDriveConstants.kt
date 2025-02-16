@@ -6,7 +6,7 @@ import edu.wpi.first.units.Units.Inches
 import edu.wpi.first.units.measure.Angle
 import edu.wpi.first.units.measure.Current
 import edu.wpi.first.units.measure.Time
-import net.tecdroid.constants.RobotSpatialConvention
+import net.tecdroid.constants.StandardConvention
 import net.tecdroid.subsystems.drivetrain.SwerveDriveConstants.ModuleConfig.moduleConfigurations
 import net.tecdroid.subsystems.drivetrain.SwerveModule.*
 import net.tecdroid.util.*
@@ -26,9 +26,6 @@ object SwerveDriveConstants {
 
     val driveGearRatio: GearRatio = GearRatio(6.12, 1.0)
     val steerGearRatio: GearRatio = GearRatio(150.0, 7.0)
-
-    val driveMotorRotationalConvention = RotationalConvention.counterclockwise()
-    val steerMotorRotationalConvention = RotationalConvention.counterclockwise()
 
     // Limits //
     val driveMotorCurrentLimit: Current = Units.Amps.of(40.0)
@@ -69,23 +66,23 @@ object SwerveDriveConstants {
         val backRightMagnetOffset: Angle = Units.Rotations.of(+0.138427734375)
 
         val frontRightModuleOffset: Translation2d = Translation2d(
-            RobotSpatialConvention.longitudinal.front(quarterDrivetrain.length),
-            RobotSpatialConvention.transversal.right(quarterDrivetrain.width)
+            StandardConvention.longitudinal.front(quarterDrivetrain.length),
+            StandardConvention.transversal.right(quarterDrivetrain.width)
         )
 
         val frontLeftModuleOffset: Translation2d = Translation2d(
-            RobotSpatialConvention.longitudinal.front(quarterDrivetrain.length),
-            RobotSpatialConvention.transversal.left(quarterDrivetrain.width)
+            StandardConvention.longitudinal.front(quarterDrivetrain.length),
+            StandardConvention.transversal.left(quarterDrivetrain.width)
         )
 
         val backLeftModuleOffset: Translation2d = Translation2d(
-            RobotSpatialConvention.longitudinal.back(quarterDrivetrain.length),
-            RobotSpatialConvention.transversal.left(quarterDrivetrain.width)
+            StandardConvention.longitudinal.back(quarterDrivetrain.length),
+            StandardConvention.transversal.left(quarterDrivetrain.width)
         )
 
         val backRightModuleOffset: Translation2d = Translation2d(
-            RobotSpatialConvention.longitudinal.back(quarterDrivetrain.length),
-            RobotSpatialConvention.transversal.right(quarterDrivetrain.width)
+            StandardConvention.longitudinal.back(quarterDrivetrain.length),
+            StandardConvention.transversal.right(quarterDrivetrain.width)
         )
     }
 
@@ -93,7 +90,7 @@ object SwerveDriveConstants {
         val drivePidf: PidfCoefficients = PidfCoefficients(0.001 * 0.0, 0.0, 0.00, 0.0)
         val driveSvag: SvagGains = SvagGains(0.132, 0.12, 0.01, 0.0)
 
-        val steerPidf: PidfCoefficients = PidfCoefficients(0.01, 0.0, 0.001, 0.0)
+        val steerPidf: PidfCoefficients = PidfCoefficients(0.1, 0.0, 0.01, 0.0)
         val steerSvag: SvagGains = SvagGains(0.0, 0.0, 0.0, 0.0)
     }
 
@@ -124,23 +121,23 @@ object SwerveDriveConstants {
 
         private val frontRightStateConfig: StateConfig = StateConfig(
             ModuleState.frontRightMagnetOffset,
-            RotationalDirection.Counterclockwise,
-            RotationalDirection.Counterclockwise
+            RotationalDirection.Clockwise,
+            RotationalDirection.Clockwise
         )
         private val frontLeftStateConfig: StateConfig = StateConfig(
             ModuleState.frontLeftMagnetOffset,
-            RotationalDirection.Counterclockwise,
-            RotationalDirection.Counterclockwise
+            RotationalDirection.Clockwise,
+            RotationalDirection.Clockwise
         )
         private val backLeftStateConfig: StateConfig = StateConfig(
             ModuleState.backLeftMagnetOffset,
-            RotationalDirection.Counterclockwise,
-            RotationalDirection.Counterclockwise
+            RotationalDirection.Clockwise,
+            RotationalDirection.Clockwise
         )
         private val backRightStateConfig: StateConfig = StateConfig(
             ModuleState.backRightMagnetOffset,
-            RotationalDirection.Counterclockwise,
-            RotationalDirection.Counterclockwise
+            RotationalDirection.Clockwise,
+            RotationalDirection.Clockwise
         )
 
         private val frontRightPhysicalDescription: PhysicalDescription =

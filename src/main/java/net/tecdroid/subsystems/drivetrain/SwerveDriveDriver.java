@@ -10,13 +10,12 @@ import java.util.function.Supplier;
 import static edu.wpi.first.units.Units.*;
 
 public class SwerveDriveDriver {
-    private static final double CONTROLLER_DEADBAND = 0.1;
 
     public enum DriveOrientation {
         FIELD_ORIENTED, ROBOT_ORIENTED
     }
 
-    DriveOrientation orientation = DriveOrientation.ROBOT_ORIENTED;
+    DriveOrientation orientation = DriveOrientation.FIELD_ORIENTED;
 
     Supplier<LinearVelocity> forwardsVelocitySupplier;
     Supplier<LinearVelocity> sidewaysVelocitySupplier;
@@ -29,7 +28,7 @@ public class SwerveDriveDriver {
         this.angularVelocitySupplier  = RadiansPerSecond::zero;
     }
 
-    private ChassisSpeeds obtainTargetSpeeds(Rotation2d currentAngle) {
+    public ChassisSpeeds obtainTargetSpeeds(Rotation2d currentAngle) {
         LinearVelocity vx = forwardsVelocitySupplier.get();
         LinearVelocity vy = sidewaysVelocitySupplier.get();
         AngularVelocity w = angularVelocitySupplier.get();
@@ -49,4 +48,15 @@ public class SwerveDriveDriver {
         return orientation == DriveOrientation.FIELD_ORIENTED;
     }
 
+    public void setLongitudinalVelocitySupplier(Supplier<LinearVelocity> forwardsVelocitySupplier) {
+        this.forwardsVelocitySupplier = forwardsVelocitySupplier;
+    }
+
+    public void setTransversalVelocitySupplier(Supplier<LinearVelocity> sidewaysVelocitySupplier) {
+        this.sidewaysVelocitySupplier = sidewaysVelocitySupplier;
+    }
+
+    public void setAngularVelocitySupplier(Supplier<AngularVelocity> angularVelocitySupplier) {
+        this.angularVelocitySupplier = angularVelocitySupplier;
+    }
 }

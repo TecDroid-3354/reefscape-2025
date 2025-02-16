@@ -17,8 +17,8 @@ enum class RotationalDirection {
     fun isClockwise() = this == Clockwise
     fun isCounterClockwise() = this == Clockwise
 
-    fun toTrueMeansClockwise() = isClockwise()
-    fun toTrueMeansCounterclockwise() = isCounterClockwise()
+    fun matches(other: RotationalDirection) = this == other
+    fun differs(other: RotationalDirection) = !matches(other)
 
     fun toSensorDirectionValue() = if (this == Clockwise) SensorDirectionValue.Clockwise_Positive else SensorDirectionValue.CounterClockwise_Positive
     fun toInvertedValue() = if (this == Clockwise) InvertedValue.Clockwise_Positive else InvertedValue.CounterClockwise_Positive
@@ -29,16 +29,17 @@ class RotationalConvention(val direction: RotationalDirection) {
     fun counterclockwise(angle: Angle): Angle = if (direction == Counterclockwise) angle else angle.times(-1.0)
     fun convertTo(other: RotationalConvention, angle: Angle) = if (this.direction == other.direction) angle else angle.times(-1.0)
 
-    fun matches(other: RotationalConvention) = this.direction == other.direction
-
     companion object {
-        fun clockwise() = RotationalConvention(Clockwise)
-        fun counterclockwise() = RotationalConvention(Counterclockwise)
+        fun clockwisePositive() = RotationalConvention(Clockwise)
+        fun counterclockwisePositive() = RotationalConvention(Counterclockwise)
     }
 }
 
 enum class LongitudinalDirection{
     Front, Back;
+
+    fun matches(other: LongitudinalDirection) = this == other
+    fun differs(other: LongitudinalDirection) = !matches(other)
 
     fun isFront() = this == Front
     fun isBack() = this == Back
@@ -49,16 +50,17 @@ class LongitudinalConvention(val direction: LongitudinalDirection) {
     fun back(distance: Distance) = if (direction == Back) distance else distance.times(-1.0)
     fun convertTo(other: LongitudinalConvention, distance: Distance) = if (this.direction == other.direction) distance else distance.times(-1.0)
 
-    fun matches(other: LongitudinalConvention) = this.direction == other.direction
-
     companion object {
-        fun front() = LongitudinalConvention(Front)
-        fun back() = LongitudinalConvention(Back)
+        fun frontPositive() = LongitudinalConvention(Front)
+        fun backPositive() = LongitudinalConvention(Back)
     }
 }
 
 enum class TransversalDirection {
     Left, Right;
+
+    fun matches(other: TransversalDirection) = this == other
+    fun differs(other: TransversalDirection) = !matches(other)
 
     fun isLeft() = this == Left
     fun isRight() = this == Right
@@ -69,16 +71,17 @@ class TransversalConvention(val direction: TransversalDirection) {
     fun right(distance: Distance) = if (direction == Right) distance else distance.times(-1.0)
     fun convertTo(other: TransversalConvention, distance: Distance) = if (this.direction == other.direction) distance else distance.times(-1.0)
 
-    fun matches(other: TransversalConvention) = this.direction == other.direction
-
     companion object {
-        fun left() = TransversalConvention(Left)
-        fun right() = TransversalConvention(Right)
+        fun leftPositive() = TransversalConvention(Left)
+        fun rightPositive() = TransversalConvention(Right)
     }
 }
 
 enum class VerticalDirection{
     Up, Down;
+
+    fun matches(other: VerticalDirection) = this == other
+    fun differs(other: VerticalDirection) = !matches(other)
 
     fun isUp() = this == Up
     fun isDown() = this == Down
@@ -88,8 +91,6 @@ class VerticalConvention(val direction: VerticalDirection) {
     fun up(distance: Distance) = if (direction == Up) distance else distance.times(-1.0)
     fun down(distance: Distance) = if (direction == Down) distance else distance.times(-1.0)
     fun convertTo(other: VerticalConvention, distance: Distance) = if (this.direction == other.direction) distance else distance.times(-1.0)
-
-    fun matches(other: VerticalConvention) = this.direction == other.direction
 
     companion object {
         fun up() = VerticalConvention(Up)
