@@ -77,6 +77,10 @@ public class SwerveModule implements Sendable {
         steerClosedLoopController.setReference(steerShaftAngle.in(Rotations), ControlType.kPosition);
     }
 
+    public void test() {
+        steerController.set(0.05);
+    }
+
     /**
      * Sets the module's target state, optimizing it prior
      *
@@ -99,8 +103,7 @@ public class SwerveModule implements Sendable {
      * @return The accumulated angular displacement of the drive motor shaft
      */
     public Angle getDriveMotorShaftPosition() {
-        return driveInterface.getPosition()
-                .getValue();
+        return driveInterface.getPosition().getValue();
     }
 
     /**
@@ -121,8 +124,7 @@ public class SwerveModule implements Sendable {
      * @return The angular velocity of the module's drive motor shaft
      */
     public AngularVelocity getDriveMotorShaftAngularVelocity() {
-        return driveInterface.getVelocity()
-                .getValue();
+        return driveInterface.getVelocity().getValue();
     }
 
     /**
@@ -147,8 +149,7 @@ public class SwerveModule implements Sendable {
      * @return The azimuth of the module's wheel (as indicated by absolute encoder)
      */
     public Angle getAbsoluteWheelAzimuth() {
-        return absoluteEncoder.getPosition()
-                .getValue();
+        return absoluteEncoder.getPosition().getValue();
     }
 
     /**
@@ -225,11 +226,11 @@ public class SwerveModule implements Sendable {
 
     @Override
     public void initSendable(SendableBuilder sendableBuilder) {
-        sendableBuilder.addDoubleProperty("Abs Azimuth (deg)", () -> getAbsoluteWheelAzimuth().in(Degrees), (double m) -> {
+        sendableBuilder.addDoubleProperty("Abs Azimuth (deg)", () -> getAbsoluteWheelAzimuth().in(Degrees),
+                                          (double m) -> {
         });
         sendableBuilder.addDoubleProperty("Rel Azimuth (deg)", () -> getWheelAzimuth().in(Degrees), (double m) -> {
         });
-
     }
 
     // //// //
@@ -250,58 +251,41 @@ public class SwerveModule implements Sendable {
     // ///////////// //
 
     /**
-     * Configures the module's drive interface, that is, the controller that will take care of driving the wheel's velocity
+     * Configures the module's drive interface, that is, the controller that will take care of driving the wheel's
+     * velocity
      */
     private void configureDriveInterface() {
         TalonFXConfiguration driveConfig = new TalonFXConfiguration();
 
-        driveConfig.Audio.withBeepOnBoot(true)
-                .withBeepOnConfig(true)
-                .withAllowMusicDurDisable(true);
+        driveConfig.Audio.withBeepOnBoot(true).withBeepOnConfig(true).withAllowMusicDurDisable(true);
 
-        driveConfig.CurrentLimits.withSupplyCurrentLimit(config.limits.driveCurrentLimit)
-                .withSupplyCurrentLimitEnable(true);
+        driveConfig.CurrentLimits.withSupplyCurrentLimit(config.limits.driveCurrentLimit).withSupplyCurrentLimitEnable(true);
 
-        driveConfig.Slot0.withKP(config.control.drivePidf.getP())
-                .withKI(config.control.drivePidf.getI())
-                .withKD(config.control.drivePidf.getD())
-                .withKS(config.control.driveSvag.getS())
-                .withKV(config.control.driveSvag.getV())
-                .withKA(config.control.driveSvag.getA());
+        driveConfig.Slot0.withKP(config.control.drivePidf.getP()).withKI(config.control.drivePidf.getI()).withKD(config.control.drivePidf.getD()).withKS(config.control.driveSvag.getS()).withKV(config.control.driveSvag.getV()).withKA(config.control.driveSvag.getA());
 
-        driveConfig.MotorOutput.withNeutralMode(NeutralModeValue.Brake)
-                .withInverted(config.physical.driveGearing.transformRotation(config.state.driveWheelPositiveDirection)
-                        .toInvertedValue());
+        driveConfig.MotorOutput.withNeutralMode(NeutralModeValue.Brake).withInverted(config.physical.driveGearing.transformRotation(config.state.driveWheelPositiveDirection).toInvertedValue());
 
         driveInterface.clearStickyFaults();
-        driveInterface.getConfigurator()
-                .apply(driveConfig);
+        driveInterface.getConfigurator().apply(driveConfig);
     }
 
     /**
-     * Configures the module's steer interface, that is, the controller that will take care of driving the wheel's azimuth
+     * Configures the module's steer interface, that is, the controller that will take care of driving the wheel's
+     * azimuth
      */
     private void configureSteerInterface() {
         SparkMaxConfig steerConfig = new SparkMaxConfig();
 
-        steerConfig.idleMode(IdleMode.kBrake)
-                .inverted(config.physical.steerGearing.transformRotation(config.state.steerWheelPositiveDirection)
-                        .differs(Motors.INSTANCE.getNeo()
-                                .getRotationalConvention()
-                                .positiveDirection()))
-                .smartCurrentLimit((int) config.limits.steerCurrentLimit.in(Amps));
+        steerConfig.idleMode(IdleMode.kBrake).inverted(config.physical.steerGearing.transformRotation(config.state.steerWheelPositiveDirection).differs(Motors.INSTANCE.getNeo().getRotationalConvention().positiveDirection())).smartCurrentLimit((int) config.limits.steerCurrentLimit.in(Amps));
 
-        steerConfig.encoder.positionConversionFactor(1.0)
-                .velocityConversionFactor(1.0);
+        steerConfig.encoder.positionConversionFactor(1.0).velocityConversionFactor(1.0);
 
-        steerConfig.closedLoop.positionWrappingEnabled(true)
-                .positionWrappingInputRange(0.0, config.physical.steerGearing.unapply(UnitConstants.INSTANCE.getHalfRotation()
-                        .in(Rotations)))
-                .pidf(config.control.steerPidf.getP(), config.control.steerPidf.getI(), config.control.steerPidf.getD(), config.control.steerPidf.getF());
+        steerConfig.closedLoop.positionWrappingEnabled(true).positionWrappingInputRange(0.0,
+                                                                                        config.physical.steerGearing.unapply(UnitConstants.INSTANCE.getHalfRotation().in(Rotations))).pidf(config.control.steerPidf.getP(), config.control.steerPidf.getI(), config.control.steerPidf.getD(), config.control.steerPidf.getF());
 
         steerController.clearFaults();
-        steerController.configure(steerConfig, SparkBase.ResetMode.kResetSafeParameters, PersistMode.kNoPersistParameters);
-
+        steerController.configure(steerConfig, SparkBase.ResetMode.kResetSafeParameters,
+                                  PersistMode.kNoPersistParameters);
     }
 
     /**
@@ -310,12 +294,10 @@ public class SwerveModule implements Sendable {
     private void configureAbsoluteEncoderInterface() {
         CANcoderConfiguration absoluteEncoderConfig = new CANcoderConfiguration();
 
-        absoluteEncoderConfig.MagnetSensor.withSensorDirection(config.state.steerWheelPositiveDirection.toSensorDirectionValue())
-                .withMagnetOffset(config.state.absoluteEncoderOffset);
+        absoluteEncoderConfig.MagnetSensor.withSensorDirection(config.state.steerWheelPositiveDirection.toSensorDirectionValue()).withMagnetOffset(config.state.absoluteEncoderOffset);
 
         this.absoluteEncoder.clearStickyFaults();
-        this.absoluteEncoder.getConfigurator()
-                .apply(absoluteEncoderConfig);
+        this.absoluteEncoder.getConfigurator().apply(absoluteEncoderConfig);
     }
 
     // ///////////////////// //
@@ -336,8 +318,10 @@ public class SwerveModule implements Sendable {
      * Stores the considerations that must be taken into account due to the module's physical state
      *
      * @param absoluteEncoderOffset       The magnet offset of the absolute encoder
-     * @param driveWheelPositiveDirection The direction in which the drive wheel must turn when it receives a positive input
-     * @param steerWheelPositiveDirection The direction in which the steer wheel must turn when it receives a positive input
+     * @param driveWheelPositiveDirection The direction in which the drive wheel must turn when it receives a
+     *                                    positive input
+     * @param steerWheelPositiveDirection The direction in which the steer wheel must turn when it receives a
+     *                                    positive input
      */
     public record StateConsiderations(Angle absoluteEncoderOffset, RotationalDirection driveWheelPositiveDirection,
                                       RotationalDirection steerWheelPositiveDirection) {

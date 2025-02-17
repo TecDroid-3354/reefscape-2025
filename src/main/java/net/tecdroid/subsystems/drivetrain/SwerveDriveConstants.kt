@@ -18,8 +18,11 @@ object SwerveDriveConstants {
     private val imuId: CanId = CanId(1)
 
     // Drivetrain Measurements //
-    val drivetrainDimensions = Square(Inches.of(22.3))
-    val quarterDrivetrain = drivetrainDimensions.scale(0.5)
+    private val drivetrainDimensions = Square(Inches.of(22.3))
+    private val quarterDrivetrain = drivetrainDimensions.scale(0.5)
+
+    private val driveMotorDirection = RotationalDirection.Counterclockwise;
+    private val steerMotorDirection = RotationalDirection.Counterclockwise;
 
     // Module Characteristics //
     val wheel: Wheel = fromRadius(Inches.of(2.0))
@@ -126,26 +129,26 @@ object SwerveDriveConstants {
         private val frontRightStateConsiderations: StateConsiderations =
             StateConsiderations(
                 ModuleState.frontRightMagnetOffset,
-                RotationalDirection.Clockwise,
-                RotationalDirection.Counterclockwise
+                driveMotorDirection,
+                steerMotorDirection
             )
         private val frontLeftStateConsiderations: StateConsiderations =
             StateConsiderations(
                 ModuleState.frontLeftMagnetOffset,
-                RotationalDirection.Clockwise,
-                RotationalDirection.Counterclockwise
+                driveMotorDirection,
+                steerMotorDirection
             )
         private val backLeftStateConsiderations: StateConsiderations =
             StateConsiderations(
                 ModuleState.backLeftMagnetOffset,
-                RotationalDirection.Clockwise,
-                RotationalDirection.Counterclockwise
+                driveMotorDirection,
+                steerMotorDirection
             )
         private val backRightStateConsiderations: StateConsiderations =
             StateConsiderations(
                 ModuleState.backRightMagnetOffset,
-                RotationalDirection.Clockwise,
-                RotationalDirection.Counterclockwise
+                driveMotorDirection,
+                steerMotorDirection
             )
 
         private val frontRightPhysicalDescription: PhysicalDescription =
