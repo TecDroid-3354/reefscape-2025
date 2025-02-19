@@ -2,6 +2,7 @@ package net.tecdroid.core;
 
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import net.tecdroid.constants.GenericConstants;
@@ -12,10 +13,10 @@ import net.tecdroid.subsystems.drivetrain.SwerveDriveConfiguration;
 import static edu.wpi.first.units.Units.*;
 
 public class RobotContainer {
-    private final CompliantXboxController controller  =
+    private final CompliantXboxController controller =
         new CompliantXboxController(GenericConstants.INSTANCE.getDriverControllerId());
-    private final SwerveDrive             swerveDrive =
-        new SwerveDrive(SwerveDriveConfiguration.INSTANCE.getConfiguration());
+
+    private final SwerveDrive swerveDrive = new SwerveDrive(SwerveDriveConfiguration.INSTANCE.getConfiguration());
 
     public RobotContainer() {
         configureBindings();
@@ -35,6 +36,8 @@ public class RobotContainer {
         controller.x().onTrue(Commands.runOnce(() -> {
             swerveDrive.setHeading(Radians.of(0.0));
         }));
+
+        SmartDashboard.putNumber("Max velocity m s^-1", swerveDrive.getMaxLinearVelocity().in(MetersPerSecond));
     }
 
     public Command getAutonomousCommand() {

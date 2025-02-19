@@ -3,12 +3,13 @@ package net.tecdroid.subsystems.drivetrain
 import com.ctre.phoenix6.configs.Pigeon2Configuration
 import com.ctre.phoenix6.hardware.Pigeon2
 import edu.wpi.first.math.geometry.Pose2d
-import edu.wpi.first.math.geometry.Rotation2d
 import edu.wpi.first.math.geometry.Translation2d
 import edu.wpi.first.math.kinematics.*
+import edu.wpi.first.units.Units.MetersPerSecond
 import edu.wpi.first.units.measure.Angle
+import edu.wpi.first.units.measure.LinearVelocity
 import edu.wpi.first.wpilibj2.command.SubsystemBase
-import net.tecdroid.kt.r2d
+import net.tecdroid.kt.toRotation2d
 import net.tecdroid.util.NumericId
 
 class SwerveDrive(private val config: Config) : SubsystemBase() {
@@ -18,7 +19,7 @@ class SwerveDrive(private val config: Config) : SubsystemBase() {
 
     private val kinematics =
         SwerveDriveKinematics(*config.moduleConfigurations.moduleConfigs.map { it.second }.toTypedArray())
-    private val odometry = SwerveDriveOdometry(kinematics, Rotation2d(heading), modulePositions.toTypedArray())
+    private val odometry = SwerveDriveOdometry(kinematics, heading.toRotation2d(), modulePositions.toTypedArray())
 
     init {
         this.configureImuInterface()
@@ -32,7 +33,7 @@ class SwerveDrive(private val config: Config) : SubsystemBase() {
         require(states.size == modules.size) { "You must provide as many states as there are modules" }
 
         for (i in states.indices) {
-            modules[i].setTargetState(states[i]!!)
+            modules[i].setTargetState(states[i])
         }
     }
 
@@ -52,13 +53,13 @@ class SwerveDrive(private val config: Config) : SubsystemBase() {
     // //////// //
 
     private fun updateOdometry() {
-        odometry.update(Rotation2d(heading), modulePositions.toTypedArray())
+        odometry.update(heading.toRotation2d(), modulePositions.toTypedArray())
     }
 
     var pose: Pose2d
         get() = odometry.poseMeters
         set(newPose) {
-            odometry.resetPosition(heading.r2d(), modulePositions.toTypedArray(), newPose)
+            odometry.resetPosition(heading.toRotation2d(), modulePositions.toTypedArray(), newPose)
         }
 
     var heading: Angle
@@ -68,10 +69,13 @@ class SwerveDrive(private val config: Config) : SubsystemBase() {
         }
 
     val moduleStates: List<SwerveModuleState>
-        get() = modules.map { SwerveModuleState(it.wheelLinearVelocity, it.wheelAzimuth.r2d()) }
+        get() = modules.map { SwerveModuleState(it.wheelLinearVelocity, it.wheelAzimuth.toRotation2d()) }
 
     val modulePositions: List<SwerveModulePosition>
-        get() = modules.map { SwerveModulePosition(it.wheelLinearDisplacement, it.wheelAzimuth.r2d()) }
+        get() = modules.map { SwerveModulePosition(it.wheelLinearDisplacement, it.wheelAzimuth.toRotation2d()) }
+
+    val maxLinearVelocity: LinearVelocity =
+        modules.map { it.wheelMaxLinearVelocity }.minByOrNull { it.`in`(MetersPerSecond) }!!
 
 
     // ///////////// //

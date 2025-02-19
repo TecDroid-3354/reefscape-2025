@@ -13,7 +13,6 @@ import com.revrobotics.spark.SparkLowLevel
 import com.revrobotics.spark.SparkMax
 import com.revrobotics.spark.config.SparkBaseConfig.IdleMode
 import com.revrobotics.spark.config.SparkMaxConfig
-import edu.wpi.first.math.geometry.Rotation2d
 import edu.wpi.first.math.kinematics.SwerveModulePosition
 import edu.wpi.first.math.kinematics.SwerveModuleState
 import edu.wpi.first.units.Units.*
@@ -21,6 +20,7 @@ import edu.wpi.first.units.measure.*
 import edu.wpi.first.util.sendable.Sendable
 import edu.wpi.first.util.sendable.SendableBuilder
 import net.tecdroid.constants.UnitConstants.halfRotation
+import net.tecdroid.kt.toRotation2d
 import net.tecdroid.util.*
 import net.tecdroid.util.geometry.Wheel
 
@@ -163,13 +163,13 @@ class SwerveModule(private val config: Config) : Sendable {
      * The state of the module as a [SwerveModuleState]
      */
     val state: SwerveModuleState
-        get() = SwerveModuleState(wheelLinearVelocity, Rotation2d(steerShaftAzimuth))
+        get() = SwerveModuleState(wheelLinearVelocity, steerShaftAzimuth.toRotation2d())
 
     /**
      * The position of the module as a [SwerveModulePosition]
      */
     val position: SwerveModulePosition
-        get() = SwerveModulePosition(wheelLinearDisplacement, Rotation2d(steerShaftAzimuth))
+        get() = SwerveModulePosition(wheelLinearDisplacement, steerShaftAzimuth.toRotation2d())
 
     // /////////// //
     // Conversions //
@@ -221,7 +221,7 @@ class SwerveModule(private val config: Config) : Sendable {
      * @param state The state to optimize
      */
     private fun optimizeState(state: SwerveModuleState) {
-        state.optimize(Rotation2d(wheelAzimuth))
+        state.optimize(wheelAzimuth.toRotation2d())
     }
 
     // ///////////// //
@@ -385,7 +385,7 @@ class SwerveModule(private val config: Config) : Sendable {
      * @param identifiers The identifier config
      * @param physical    The physical config
      * @param control     The control config
-     * @param limits      The limt config
+     * @param limits      The limit config
      */
     @JvmRecord
     data class Config(
