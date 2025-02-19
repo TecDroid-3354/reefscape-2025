@@ -16,7 +16,6 @@ import com.revrobotics.spark.SparkMax;
 import com.revrobotics.spark.config.SparkBaseConfig.IdleMode;
 import com.revrobotics.spark.config.SparkMaxConfig;
 import edu.wpi.first.math.geometry.Rotation2d;
-import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.kinematics.SwerveModulePosition;
 import edu.wpi.first.math.kinematics.SwerveModuleState;
 import edu.wpi.first.units.measure.*;
@@ -99,6 +98,10 @@ public class SwerveModule implements Sendable {
         steerEncoder.setPosition(getAbsoluteSteerShaftAzimuth().in(Rotations));
     }
 
+    // ///////////////// //
+    // Getters + Setters //
+    // ///////////////// //
+
     /**
      * @return The accumulated angular displacement of the drive motor shaft
      */
@@ -141,9 +144,13 @@ public class SwerveModule implements Sendable {
         return config.physical.wheel.angularVelocityToLinearVelocity(getWheelAngularVelocity());
     }
 
-    // ///////////////// //
-    // Getters + Setters //
-    // ///////////////// //
+    public AngularVelocity getDriveMotorShaftMaxAngularVelocity() {
+        return config.deviceProperties.driveMotorProperties.getMaxAngularVelocity();
+    }
+
+    public LinearVelocity getWheelMaxLinearVelocity() {
+        return config.physical.wheel.angularVelocityToLinearVelocity(config.physical.driveGearing.apply(getDriveMotorShaftMaxAngularVelocity()));
+    }
 
     /**
      * @return The azimuth of the module's wheel (as indicated by absolute encoder)
@@ -185,13 +192,6 @@ public class SwerveModule implements Sendable {
      */
     public SwerveModulePosition getPosition() {
         return new SwerveModulePosition(getWheelLinearDisplacement(), new Rotation2d(getSteerShaftAzimuth()));
-    }
-
-    /**
-     * @return The offset from the center of the robot
-     */
-    public Translation2d getOffsetFromCenter() {
-        return config.physical.offset();
     }
 
     // /////////// //
@@ -263,7 +263,7 @@ public class SwerveModule implements Sendable {
 
         driveConfig.Slot0.withKP(config.control.drivePidf.getP()).withKI(config.control.drivePidf.getI()).withKD(config.control.drivePidf.getD()).withKS(config.control.driveSvag.getS()).withKV(config.control.driveSvag.getV()).withKA(config.control.driveSvag.getA());
 
-        driveConfig.MotorOutput.withNeutralMode(NeutralModeValue.Brake).withInverted(config.physical.driveGearing.transformRotation(config.state.driveWheelPositiveDirection).toInvertedValue());
+        driveConfig.MotorOutput.withNeutralMode(NeutralModeValue.Brake).withInverted(config.physical.driveGearing.transformRotation(config.deviceConventions.driveWheelPositiveDirection).toInvertedValue());
 
         driveInterface.clearStickyFaults();
         driveInterface.getConfigurator().apply(driveConfig);
@@ -276,7 +276,7 @@ public class SwerveModule implements Sendable {
     private void configureSteerInterface() {
         SparkMaxConfig steerConfig = new SparkMaxConfig();
 
-        steerConfig.idleMode(IdleMode.kBrake).inverted(config.physical.steerGearing.transformRotation(config.state.steerWheelPositiveDirection).differs(Motors.INSTANCE.getNeo().getRotationalConvention().positiveDirection())).smartCurrentLimit((int) config.limits.steerCurrentLimit.in(Amps));
+        steerConfig.idleMode(IdleMode.kBrake).inverted(config.physical.steerGearing.transformRotation(config.deviceConventions.steerWheelPositiveDirection).differs(Motors.INSTANCE.getNeo().getPositiveDirection())).smartCurrentLimit((int) config.limits.steerCurrentLimit.in(Amps));
 
         steerConfig.encoder.positionConversionFactor(1.0).velocityConversionFactor(1.0);
 
@@ -294,7 +294,7 @@ public class SwerveModule implements Sendable {
     private void configureAbsoluteEncoderInterface() {
         CANcoderConfiguration absoluteEncoderConfig = new CANcoderConfiguration();
 
-        absoluteEncoderConfig.MagnetSensor.withSensorDirection(config.state.steerWheelPositiveDirection.toSensorDirectionValue()).withMagnetOffset(config.state.absoluteEncoderOffset);
+        absoluteEncoderConfig.MagnetSensor.withSensorDirection(config.deviceConventions.steerWheelPositiveDirection.toSensorDirectionValue()).withMagnetOffset(config.specifics.absoluteEncoderOffset);
 
         this.absoluteEncoder.clearStickyFaults();
         this.absoluteEncoder.getConfigurator().apply(absoluteEncoderConfig);
@@ -311,32 +311,49 @@ public class SwerveModule implements Sendable {
      * @param steerId           The ID of the steer motor controller
      * @param absoluteEncoderId The ID of the absolute encoder
      */
-    public record LinkedIdentifiers(NumericId driveId, NumericId steerId, NumericId absoluteEncoderId) {
+    public record DeviceIdentifiers(NumericId driveId, NumericId steerId, NumericId absoluteEncoderId) {
+    }
+
+    public record DeviceProperties(MotorProperties driveMotorProperties, MotorProperties steerMotorProperties) {
+    }
+
+    /**
+     * Stores limits that regulate the module's motion
+     *
+     * @param driveCurrentLimit The current limit for the driving motor
+     * @param steerCurrentLimit The current limit for the steering motor
+     */
+    public record DeviceLimits(Current driveCurrentLimit, Current steerCurrentLimit) {
     }
 
     /**
      * Stores the considerations that must be taken into account due to the module's physical state
      *
-     * @param absoluteEncoderOffset       The magnet offset of the absolute encoder
      * @param driveWheelPositiveDirection The direction in which the drive wheel must turn when it receives a
      *                                    positive input
      * @param steerWheelPositiveDirection The direction in which the steer wheel must turn when it receives a
      *                                    positive input
      */
-    public record StateConsiderations(Angle absoluteEncoderOffset, RotationalDirection driveWheelPositiveDirection,
-                                      RotationalDirection steerWheelPositiveDirection) {
+    public record DeviceConventions(RotationalDirection driveWheelPositiveDirection,
+                                    RotationalDirection steerWheelPositiveDirection) {
+    }
+
+    /**
+     * Stores the configuration parameters that are unique to each module
+     *
+     * @param absoluteEncoderOffset The magnet offset of the absolute encoder
+     */
+    public record ModuleSpecifics(Angle absoluteEncoderOffset) {
     }
 
     /**
      * Stores characteristics relating to the module's physical description
      *
-     * @param offset       The module's offset from the center of the drivetrain
      * @param driveGearing The gearing between the drive shaft and the wheel
      * @param steerGearing The gearing between the steer shaft and the wheel
      * @param wheel        The wheel's physical description
      */
-    public record PhysicalDescription(Translation2d offset, GearRatio driveGearing, GearRatio steerGearing,
-                                      Wheel wheel) {
+    public record PhysicalDescription(GearRatio driveGearing, GearRatio steerGearing, Wheel wheel) {
     }
 
     /**
@@ -352,24 +369,15 @@ public class SwerveModule implements Sendable {
     }
 
     /**
-     * Stores limits that regulate the module's motion
-     *
-     * @param driveCurrentLimit The current limit for the driving motor
-     * @param steerCurrentLimit The current limit for the steering motor
-     */
-    public record Limits(Current driveCurrentLimit, Current steerCurrentLimit) {
-    }
-
-    /**
      * Stores the module's configuration parameters
      *
      * @param identifiers The identifier config
-     * @param state       The state config
      * @param physical    The physical config
      * @param control     The control config
      * @param limits      The limt config
      */
-    public record Config(LinkedIdentifiers identifiers, StateConsiderations state, PhysicalDescription physical,
-                         ControlConstants control, Limits limits) {
+    public record Config(DeviceIdentifiers identifiers, DeviceProperties deviceProperties,
+                         DeviceConventions deviceConventions, DeviceLimits limits, PhysicalDescription physical,
+                         ControlConstants control, ModuleSpecifics specifics) {
     }
 }

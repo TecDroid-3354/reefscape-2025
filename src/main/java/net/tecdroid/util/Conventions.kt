@@ -2,125 +2,94 @@ package net.tecdroid.util
 
 import com.ctre.phoenix6.signals.InvertedValue
 import com.ctre.phoenix6.signals.SensorDirectionValue
-import edu.wpi.first.units.Units.RotationsPerSecond
 import edu.wpi.first.units.measure.Angle
 import edu.wpi.first.units.measure.Distance
-import net.tecdroid.util.LongitudinalDirection.*
-import net.tecdroid.util.RotationalDirection.*
-import net.tecdroid.util.TransversalDirection.Left
-import net.tecdroid.util.TransversalDirection.Right
-import net.tecdroid.util.VerticalDirection.Down
-import net.tecdroid.util.VerticalDirection.Up
 
-enum class RotationalDirection {
-    Clockwise, Counterclockwise;
+enum class RotationalDirection(private val factor: Int) {
+    Counterclockwise(1), Clockwise(-1);
 
-    fun isClockwise() = this == Clockwise
-    fun isCounterClockwise() = this == Clockwise
+    fun isCounterClockwise(): Boolean = this == Counterclockwise
+    fun isClockwise(): Boolean = !isCounterClockwise()
 
-    fun matches(other: RotationalDirection) = this == other
-    fun differs(other: RotationalDirection) = !matches(other)
+    fun matches(other: RotationalDirection): Boolean = this == other
+    fun differs(other: RotationalDirection): Boolean = !matches(other)
 
-    fun opposite() = if (isClockwise()) Counterclockwise else Clockwise
+    fun rotateClockwise(angle: Angle): Angle = angle * (factor * Clockwise.factor).toDouble()
+    fun rotateCounterclockwise(angle: Angle): Angle = angle * (factor * Counterclockwise.factor).toDouble()
+    fun rotateWithDirection(angle: Angle, dir: RotationalDirection): Angle = angle * (factor * dir.factor).toDouble()
 
-    fun toSensorDirectionValue() = if (this == Clockwise) SensorDirectionValue.Clockwise_Positive else SensorDirectionValue.CounterClockwise_Positive
-    fun toInvertedValue() = if (this == Clockwise) InvertedValue.Clockwise_Positive else InvertedValue.CounterClockwise_Positive
+    fun opposite(): RotationalDirection = if (isCounterClockwise()) Clockwise else Counterclockwise
+
+    fun toSensorDirectionValue(): SensorDirectionValue =
+        if (this == Clockwise) SensorDirectionValue.Clockwise_Positive else SensorDirectionValue.CounterClockwise_Positive
+
+    fun toInvertedValue(): InvertedValue =
+        if (this == Clockwise) InvertedValue.Clockwise_Positive else InvertedValue.CounterClockwise_Positive
 }
 
-class RotationalConvention(val direction: RotationalDirection) {
-    fun clockwise(angle: Angle): Angle = if (direction == Clockwise) angle else angle.times(-1.0)
-    fun counterclockwise(angle: Angle): Angle = if (direction == Counterclockwise) angle else angle.times(-1.0)
+enum class LongitudinalDirection(private val factor: Int) {
+    Front(1), Back(-1);
 
-    fun positiveDirection(): RotationalDirection = direction
-    fun negativeDirection(): RotationalDirection = direction.opposite()
+    fun isFront(): Boolean = this == Front
+    fun isBack(): Boolean = this == Back
 
-    fun convertTo(other: RotationalConvention, angle: Angle) = if (this.direction == other.direction) angle else angle.times(-1.0)
+    fun matches(other: LongitudinalDirection): Boolean = this == other
+    fun differs(other: LongitudinalDirection): Boolean = !matches(other)
 
-    companion object {
-        fun clockwisePositive() = RotationalConvention(Clockwise)
-        fun counterclockwisePositive() = RotationalConvention(Counterclockwise)
-    }
+    fun translateFront(distance: Distance): Distance = distance * (factor * Front.factor).toDouble()
+    fun translateBack(distance: Distance): Distance = distance * (factor * Back.factor).toDouble()
+    fun translateWithDirection(distance: Distance, dir: LongitudinalDirection): Distance =
+        distance * (factor * dir.factor).toDouble()
+
+    fun opposite(): LongitudinalDirection = if (isFront()) Back else Front
 }
 
-enum class LongitudinalDirection{
-    Front, Back;
+enum class TransversalDirection(private val factor: Int) {
+    Left(1), Right(-1);
 
-    fun matches(other: LongitudinalDirection) = this == other
-    fun differs(other: LongitudinalDirection) = !matches(other)
+    fun isLeft(): Boolean = this == Left
+    fun isRight(): Boolean = this == Right
 
-    fun isFront() = this == Front
-    fun isBack() = this == Back
+    fun matches(other: TransversalDirection): Boolean = this == other
+    fun differs(other: TransversalDirection): Boolean = !matches(other)
+
+    fun translateLeft(distance: Distance): Distance = distance * (factor * Left.factor).toDouble()
+    fun translateRight(distance: Distance): Distance = distance * (factor * Right.factor).toDouble()
+    fun translateWithDirection(distance: Distance, dir: TransversalDirection): Distance =
+        distance * (factor * dir.factor).toDouble()
+
+    fun opposite(): TransversalDirection = if (isLeft()) Left else Right
 }
 
-class LongitudinalConvention(val direction: LongitudinalDirection) {
-    fun front(distance: Distance) = if (direction == Front) distance else distance.times(-1.0)
-    fun back(distance: Distance) = if (direction == Back) distance else distance.times(-1.0)
-    fun convertTo(other: LongitudinalConvention, distance: Distance) = if (this.direction == other.direction) distance else distance.times(-1.0)
+enum class VerticalDirection(private val factor: Int) {
+    Up(1), Down(-1);
 
-    companion object {
-        fun frontPositive() = LongitudinalConvention(Front)
-        fun backPositive() = LongitudinalConvention(Back)
-    }
-}
+    fun isUp(): Boolean = this == Up
+    fun isDown(): Boolean = this == Down
 
-enum class TransversalDirection {
-    Left, Right;
+    fun matches(other: VerticalDirection): Boolean = this == other
+    fun differs(other: VerticalDirection): Boolean = !matches(other)
 
-    fun matches(other: TransversalDirection) = this == other
-    fun differs(other: TransversalDirection) = !matches(other)
+    fun translateUp(distance: Distance): Distance = distance * (factor * Up.factor).toDouble()
+    fun translateDown(distance: Distance): Distance = distance * (factor * Down.factor).toDouble()
+    fun translateWithDirection(distance: Distance, dir: VerticalDirection): Distance =
+        distance * (factor * dir.factor).toDouble()
 
-    fun isLeft() = this == Left
-    fun isRight() = this == Right
-}
-
-class TransversalConvention(val direction: TransversalDirection) {
-    fun left(distance: Distance) = if (direction == Left) distance else distance.times(-1.0)
-    fun right(distance: Distance) = if (direction == Right) distance else distance.times(-1.0)
-    fun convertTo(other: TransversalConvention, distance: Distance) = if (this.direction == other.direction) distance else distance.times(-1.0)
-
-    companion object {
-        fun leftPositive() = TransversalConvention(Left)
-        fun rightPositive() = TransversalConvention(Right)
-    }
-}
-
-enum class VerticalDirection{
-    Up, Down;
-
-    fun matches(other: VerticalDirection) = this == other
-    fun differs(other: VerticalDirection) = !matches(other)
-
-    fun isUp() = this == Up
-    fun isDown() = this == Down
-}
-
-class VerticalConvention(val direction: VerticalDirection) {
-    fun up(distance: Distance) = if (direction == Up) distance else distance.times(-1.0)
-    fun down(distance: Distance) = if (direction == Down) distance else distance.times(-1.0)
-    fun convertTo(other: VerticalConvention, distance: Distance) = if (this.direction == other.direction) distance else distance.times(-1.0)
-
-    companion object {
-        fun up() = VerticalConvention(Up)
-        fun down() = VerticalConvention(Down)
-    }
+    fun opposite(): VerticalDirection = if (isUp()) Up else Down
 }
 
 open class SpatialConvention(
-    val longitudinal: LongitudinalConvention,
-    val transversal: TransversalConvention,
-    val rotational: VerticalConvention,
-    val rotationalConvention: RotationalConvention)
-
-class SpatialConversion(private val from: SpatialConvention, private val to: SpatialConvention) {
-    fun convertLongitudinal(distance: Distance) = from.longitudinal.convertTo(
-        to.longitudinal,
-        distance
-    )
-    fun convertTransversal(distance: Distance) = from.transversal.convertTo(
-        to.transversal,
-        distance
-    )
-    fun convertVertical(distance: Distance) = from.rotational.convertTo(to.rotational, distance)
-    fun convertRotational(angle: Angle) = from.rotationalConvention.convertTo(to.rotationalConvention, angle)
-
+    val longitudinalDirection: LongitudinalDirection,
+    val transversalDirection: TransversalDirection,
+    val verticalDirection: VerticalDirection,
+    val rotationalDirection: RotationalDirection
+) {
+    fun rotateClockwise(angle: Angle): Angle = rotationalDirection.rotateClockwise(angle)
+    fun rotateCounterclockwise(angle: Angle): Angle = rotationalDirection.rotateCounterclockwise(angle)
+    fun translateFront(distance: Distance): Distance = longitudinalDirection.translateFront(distance)
+    fun translateBack(distance: Distance): Distance = longitudinalDirection.translateBack(distance)
+    fun translateLeft(distance: Distance): Distance = transversalDirection.translateLeft(distance)
+    fun translateRight(distance: Distance): Distance = transversalDirection.translateRight(distance)
+    fun translateUp(distance: Distance): Distance = verticalDirection.translateUp(distance)
+    fun translateDown(distance: Distance): Distance = verticalDirection.translateDown(distance)
 }

@@ -8,9 +8,11 @@ import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.kinematics.*;
 import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
+import kotlin.Pair;
 import net.tecdroid.util.NumericId;
 
 import java.util.Arrays;
+import java.util.List;
 
 public class SwerveDrive extends SubsystemBase {
     private final SwerveModule[] modules;
@@ -26,13 +28,13 @@ public class SwerveDrive extends SubsystemBase {
         this.config = config;
 
         this.modules =
-            Arrays.stream(config.moduleConfig.moduleConfigs()).map(SwerveModule::new).toArray(SwerveModule[]::new);
+            config.moduleConfig.moduleConfigs.stream().map((pair) -> new SwerveModule(pair.getFirst())).toArray(SwerveModule[]::new);
 
         this.gyro = new Pigeon2(config.identifierConfig.imuId().getId());
         this.configureImuInterface();
 
         this.kinematics =
-            new SwerveDriveKinematics(Arrays.stream(modules).map(SwerveModule::getOffsetFromCenter).toArray(Translation2d[]::new));
+            new SwerveDriveKinematics(config.moduleConfig.moduleConfigs.stream().map(Pair::getSecond).toArray(Translation2d[]::new));
 
         this.odometry = new SwerveDriveOdometry(kinematics, new Rotation2d(getHeading()), getModulePositions());
     }
@@ -117,12 +119,12 @@ public class SwerveDrive extends SubsystemBase {
         gyro.getConfigurator().apply(imuConfiguration);
     }
 
-    public record ModuleConfig(SwerveModule.Config[] moduleConfigs) {
+    public record ModuleConfig(List<Pair<SwerveModule.Config, Translation2d>> moduleConfigs) {
     }
 
-    public record IdentifierConfig(NumericId imuId) {
+    public record DeviceIdentifiers(NumericId imuId) {
     }
 
-    public record Config(ModuleConfig moduleConfig, IdentifierConfig identifierConfig) {
+    public record Config(ModuleConfig moduleConfig, DeviceIdentifiers identifierConfig) {
     }
 }
