@@ -69,8 +69,8 @@ class SwerveModule(private val config: Config) : Sendable {
      */
     fun setTargetState(targetState: SwerveModuleState) {
         optimizeState(targetState)
-        setTargetVelocity(MetersPerSecond.of(targetState.speedMetersPerSecond))
         setTargetAngle(targetState.angle.measure)
+        setTargetVelocity(MetersPerSecond.of(targetState.speedMetersPerSecond))
     }
 
     /**
@@ -98,7 +98,7 @@ class SwerveModule(private val config: Config) : Sendable {
     /**
      * The accumulated linear displacement of the module's wheel
      */
-    private val wheelLinearDisplacement: Distance
+    val wheelLinearDisplacement: Distance
         get() = config.physical.wheel.angularDisplacementToLinearDisplacement(wheelAngularDisplacement)
 
     /**
@@ -116,7 +116,7 @@ class SwerveModule(private val config: Config) : Sendable {
     /**
      * The linear velocity of the module's wheel
      */
-    private val wheelLinearVelocity: LinearVelocity
+    val wheelLinearVelocity: LinearVelocity
         get() = config.physical.wheel.angularVelocityToLinearVelocity(wheelAngularVelocity)
 
     /**
@@ -156,7 +156,7 @@ class SwerveModule(private val config: Config) : Sendable {
     /**
      * The azimuth of the module's wheel
      */
-    private val wheelAzimuth: Angle
+    val wheelAzimuth: Angle
         get() = config.physical.steerGearing.apply(steerShaftAzimuth)
 
     /**

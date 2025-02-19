@@ -49,8 +49,8 @@ object SwerveDriveConfiguration {
 
     }
 
-    private val moduleConfig =
-        SwerveDrive.ModuleConfig(SwerveModuleConfiguration.configurations.zip(Structure.moduleOffsets))
+    private val moduleConfigurations =
+        SwerveDrive.ModuleConfigurations(SwerveModuleConfiguration.configurations.zip(Structure.moduleOffsets))
 
-    val configuration = SwerveDrive.Config(moduleConfig, DeviceIds.deviceIdentifiers)
+    val configuration = SwerveDrive.Config(moduleConfigurations, DeviceIds.deviceIdentifiers)
 }
