@@ -393,4 +393,6 @@ class SwerveModule(private val config: Config) : Sendable {
         val deviceConventions: DeviceConventions, val limits: DeviceLimits, val physical: PhysicalDescription,
         val control: ControlConstants, val specifics: ModuleSpecifics
     )
+
+    val talon = driveInterface;
 }

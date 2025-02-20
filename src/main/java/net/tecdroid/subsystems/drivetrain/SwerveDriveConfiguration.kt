@@ -47,10 +47,13 @@ object SwerveDriveConfiguration {
             )
         )
 
+        internal val physicalDescription = SwerveDrive.PhysicalDescription(chassisDimensions)
     }
 
     private val moduleConfigurations =
         SwerveDrive.ModuleConfigurations(SwerveModuleConfiguration.configurations.zip(Structure.moduleOffsets))
 
-    val configuration = SwerveDrive.Config(moduleConfigurations, DeviceIds.deviceIdentifiers)
+
+    val configuration =
+        SwerveDrive.Config(moduleConfigurations, DeviceIds.deviceIdentifiers, Structure.physicalDescription)
 }

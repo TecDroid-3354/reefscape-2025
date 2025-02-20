@@ -6,11 +6,15 @@ import edu.wpi.first.math.geometry.Pose2d
 import edu.wpi.first.math.geometry.Translation2d
 import edu.wpi.first.math.kinematics.*
 import edu.wpi.first.units.Units.MetersPerSecond
+import edu.wpi.first.units.Units.Rotations
 import edu.wpi.first.units.measure.Angle
+import edu.wpi.first.units.measure.AngularVelocity
 import edu.wpi.first.units.measure.LinearVelocity
 import edu.wpi.first.wpilibj2.command.SubsystemBase
 import net.tecdroid.kt.toRotation2d
 import net.tecdroid.util.NumericId
+import net.tecdroid.util.geometry.Rectangle
+import kotlin.math.PI
 
 class SwerveDrive(private val config: Config) : SubsystemBase() {
     private val gyro = Pigeon2(config.identifierConfig.imuId.id)
@@ -77,6 +81,9 @@ class SwerveDrive(private val config: Config) : SubsystemBase() {
     val maxLinearVelocity: LinearVelocity =
         modules.map { it.wheelMaxLinearVelocity }.minByOrNull { it.`in`(MetersPerSecond) }!!
 
+    val maxAngularVelocity: AngularVelocity =
+        Rotations.one().div((config.physicalDescription.dimensions.diagonalLength * PI) / maxLinearVelocity);
+
 
     // ///////////// //
     // Configuration //
@@ -103,5 +110,13 @@ class SwerveDrive(private val config: Config) : SubsystemBase() {
      */
     data class DeviceIdentifiers(val imuId: NumericId)
 
-    data class Config(val moduleConfigurations: ModuleConfigurations, val identifierConfig: DeviceIdentifiers)
+    data class PhysicalDescription(val dimensions: Rectangle)
+
+    data class Config(
+        val moduleConfigurations: ModuleConfigurations,
+        val identifierConfig: DeviceIdentifiers,
+        val physicalDescription: PhysicalDescription
+    )
+
+    val talons = modules.map { it.talon }
 }
