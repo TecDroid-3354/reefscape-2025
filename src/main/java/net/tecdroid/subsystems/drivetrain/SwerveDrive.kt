@@ -110,7 +110,8 @@ class SwerveDrive(private val config: Config) : SubsystemBase() {
      */
     data class DeviceIdentifiers(val imuId: NumericId)
 
-    data class PhysicalDescription(val dimensions: Rectangle)
+    data class 
+    PhysicalDescription(val dimensions: Rectangle)
 
     data class Config(
         val moduleConfigurations: ModuleConfigurations,
