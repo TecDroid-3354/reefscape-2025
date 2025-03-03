@@ -15,12 +15,12 @@ public class WristConfiguration {
 
     private static class DeviceIDs {
         private final DigitId wristDigit = new DigitId(7);
-        private final DigitId throughboreDigit = new DigitId(0);
+        private final DigitId throughborePort = new DigitId(0);
         private final DigitId leftMotorDigit = new DigitId(1);
         private final DigitId rightMotorDigit = new DigitId(2);
 
         final DeviceIdentifiers wristDevicesIDs = new DeviceIdentifiers(
-                throughboreDigit,
+                throughborePort,
                 IdentifiersKt.joinDigits(wristDigit, leftMotorDigit),
                 IdentifiersKt.joinDigits(wristDigit, rightMotorDigit)
         );
@@ -33,9 +33,9 @@ public class WristConfiguration {
 
     private static class Limits {
         private final Current motorsCurrentLimit = Amps.of(30.0);
-        private final Angle minimumAngleLimit = Angle.ofBaseUnits(60.0, Degrees);
-        private final Angle maximumAngleLimit = Angle.ofBaseUnits(120.0, Degrees);
-        private final AngularVelocity maximumAngularVelocity = RotationsPerSecond.of(33.3);
+        private final Angle minimumAngleLimit = Degrees.of(-30.0); // TODO: GET REAL MINIMUM. ARBITRARY VALUE
+        private final Angle maximumAngleLimit = Degrees.of(45.0); // TODO: GET REAL MAXIMUM. ARBITRARY VALUE
+        private final AngularVelocity maximumAngularVelocity = RotationsPerSecond.of(31.53); // A third of motor's capacity
         final DeviceLimits wristDeviceLimits = new DeviceLimits(
                 motorsCurrentLimit, minimumAngleLimit, maximumAngleLimit, maximumAngularVelocity);
     }
@@ -47,7 +47,7 @@ public class WristConfiguration {
 
     private static class Structure {
         private final GearRatio wristGR = new GearRatio(89.2857, 1.0, 0);
-        private final Angle encoderOffset = Angle.ofBaseUnits(45.0, Degrees); // TODO: Offset varies depending on the robot's build. 45 is an arbitrary value
+        private final Angle encoderOffset = Degrees.of(45.0); // TODO: GET REAL OFFSET. ARBITRARY VALUE
         final PhysicalDescription wristPhysicalDescription = new PhysicalDescription(wristGR, encoderOffset);
     }
 
@@ -55,7 +55,7 @@ public class WristConfiguration {
         // TODO: Determine all PIDF, SVAG coefficients
         private final PidfCoefficients motorsPIDF = new PidfCoefficients(0.0, 0.0, 0.0, 0.0);
         private final SvagGains motorsSVAG = new SvagGains(0.0, 0.0, 0.0, 0.0);
-        private final Time motorsRampRate = Time.ofBaseUnits(0.1, Seconds);
+        private final Time motorsRampRate = Seconds.of(0.1);
         final ControlConstants wristControlConstants = new ControlConstants(motorsPIDF, motorsSVAG, motorsRampRate);
     }
 

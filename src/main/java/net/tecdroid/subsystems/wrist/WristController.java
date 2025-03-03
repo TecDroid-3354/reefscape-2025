@@ -18,12 +18,12 @@ import java.util.function.Supplier;
 import static edu.wpi.first.units.Units.*;
 
 public class WristController {
-    private SparkMax leadingWristMotorController;
-    private SparkMax followerWristMotorController;
-    private SparkClosedLoopController leadingWristClosedLoopController;
-    private DutyCycleEncoder wristEncoder;
-    private Config wristConfig;
-    private Supplier<Boolean> isElevatorAngleDown;
+    private final SparkMax leadingWristMotorController;
+    private final SparkMax followerWristMotorController;
+    private final SparkClosedLoopController leadingWristClosedLoopController;
+    private final DutyCycleEncoder wristEncoder;
+    private final Config wristConfig;
+    private final Supplier<Boolean> isElevatorAngleDown;
 
     public WristController(Config wristConfig, Supplier<Boolean> isElevatorAngleDown) {
         this.wristConfig = wristConfig;
@@ -32,7 +32,7 @@ public class WristController {
         // wrist encoder --> throughbore (roboRIO connected)
         wristEncoder = new DutyCycleEncoder(wristConfig.Identifiers.encoderID.getId());
 
-        // leading motor --> right motor
+        // leading motor --> left motor
         leadingWristMotorController = new SparkMax(wristConfig.Identifiers.leftMotorID.getId(),
                                                     SparkLowLevel.MotorType.kBrushless);
         // follower motor --> right motor
@@ -46,9 +46,7 @@ public class WristController {
 
     public Angle getWristAngle() {
         /* Gets the leading motor's encoder reading and applies the gear ratio to obtain the wrist angle */
-        return Angle.ofBaseUnits(
-                wristConfig.PhysicalDescription.motorsGearRatio.apply(getMotorEncoderAngle().in(Rotations)),
-                Rotations);
+        return Rotations.of(wristConfig.PhysicalDescription.motorsGearRatio.apply(getMotorEncoderAngle().in(Rotations)));
     }
 
     private Angle getMotorEncoderAngle() {
@@ -84,18 +82,17 @@ public class WristController {
         /* Sets all motor's configurations */
 
         // Initialize config objects
-        SparkMaxConfig leaderConfig = new SparkMaxConfig();
-        SparkMaxConfig followerConfig = new SparkMaxConfig();
+        SparkMaxConfig motorsConfig = new SparkMaxConfig();
 
-        // Sets leading motor to brake and decides weather to invert the motor or not
-        leaderConfig.idleMode(SparkBaseConfig.IdleMode.kBrake).inverted(
+        // Sets leading motor to brake and decides whether to invert the motor or not
+        motorsConfig.idleMode(SparkBaseConfig.IdleMode.kBrake).inverted(
                 wristConfig.PhysicalDescription.motorsGearRatio.transformRotation(
                         wristConfig.Conventions.motorsRotationalPositiveDirection
                 ).differs(wristConfig.Properties.wristMotorProperties.getPositiveDirection())
         );
 
         // Limits the motor's current
-        leaderConfig.smartCurrentLimit(
+        motorsConfig.smartCurrentLimit(
                 (int) wristConfig.Limits.motorsCurrentLimit.in(Amps), // Stall limit
                 (int) wristConfig.Limits.motorsCurrentLimit.in(Amps), // Free limit
                 (int) wristConfig.Limits.maximumAngularVelocity.in(RotationsPerSecond) * 60 // Limit RPM
@@ -103,7 +100,7 @@ public class WristController {
         //leaderConfig.smartCurrentLimit((int) wristConfig.Limits.motorsCurrentLimit.in(Amps)); // Limited RPMs above to test
 
         // Sets all PIDF coefficients to the motor closed loop controller
-        leaderConfig.closedLoop.pidf(
+        motorsConfig.closedLoop.pidf(
                 wristConfig.ControlConstants.motorsPidfCoefficients.getP(),
                 wristConfig.ControlConstants.motorsPidfCoefficients.getI(),
                 wristConfig.ControlConstants.motorsPidfCoefficients.getD(),
@@ -112,30 +109,35 @@ public class WristController {
 
         // Compensate voltage by applying the summary of the gains S & G
         // S gain: minimum voltage to move.      G gain: minimum voltage to overcome the gravity.
-        leaderConfig.voltageCompensation(
+        motorsConfig.voltageCompensation(
                 wristConfig.ControlConstants.motorsSvagGains.getS() +
                         wristConfig.ControlConstants.motorsSvagGains.getG()
         );
 
         // Sets the time the motor should take to get to the desired speed / position
-        leaderConfig.closedLoopRampRate(wristConfig.ControlConstants.motorsRampRate.in(Seconds));
-
-        // Tells the follower motor to do everything the leading motor does
-        followerConfig.follow(leadingWristMotorController.getDeviceId());
-
-        // Removes all sticky faults when initializing
-        leadingWristMotorController.clearFaults();
-        followerWristMotorController.clearFaults();
+        motorsConfig.closedLoopRampRate(wristConfig.ControlConstants.motorsRampRate.in(Seconds));
 
         // Sets the motor's encoder reading to the throughbore encoder's reading and applies offset
         leadingWristMotorController.getEncoder().setPosition(
                 wristEncoder.get() - wristConfig.PhysicalDescription.encoderOffset.in(Rotations));
 
+        // Removes all previous sticky faults
+        leadingWristMotorController.clearFaults();
+        followerWristMotorController.clearFaults();
+
         // Apply configurations
         leadingWristMotorController.configure(
-                leaderConfig, SparkBase.ResetMode.kResetSafeParameters, SparkBase.PersistMode.kNoPersistParameters);
+                motorsConfig,
+                SparkBase.ResetMode.kResetSafeParameters, SparkBase.PersistMode.kNoPersistParameters);
         followerWristMotorController.configure(
-                followerConfig, SparkBase.ResetMode.kResetSafeParameters, SparkBase.PersistMode.kNoPersistParameters);
+                motorsConfig,
+                SparkBase.ResetMode.kResetSafeParameters, SparkBase.PersistMode.kNoPersistParameters);
+
+        // Sets the motor to follower mode. kNoResetSafeParameters to avoid overwriting previous set of configs
+        followerWristMotorController.configure(
+                motorsConfig.follow(leadingWristMotorController.getDeviceId()),
+                SparkBase.ResetMode.kNoResetSafeParameters, SparkBase.PersistMode.kNoPersistParameters
+        );
     }
 
     public record DeviceIdentifiers(NumericId leftMotorID, NumericId rightMotorID, NumericId encoderID) {}

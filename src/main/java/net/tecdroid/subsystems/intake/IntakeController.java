@@ -2,6 +2,7 @@ package net.tecdroid.subsystems.intake;
 
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.ctre.phoenix6.controls.VelocityVoltage;
+import com.ctre.phoenix6.controls.VoltageOut;
 import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.signals.NeutralModeValue;
 import edu.wpi.first.units.measure.*;
@@ -42,6 +43,13 @@ public class IntakeController {
         /* Applies a voltage based on the desired motor angular velocity */
         algaeIntakeMotorController.setControl(
                 new VelocityVoltage(motorAngularVelocity)
+        );
+    }
+
+    public void retainAlgaeIntake() {
+        /* Applies the minimum voltage to ensure algae does not go out the intake */
+        algaeIntakeMotorController.setControl(
+                new VoltageOut(intakeConfig.ControlConstants.retainAlgaeMinimumVoltage)
         );
     }
 
@@ -114,7 +122,7 @@ public class IntakeController {
         // Initialize configuration object
         TalonFXConfiguration algaeMotorConfig = new TalonFXConfiguration();
 
-        // Sets the motor to brake and decides weather to invert it or not
+        // Sets the motor to brake and decides whether to invert it or not
         algaeMotorConfig.MotorOutput.withNeutralMode(NeutralModeValue.Brake).withInverted(
                 intakeConfig.PhysicalDescription.algaeIntakeMotorGearRatio.transformRotation(
                         intakeConfig.Conventions.algaeIntakeMotorRotationalPositiveDirection
@@ -122,7 +130,8 @@ public class IntakeController {
         );
 
         // Limits the motor's current
-        algaeMotorConfig.CurrentLimits.withSupplyCurrentLimit(intakeConfig.Limits.algaeIntakeMotorCurrentLimit);
+        algaeMotorConfig.CurrentLimits.withSupplyCurrentLimitEnable(true)
+                .withSupplyCurrentLimit(intakeConfig.Limits.algaeIntakeMotorCurrentLimit);
 
         // Sets the time the motor should take to get to the desired speed / position
         algaeMotorConfig.ClosedLoopRamps.withVoltageClosedLoopRampPeriod(intakeConfig.ControlConstants.intakeRampRate);
@@ -139,7 +148,7 @@ public class IntakeController {
         // Initialize configuration object
         TalonFXConfiguration coralMotorConfig = new TalonFXConfiguration();
 
-        // Sets the motor to brake and decides weather to invert it or not
+        // Sets the motor to brake and decides whether to invert it or not
         coralMotorConfig.MotorOutput.withNeutralMode(NeutralModeValue.Brake).withInverted(
                 intakeConfig.PhysicalDescription.coralIntakeMotorGearRatio.transformRotation(
                         intakeConfig.Conventions.coralIntakeMotorRotationalPositiveDirection
@@ -147,7 +156,8 @@ public class IntakeController {
         );
 
         // Limits the motor's current
-        coralMotorConfig.CurrentLimits.withSupplyCurrentLimit(intakeConfig.Limits.coralIntakeMotorCurrentLimit);
+        coralMotorConfig.CurrentLimits.withSupplyCurrentLimitEnable(true)
+                .withSupplyCurrentLimit(intakeConfig.Limits.coralIntakeMotorCurrentLimit);
 
         // Sets the time the motor should take to get to the desired speed
         coralMotorConfig.ClosedLoopRamps.withVoltageClosedLoopRampPeriod(intakeConfig.ControlConstants.intakeRampRate);
@@ -170,7 +180,7 @@ public class IntakeController {
             Wheel algaeIntakeWheel, Wheel coralIntakeWheel) {}
     public record ControlConstants(
             LinearVelocity algaeIntakeMaxWheelLinearVelocity, LinearVelocity coralIntakeMaxWheelLinearVelocity,
-            Time intakeRampRate) {}
+            Voltage retainAlgaeMinimumVoltage, Time intakeRampRate) {}
     public record Config(
             DeviceIdentifiers Identifiers, DeviceProperties Properties, DeviceLimits Limits,
             DeviceConventions Conventions, PhysicalDescription PhysicalDescription, ControlConstants ControlConstants

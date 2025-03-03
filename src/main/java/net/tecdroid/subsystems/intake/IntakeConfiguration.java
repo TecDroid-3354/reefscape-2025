@@ -1,6 +1,7 @@
 package net.tecdroid.subsystems.intake;
 
 import static edu.wpi.first.units.Units.*;
+import static net.tecdroid.util.RotationalDirection.Clockwise;
 import static net.tecdroid.util.RotationalDirection.Counterclockwise;
 
 import edu.wpi.first.units.measure.*;
@@ -34,7 +35,7 @@ public class IntakeConfiguration {
     }
     
     private static class Conventions {
-        private final RotationalDirection algaeIntakeRotationalPositiveDirection = Counterclockwise;
+        private final RotationalDirection algaeIntakeRotationalPositiveDirection = Clockwise;
         private final RotationalDirection coralIntakeRotationalPositiveDirection = Counterclockwise;
         final DeviceConventions intakeDevicesConventions = new DeviceConventions(
                 algaeIntakeRotationalPositiveDirection, coralIntakeRotationalPositiveDirection
@@ -43,9 +44,9 @@ public class IntakeConfiguration {
     
     private static class Structure {
         private final GearRatio algaeIntakeMotorGR = new GearRatio(6.75, 1, 0); // TODO: GEAR COUNT
-        private final Wheel algaeIntakeWheel = Wheel.Companion.fromDiameter(Distance.ofBaseUnits(4.0, Inches));
+        private final Wheel algaeIntakeWheel = Wheel.Companion.fromDiameter(Inches.of(4.0));
         private final GearRatio coralIntakeMotorGR = new GearRatio(4.5, 1, 7);
-        private final Wheel coralIntakeWheel = Wheel.Companion.fromDiameter(Distance.ofBaseUnits(4.0, Inches));
+        private final Wheel coralIntakeWheel = Wheel.Companion.fromDiameter(Inches.of(4.0));
         final PhysicalDescription intakePhysicalDescription = new PhysicalDescription(
                 algaeIntakeMotorGR, coralIntakeMotorGR,
                 algaeIntakeWheel, coralIntakeWheel
@@ -53,15 +54,13 @@ public class IntakeConfiguration {
     }
     
     private static class Control {
-        private final LinearVelocity algaeIntakeMaxWheelLinearVelocity = LinearVelocity.ofBaseUnits(
-                2.0, MetersPerSecond
-        );
-        private final LinearVelocity coralIntakeMaxWheelLinearVelocity = LinearVelocity.ofBaseUnits(
-                2.0, MetersPerSecond
-        );
-        private final Time intakeRampRate = Time.ofBaseUnits(0.1, Seconds);
+        private final LinearVelocity algaeIntakeMaxWheelLinearVelocity = MetersPerSecond.of(2.0);
+        private final LinearVelocity coralIntakeMaxWheelLinearVelocity = MetersPerSecond.of(2.0);
+        private final Voltage retainAlgaeMinimumVoltage = Volts.of(0.18);
+        private final Time intakeRampRate = Seconds.of(0.1);
         final ControlConstants intakeControlConstants = new ControlConstants(
-                algaeIntakeMaxWheelLinearVelocity, coralIntakeMaxWheelLinearVelocity, intakeRampRate
+                algaeIntakeMaxWheelLinearVelocity, coralIntakeMaxWheelLinearVelocity,
+                retainAlgaeMinimumVoltage, intakeRampRate
         );
     }
     
