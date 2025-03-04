@@ -4,12 +4,18 @@ import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.ctre.phoenix6.controls.Follower;
 import com.ctre.phoenix6.controls.MotionMagicVoltage;
 import com.ctre.phoenix6.hardware.TalonFX;
+import com.ctre.phoenix6.signals.InvertedValue;
 import com.ctre.phoenix6.signals.NeutralModeValue;
 import edu.wpi.first.units.measure.Angle;
+import edu.wpi.first.units.measure.Current;
 import edu.wpi.first.units.measure.Distance;
 import edu.wpi.first.wpilibj.DutyCycleEncoder;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
+import net.tecdroid.util.GearRatio;
+import net.tecdroid.util.MotionMagicSettings;
+import net.tecdroid.util.PidfCoefficients;
+import net.tecdroid.util.SvagGains;
 
 import static edu.wpi.first.units.Units.*;
 
@@ -17,57 +23,61 @@ public class Elevator extends SubsystemBase {
     TalonFX mLeftMotor;
     TalonFX mRightMotor;
     DutyCycleEncoder absoluteEncoder;
+    ElevatorConfig elevatorConfig = net.tecdroid.subsystems.Elevator.ElevatorConfig.elevatorConfig;
 
     public Angle getAbsoluteEncoderRot() {
-        return Rotations.of(absoluteEncoder.get() - ElevatorConstants.AbsoluteEncoder.OFFSET_POSITION);
+        return Rotations.of(absoluteEncoder.get() - elevatorConfig.encoderProperties.encoderOffsets.in(Rotations));
     }
 
     public Distance getAbsoluteEncoderDistance() {
-        return Distance.ofBaseUnits(getAbsoluteEncoderRot().in(Rotations) * ElevatorConstants.ElevatorReductions.ELEVATOR_INCHES_PER_REV, Inches);
+        return Distance.ofBaseUnits(getAbsoluteEncoderRot().in(Rotations) * elevatorConfig.gearRatio.elevatorInchesPerRev.in(Inches), Inches);
     }
 
     public Angle getRightMotorRot() {
-        return Rotations.of(mRightMotor.getPosition().getValueAsDouble() * ElevatorConstants.ElevatorReductions.ELEVATOR_GEAR_RATIO_CONVERSION_FACTOR);
+        return Rotations.of(elevatorConfig.gearRatio.motorGearRatio.apply(mRightMotor.getPosition().getValueAsDouble()));
     }
 
     public Distance getRightMotorDistance() {
-        return Distance.ofBaseUnits(getRightMotorRot().in(Rotations) * ElevatorConstants.ElevatorReductions.ELEVATOR_INCHES_PER_REV, Inches);
+        return Distance.ofBaseUnits(getRightMotorRot().in(Rotations) * elevatorConfig.gearRatio.elevatorInchesPerRev.in(Inches), Inches);
     }
 
     public void resetMotorsPositionsToAbsoluteEncoderPosition() {
-        mRightMotor.setPosition(getAbsoluteEncoderRot().in(Rotations) * ElevatorConstants.ElevatorReductions.ELEVATOR_GEAR_RATIO);
-        mLeftMotor.setPosition(getAbsoluteEncoderRot().in(Rotations) * ElevatorConstants.ElevatorReductions.ELEVATOR_GEAR_RATIO);
+        mRightMotor.setPosition(elevatorConfig.gearRatio.motorGearRatio.unapply(getAbsoluteEncoderRot().in(Rotations)));
+        mLeftMotor.setPosition(elevatorConfig.gearRatio.motorGearRatio.unapply(getAbsoluteEncoderRot().in(Rotations)));
     }
 
     public void ElevatorConfig() {
-        mLeftMotor = new TalonFX(ElevatorConstants.ElevatorMotors.LEFT_MOTOR_ID);
-        mRightMotor = new TalonFX(ElevatorConstants.ElevatorMotors.RIGHT_MOTOR_ID);
+        mLeftMotor = new TalonFX(elevatorConfig.deviceIdentifier.leftMotorId);
+        mRightMotor = new TalonFX(elevatorConfig.deviceIdentifier.rightMotorId);
 
         // Motion profile config
         var talonFXConfigs = new TalonFXConfiguration();
 
+        // Invert Motors
+        talonFXConfigs.MotorOutput.withInverted(elevatorConfig.motorProperties.leaderMotorInvertedType);
+
         // set slot 0 gains
         var slot0Configs = talonFXConfigs.Slot0;
-        slot0Configs.kS = ElevatorConstants.ElevatorCoefficients.S;
-        slot0Configs.kV = ElevatorConstants.ElevatorCoefficients.V;
-        slot0Configs.kA = ElevatorConstants.ElevatorCoefficients.A;
-        slot0Configs.kP = ElevatorConstants.ElevatorCoefficients.P;
-        slot0Configs.kI = ElevatorConstants.ElevatorCoefficients.I;
-        slot0Configs.kD = ElevatorConstants.ElevatorCoefficients.D;
+        slot0Configs.kS = elevatorConfig.coefficients.svagGains.getS();
+        slot0Configs.kV = elevatorConfig.coefficients.svagGains.getV();
+        slot0Configs.kA = elevatorConfig.coefficients.svagGains.getA();
+        slot0Configs.kP = elevatorConfig.coefficients.pidfCoefficients.getP();
+        slot0Configs.kI = elevatorConfig.coefficients.pidfCoefficients.getI();
+        slot0Configs.kD = elevatorConfig.coefficients.pidfCoefficients.getD();
         // feedforward: https://v6.docs.ctr-electronics.com/en/2024/docs/api-reference/device-specific/talonfx/closed-loop-requests.html
 
         // set Motion Magic settings
         var motionMagicConfigs = talonFXConfigs.MotionMagic;
-        motionMagicConfigs.MotionMagicCruiseVelocity = ElevatorConstants.ElevatorMotionMagicSettings.MOTION_MAGIC_CRUISE_VELOCITY; // Target cruise velocity of 80 rps
-        motionMagicConfigs.MotionMagicAcceleration = ElevatorConstants.ElevatorMotionMagicSettings.MOTION_MAGIC_ACCELERATION; // Target acceleration of 160 rps/s (0.5 seconds)
-        motionMagicConfigs.MotionMagicJerk = ElevatorConstants.ElevatorMotionMagicSettings.MOTION_MAGIC_JERK; // Target jerk of 1600 rps/s/s (0.1 seconds)
+        motionMagicConfigs.MotionMagicCruiseVelocity = elevatorConfig.motionMagicProperties.motionMagicSettings.getMotionMagicCruiseVelocity(); // Target cruise velocity of 80 rps
+        motionMagicConfigs.MotionMagicAcceleration = elevatorConfig.motionMagicProperties.motionMagicSettings.getMotionMagicAcceleration(); // Target acceleration of 160 rps/s (0.5 seconds)
+        motionMagicConfigs.MotionMagicJerk = elevatorConfig.motionMagicProperties.motionMagicSettings.getMotionMagicJerk(); // Target jerk of 1600 rps/s/s (0.1 seconds)
 
         // Config based on: https://www.youtube.com/watch?v=Ew3dxj9uIdY
 
         // Configure limits
         var limitsConfig = talonFXConfigs.CurrentLimits;
 
-        limitsConfig.StatorCurrentLimit = ElevatorConstants.ElevatorMotors.AMP_LIMITS;
+        limitsConfig.StatorCurrentLimit = elevatorConfig.motorProperties.ampLimits.in(Amps);
         limitsConfig.StatorCurrentLimitEnable = true;
 
         // Apply config
@@ -80,11 +90,11 @@ public class Elevator extends SubsystemBase {
 
         // Make the left motor to follow the right one
         mLeftMotor.setControl(new Follower(mRightMotor.getDeviceID(),
-                ElevatorConstants.ElevatorMotors.IS_INVERTED));
+                elevatorConfig.motorProperties.followerMotorInverted));
 
         // Absolute Encoder
-        absoluteEncoder = new DutyCycleEncoder(ElevatorConstants.AbsoluteEncoder.ABSOLUTE_ENCODER_CHANNEL);
-        absoluteEncoder.setInverted(ElevatorConstants.AbsoluteEncoder.IS_INVERTED);
+        absoluteEncoder = new DutyCycleEncoder(elevatorConfig.deviceIdentifier.absoluteEncoderChannel);
+        absoluteEncoder.setInverted(elevatorConfig.encoderProperties.absoluteEncoderReversed);
     }
 
     public Elevator() {
@@ -98,8 +108,9 @@ public class Elevator extends SubsystemBase {
         return runOnce(
                 () -> {
                     // pre-process position (inches to rotations)
-                    Angle requestedRotations = Rotations.of(requestedPosition.in(Inches) * ElevatorConstants.ElevatorReductions.ELEVATOR_GEAR_RATIO
-                            / ElevatorConstants.ElevatorReductions.ELEVATOR_INCHES_PER_REV);
+                    Angle requestedRotations = Rotations.of(elevatorConfig.gearRatio.motorGearRatio.unapply(
+                            requestedPosition.in(Inches) / elevatorConfig.gearRatio.elevatorInchesPerRev.in(Inches)
+                    ));
 
                     // create a Motion Magic request, voltage output
                     final MotionMagicVoltage m_request = new MotionMagicVoltage(0);
@@ -124,5 +135,18 @@ public class Elevator extends SubsystemBase {
     public void periodic() {
         // This method will be called once per scheduler run
     }
+
+    public record DeviceIdentifier(int leftMotorId, int rightMotorId, int absoluteEncoderChannel) {}
+    public record MotorProperties(Current ampLimits, InvertedValue leaderMotorInvertedType, boolean followerMotorInverted) {}
+    public record ElevatorGearRatio(GearRatio motorGearRatio, Distance elevatorInchesPerRev) {}
+    public record EncoderProperties(Boolean absoluteEncoderReversed, Angle encoderOffsets) {}
+    public record Coefficients(PidfCoefficients pidfCoefficients, SvagGains svagGains) {}
+    public record MotionMagicProperties(MotionMagicSettings motionMagicSettings) {}
+
+    public record ElevatorConfig(DeviceIdentifier deviceIdentifier, MotorProperties motorProperties,
+                                 ElevatorGearRatio gearRatio, EncoderProperties encoderProperties,
+                                 Coefficients coefficients,
+                                 MotionMagicProperties motionMagicProperties) {}
+
 
 }
