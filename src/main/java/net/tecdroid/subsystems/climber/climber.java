@@ -17,12 +17,8 @@ public class Climber extends SubsystemBase {
     private static final double kD = 0.0;
     private static final double MAX_HEIGHT = 100.0;  // Valor de ejemplo
 
-    public Climber(int leftMotorID, int rightMotorID, int limitSwitchPort) {
-        leftMotor = new TalonFX(leftMotorID);
-        rightMotor = new TalonFX(rightMotorID);
-        limitSwitch = new DigitalInput(limitSwitchPort);
-        pidController = new PIDController(kP, kI, kD);
-    }
+
+    
 
     public void setClimberPosition(double targetHeight) {
         if (targetHeight > MAX_HEIGHT) targetHeight = MAX_HEIGHT;
