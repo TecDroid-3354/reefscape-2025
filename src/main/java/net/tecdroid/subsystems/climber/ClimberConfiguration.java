@@ -17,7 +17,7 @@ public class ClimberConfiguration {
         final DiviceProperties climberDevicesProperties = new DeviceProperties(
             leftclimberMotorProperties, rightClimberMotorProperties);
 
-    }
+    } //falta poner los amps
     private static class Limits {
         private final Current leftClimberMotorCurrentLimit = Amps.of();
         private final Current rightClimberMotorCurrentLimit = Amps.of();
@@ -37,10 +37,20 @@ public class ClimberConfiguration {
         final PhysicalDescription intakePhysicalDescription = new PhysicalDescription(
             climberMotorsGR);
     }
-    
+    //hay que revisar los MetersPerSecond
     private static class Control {
         private final LinearVelocity leftClimberMaxWheelLinearVelocity = MetersPerSecond.of(1.0);
         private final LinearVelocity rightClimberMaxWheelLinearVelocity = MetersPerSecond.of(1.0);
-        final 
+        private final Voltage retainMotorsMinimumVoltage = Volts.of(0.18);
+        private final Time climberRampRate = Seconds.of(0.1);
+        final ControlConstants intakeControlConstants = new ControlConstants(
+                leftClimberMaxWheelLinearVelocity, rightClimberMaxWheelLinearVelocity,
+                retainMotorsMinimumVoltage, climberRampRate);
     }
+
+    final Config intakeConfig = new Config(
+            new DeviceIDs().climberDevicesIDs, new Devices().climberDevicesProperties, new Limits().climberDevicesLimits,
+            new Conventions().climberDevicesConventions, new Structure().climberPhysicalDescription, new Control().climberControlConstants
+    );
+}
 }
