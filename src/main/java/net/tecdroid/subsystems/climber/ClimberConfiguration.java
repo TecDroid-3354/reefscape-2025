@@ -50,6 +50,7 @@ public class ClimberConfiguration {
         final ControlConstants intakeControlConstants = new ControlConstants(
                 leftClimberMaxWheelLinearVelocity, rightClimberMaxWheelLinearVelocity,
                 retainMotorsMinimumVoltage, climberRampRate);
+        public Object climberControlConstants;
     }
 
     final Config intakeConfig = new Config(
@@ -57,4 +58,4 @@ public class ClimberConfiguration {
             new Conventions().climberDevicesConventions, new Structure().climberPhysicalDescription, new Control().climberControlConstants
     );
 }
-}
+

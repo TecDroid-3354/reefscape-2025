@@ -54,6 +54,7 @@ public class ClimberController {
         motionMagicConfigs.MotionMagicJerk = 1600;
         Object m_talonFx = new Object();
 
+        m_talonFx.getConfiguration.apply(talonFxConfigs);
         final  MotionMagicVoltage m_request = new MotionMagicVoltage(0);
         m_talonFx.setControl(m_request.withPosition(100));
 
