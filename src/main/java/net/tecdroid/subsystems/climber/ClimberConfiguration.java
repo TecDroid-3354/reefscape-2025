@@ -1,6 +1,9 @@
 package net.tecdroid.subsystems.climber;
 
+import edu.wpi.first.units.measure.Current;
 import net.tecdroid.util.*;
+
+import static edu.wpi.first.units.Units.Amps;
 
 public class ClimberConfiguration {
     public static class ClimberIdentifiers {
@@ -14,18 +17,19 @@ public class ClimberConfiguration {
     private static class Devices {
         private final MotorProperties leftclimberMotorProperties = Motors.INSTANCE.getKrakenX60();
         private final MotorProperties rightClimberMotorProperties = Motors.INSTANCE.getKrakenX60();
-        final DiviceProperties climberDevicesProperties = new DeviceProperties(
+        final ClimberController.DeviceProperties climberDevicesProperties = new ClimberController.DeviceProperties(
             leftclimberMotorProperties, rightClimberMotorProperties);
 
     } //falta poner los amps
     private static class Limits {
         private final Current leftClimberMotorCurrentLimit = Amps.of();
         private final Current rightClimberMotorCurrentLimit = Amps.of();
-        final DiviceLimits climberDeviceLimits = new Devicelimits (
+        final DeviceLimits climberDeviceLimits = new Deviceslimits (
             leftClimberMotorCurrentLimit, rightClimberMotorCurrentLimit);
     }
 
     private static class Conventions {
+        private RationalDirection Clockwise;
         private final RationalDirection leftClimberPositiveRotation = Clockwise;
         private final RationalDirection rightClimberPositiveRotation = CounterClockwise;
         final DiviceConventions climberDiviceConections = new DiviceConventions (
