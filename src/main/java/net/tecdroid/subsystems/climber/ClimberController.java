@@ -1,9 +1,7 @@
 package net.tecdroid.subsystems.climber;
 
-import com.ctre.phoenix6.configs.MotionMagicConfigs;
 import com.ctre.phoenix6.configs.Slot0Configs;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
-import com.ctre.phoenix6.controls.MotionMagicVoltage;
 import com.ctre.phoenix6.controls.VelocityVoltage;
 import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.signals.NeutralModeValue;
@@ -14,6 +12,7 @@ public class ClimberController {
     private final TalonFX leftClimberMotor;
     private final TalonFX rightClimberMotor;
     private final Config climberConfig;
+    private final
 
 
     public ClimberController(Config climberConfig) {
@@ -69,13 +68,13 @@ public class ClimberController {
         slot0Configs.kD = 0.1;
 
 
-    public record DeviceIdentifiers(NumericId leftClimberMotorID, NumericId rightClimberMotorID) {}
+    public record DeviceIdentifiers(NumericId leftClimberMotorID, NumericId rightClimberMotorID, NumericId encoderID) {}
     public record DeviceProperties(MotorProperties leftClimberMotorProperties, MotorProperties rightClimberMotorProperties) {}
     public record DeviceLimits(Current leftClimberMotorCurrentLimit, Current rightClimberMotorCurrentLimit) {}
     public record DeviceConventions(RotationalDirection leftClimberMotorRotationalPositiveDirection,
                                     RotationalDirection rightClimberMotorRotationalPositiveDirection) {}
-    public record PhysicalDescription(GearRatio leftClimberMotorGearRatio, GearRatio rightClimberMotorGearRatio) {}
-    public record ControlConstants(Time climberRampRate) {}
+    public record PhysicalDescription(GearRatio leftClimberMotorGearRatio) {}
+    public record ControlConstants(Time climberRampRate, PidfCoefficients pidfCoefficients) {}
     public record Config(DeviceIdentifiers Identifiers, DeviceProperties Properties, DeviceLimits Limits,
                          DeviceConventions Conventions, PhysicalDescription PhysicalDescription, ControlConstants ControlConstants) {}
 }
