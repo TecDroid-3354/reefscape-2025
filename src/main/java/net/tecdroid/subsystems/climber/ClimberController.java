@@ -43,20 +43,28 @@ public class ClimberController {
         rightClimberMotor.setVoltage(0.0);
     }
 
-    private void configureMotor(TalonFX motor, GearRatio gearRatio, RotationalDirection direction, Current currentLimit) {
+    public void setTargetPosition(int targetPosition) {
         TalonFXConfiguration motorConfig = new TalonFXConfiguration();
-
         motorConfig.Slot0.withKP(4.8).withKI(0).withKD(0.1).withKS(0.25).withKV(0.12).withKA(0.01);
         TalonFXConfiguration talonFxConfigs = new TalonFXConfiguration();
         MotionMagicConfigs motionMagicConfigs = talonFxConfigs.MotionMagic;
         motionMagicConfigs.MotionMagicCruiseVelocity = 80;
         motionMagicConfigs.MotionMagicAcceleration = 160;
         motionMagicConfigs.MotionMagicJerk = 1600;
-        Object m_talonFx = new Object();
 
-        m_talonFx.getConfiguration.apply(talonFxConfigs);
         final  MotionMagicVoltage m_request = new MotionMagicVoltage(0);
-        m_talonFx.setControl(m_request.withPosition(100));
+
+        leftClimberMotor.getConfigurator().apply(talonFxConfigs);
+        leftClimberMotor.setControl(m_request.withPosition(targetPosition));
+
+        rightClimberMotor.getConfigurator().apply(talonFxConfigs);
+        rightClimberMotor.setControl(m_request.withPosition(targetPosition));
+    }
+
+    private void configureMotor(TalonFX motor, GearRatio gearRatio, RotationalDirection direction, Current currentLimit) {
+        TalonFXConfiguration motorConfig = new TalonFXConfiguration();
+
+
 
 
 
