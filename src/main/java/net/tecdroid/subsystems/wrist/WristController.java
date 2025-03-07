@@ -1,11 +1,9 @@
 package net.tecdroid.subsystems.wrist;
 
-import com.revrobotics.spark.SparkBase;
-import com.revrobotics.spark.SparkClosedLoopController;
-import com.revrobotics.spark.SparkLowLevel;
-import com.revrobotics.spark.SparkMax;
-import com.revrobotics.spark.config.SparkBaseConfig;
-import com.revrobotics.spark.config.SparkMaxConfig;
+import com.ctre.phoenix6.configs.TalonFXConfiguration;
+import com.ctre.phoenix6.controls.PositionVoltage;
+import com.ctre.phoenix6.hardware.TalonFX;
+import com.ctre.phoenix6.signals.NeutralModeValue;
 import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.units.measure.AngularVelocity;
 import edu.wpi.first.units.measure.Current;
@@ -18,9 +16,7 @@ import java.util.function.Supplier;
 import static edu.wpi.first.units.Units.*;
 
 public class WristController {
-    private final SparkMax leadingWristMotorController;
-    private final SparkMax followerWristMotorController;
-    private final SparkClosedLoopController leadingWristClosedLoopController;
+    private final TalonFX wristMotorController;
     private final DutyCycleEncoder wristEncoder;
     private final Config wristConfig;
     private final Supplier<Boolean> isElevatorAngleDown;
@@ -32,16 +28,10 @@ public class WristController {
         // wrist encoder --> throughbore (roboRIO connected)
         wristEncoder = new DutyCycleEncoder(wristConfig.Identifiers.encoderID.getId());
 
-        // leading motor --> left motor
-        leadingWristMotorController = new SparkMax(wristConfig.Identifiers.leftMotorID.getId(),
-                                                    SparkLowLevel.MotorType.kBrushless);
-        // follower motor --> right motor
-        followerWristMotorController = new SparkMax(wristConfig.Identifiers.rightMotorID.getId(),
-                                                    SparkLowLevel.MotorType.kBrushless);
+        wristMotorController = new TalonFX(wristConfig.Identifiers.wristMotorID.getId());
+
         // Configure motors
         motorsInterface();
-
-        leadingWristClosedLoopController = leadingWristMotorController.getClosedLoopController();
     }
 
     public Angle getWristAngle() {
@@ -51,7 +41,7 @@ public class WristController {
 
     private Angle getMotorEncoderAngle() {
         /* Returns the leading motor's encoder reading as an Angle object from rotations */
-        return Rotations.of(leadingWristMotorController.getEncoder().getPosition());
+        return wristMotorController.getPosition().getValue();
     }
 
     public void setWristAngle(Angle angle) {
@@ -60,13 +50,13 @@ public class WristController {
         // Always allows to move the wrist to {insert value} degrees or more.
         if (isAngleWithinRange(angle) &&
                 (!isElevatorAngleDown.get() || angle.gte(Degrees.of(0.0)))) {
-            leadingWristClosedLoopController.setReference(
-                    wristConfig.PhysicalDescription.motorsGearRatio.unapply(angle.in(Rotations)),
-                    SparkBase.ControlType.kPosition);
+            wristMotorController.setControl(new PositionVoltage(
+                    wristConfig.PhysicalDescription.motorsGearRatio.unapply(angle)
+            ));
         }
     }
 
-    public boolean isAngleWithinRange(Angle angle) {
+    private boolean isAngleWithinRange(Angle angle) {
         /* Makes sure that the desired wrist angle is within the allowed range */
         // gte() == greater than or equal to       lte() == less than or equal to
         return angle.gte(wristConfig.Limits.minimumAngleLimit) && angle.lte(wristConfig.Limits.maximumAngleLimit);
@@ -78,76 +68,57 @@ public class WristController {
     // Configuration //
     // ///////////// //
 
-    public void motorsInterface() {
+    private void motorsInterface() {
         /* Sets all motor's configurations */
 
-        // Initialize config objects
-        SparkMaxConfig motorsConfig = new SparkMaxConfig();
+        // Initialize configuration object
+        TalonFXConfiguration wristMotorConfig = new TalonFXConfiguration();
 
-        // Sets leading motor to brake and decides whether to invert the motor or not
-        motorsConfig.idleMode(SparkBaseConfig.IdleMode.kBrake).inverted(
+        // Sets the motor to brake and decides whether to invert it or not
+        wristMotorConfig.MotorOutput.withNeutralMode(
+                wristConfig.ControlConstants.motorNeutralMode
+        ).withInverted(
                 wristConfig.PhysicalDescription.motorsGearRatio.transformRotation(
-                        wristConfig.Conventions.motorsRotationalPositiveDirection
-                ).differs(wristConfig.Properties.wristMotorProperties.getPositiveDirection())
+                        wristConfig.Conventions.motorRotationalPositiveDirection
+                ).toInvertedValue()
         );
 
         // Limits the motor's current
-        motorsConfig.smartCurrentLimit(
-                (int) wristConfig.Limits.motorsCurrentLimit.in(Amps), // Stall limit
-                (int) wristConfig.Limits.motorsCurrentLimit.in(Amps), // Free limit
-                (int) wristConfig.Limits.maximumAngularVelocity.in(RotationsPerSecond) * 60 // Limit RPM
-        );
-        //leaderConfig.smartCurrentLimit((int) wristConfig.Limits.motorsCurrentLimit.in(Amps)); // Limited RPMs above to test
+        wristMotorConfig.CurrentLimits.withSupplyCurrentLimitEnable(true)
+                .withSupplyCurrentLimit(wristConfig.Limits.motorCurrentLimit);
 
-        // Sets all PIDF coefficients to the motor closed loop controller
-        motorsConfig.closedLoop.pidf(
-                wristConfig.ControlConstants.motorsPidfCoefficients.getP(),
-                wristConfig.ControlConstants.motorsPidfCoefficients.getI(),
-                wristConfig.ControlConstants.motorsPidfCoefficients.getD(),
-                wristConfig.ControlConstants.motorsPidfCoefficients.getF()
-        );
-
-        // Compensate voltage by applying the summary of the gains S & G
-        // S gain: minimum voltage to move.      G gain: minimum voltage to overcome the gravity.
-        motorsConfig.voltageCompensation(
-                wristConfig.ControlConstants.motorsSvagGains.getS() +
-                        wristConfig.ControlConstants.motorsSvagGains.getG()
-        );
+        wristMotorConfig.Slot0
+                .withKP(wristConfig.ControlConstants.motorPidfCoefficients.getP())
+                .withKI(wristConfig.ControlConstants.motorPidfCoefficients.getI())
+                .withKD(wristConfig.ControlConstants.motorPidfCoefficients.getD())
+                .withKS(wristConfig.ControlConstants.motorSvagGains.getS())
+                .withKV(wristConfig.ControlConstants.motorSvagGains.getV())
+                .withKA(wristConfig.ControlConstants.motorSvagGains.getA())
+                .withKG(wristConfig.ControlConstants.motorSvagGains.getG());
 
         // Sets the time the motor should take to get to the desired speed / position
-        motorsConfig.closedLoopRampRate(wristConfig.ControlConstants.motorsRampRate.in(Seconds));
+        wristMotorConfig.ClosedLoopRamps.withVoltageClosedLoopRampPeriod(wristConfig.ControlConstants.motorRampRate);
 
-        // Sets the motor's encoder reading to the throughbore encoder's reading and applies offset
-        leadingWristMotorController.getEncoder().setPosition(
-                wristEncoder.get() - wristConfig.PhysicalDescription.encoderOffset.in(Rotations));
+        // Clear all sticky faults when initializing
+        wristMotorController.clearStickyFaults();
 
-        // Removes all previous sticky faults
-        leadingWristMotorController.clearFaults();
-        followerWristMotorController.clearFaults();
+        // Apply the configuration
+        wristMotorController.getConfigurator().apply(wristMotorConfig);
 
-        // Apply configurations
-        leadingWristMotorController.configure(
-                motorsConfig,
-                SparkBase.ResetMode.kResetSafeParameters, SparkBase.PersistMode.kNoPersistParameters);
-        followerWristMotorController.configure(
-                motorsConfig,
-                SparkBase.ResetMode.kResetSafeParameters, SparkBase.PersistMode.kNoPersistParameters);
-
-        // Sets the motor to follower mode. kNoResetSafeParameters to avoid overwriting previous set of configs
-        followerWristMotorController.configure(
-                motorsConfig.follow(leadingWristMotorController.getDeviceId()),
-                SparkBase.ResetMode.kNoResetSafeParameters, SparkBase.PersistMode.kNoPersistParameters
-        );
+        // Apply throughbore value to motor's encoder
+        wristMotorController.setPosition(
+                Rotations.of(wristEncoder.get() - wristConfig.PhysicalDescription.encoderOffset.in(Rotations)));
     }
 
-    public record DeviceIdentifiers(NumericId leftMotorID, NumericId rightMotorID, NumericId encoderID) {}
+    public record DeviceIdentifiers(NumericId wristMotorID, NumericId encoderID) {}
     public record DeviceProperties(MotorProperties wristMotorProperties) {}
     public record DeviceLimits(
-            Current motorsCurrentLimit, Angle minimumAngleLimit,
+            Current motorCurrentLimit, Angle minimumAngleLimit,
             Angle maximumAngleLimit, AngularVelocity maximumAngularVelocity) {}
-    public record DeviceConventions(RotationalDirection motorsRotationalPositiveDirection) {}
+    public record DeviceConventions(RotationalDirection motorRotationalPositiveDirection) {}
     public record PhysicalDescription(GearRatio motorsGearRatio, Angle encoderOffset) {}
-    public record ControlConstants(PidfCoefficients motorsPidfCoefficients, SvagGains motorsSvagGains, Time motorsRampRate) {}
+    public record ControlConstants(PidfCoefficients motorPidfCoefficients, SvagGains motorSvagGains,
+                                   NeutralModeValue motorNeutralMode, Time motorRampRate) {}
     public record Config(
             DeviceIdentifiers Identifiers, DeviceProperties Properties, DeviceLimits Limits,
             DeviceConventions Conventions, PhysicalDescription PhysicalDescription, ControlConstants ControlConstants

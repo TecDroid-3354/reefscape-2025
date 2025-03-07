@@ -3,7 +3,9 @@ package net.tecdroid.subsystems.wrist;
 import static edu.wpi.first.units.Units.*;
 import static net.tecdroid.subsystems.wrist.WristController.*;
 import static net.tecdroid.util.RotationalDirection.Clockwise;
+import static com.ctre.phoenix6.signals.NeutralModeValue.*;
 
+import com.ctre.phoenix6.signals.NeutralModeValue;
 import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.units.measure.AngularVelocity;
 import edu.wpi.first.units.measure.Current;
@@ -14,20 +16,17 @@ import net.tecdroid.util.*;
 public class WristConfiguration {
 
     private static class DeviceIDs {
-        private final DigitId wristDigit = new DigitId(7);
+        private final DigitId wristDigit = new DigitId(6);
         private final DigitId throughborePort = new DigitId(0);
-        private final DigitId leftMotorDigit = new DigitId(1);
-        private final DigitId rightMotorDigit = new DigitId(2);
-
+        private final DigitId wristMotorDigit = new DigitId(1);
         final DeviceIdentifiers wristDevicesIDs = new DeviceIdentifiers(
-                throughborePort,
-                IdentifiersKt.joinDigits(wristDigit, leftMotorDigit),
-                IdentifiersKt.joinDigits(wristDigit, rightMotorDigit)
+                IdentifiersKt.joinDigits(wristDigit, wristMotorDigit),
+                throughborePort
         );
     }
 
     private static class Devices {
-        private final MotorProperties wristMotorProperties = Motors.INSTANCE.getNeo();
+        private final MotorProperties wristMotorProperties = Motors.INSTANCE.getKrakenX60();
         final DeviceProperties wristDeviceProperties = new DeviceProperties(wristMotorProperties);
     }
 
@@ -35,7 +34,7 @@ public class WristConfiguration {
         private final Current motorsCurrentLimit = Amps.of(30.0);
         private final Angle minimumAngleLimit = Degrees.of(-30.0); // TODO: GET REAL MINIMUM. ARBITRARY VALUE
         private final Angle maximumAngleLimit = Degrees.of(45.0); // TODO: GET REAL MAXIMUM. ARBITRARY VALUE
-        private final AngularVelocity maximumAngularVelocity = RotationsPerSecond.of(31.53); // A third of motor's capacity
+        private final AngularVelocity maximumAngularVelocity = RotationsPerSecond.of(33.3333); // A third of motor's capacity
         final DeviceLimits wristDeviceLimits = new DeviceLimits(
                 motorsCurrentLimit, minimumAngleLimit, maximumAngleLimit, maximumAngularVelocity);
     }
@@ -53,10 +52,12 @@ public class WristConfiguration {
 
     private static class Control {
         // TODO: Determine all PIDF, SVAG coefficients
-        private final PidfCoefficients motorsPIDF = new PidfCoefficients(0.0, 0.0, 0.0, 0.0);
-        private final SvagGains motorsSVAG = new SvagGains(0.0, 0.0, 0.0, 0.0);
+        private final PidfCoefficients motorPIDF = new PidfCoefficients(0.0, 0.0, 0.0, 0.0);
+        private final SvagGains motorSVAG = new SvagGains(0.0, 0.0, 0.0, 0.0);
+        private final NeutralModeValue motorNeutralMode = Brake;
         private final Time motorsRampRate = Seconds.of(0.1);
-        final ControlConstants wristControlConstants = new ControlConstants(motorsPIDF, motorsSVAG, motorsRampRate);
+        final ControlConstants wristControlConstants = new ControlConstants(
+                motorPIDF, motorSVAG, motorNeutralMode, motorsRampRate);
     }
 
     final Config wristConfig = new Config(
