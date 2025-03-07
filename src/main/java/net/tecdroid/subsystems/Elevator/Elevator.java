@@ -9,29 +9,17 @@ import com.ctre.phoenix6.signals.NeutralModeValue;
 import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.units.measure.Current;
 import edu.wpi.first.units.measure.Distance;
-import edu.wpi.first.wpilibj.DutyCycleEncoder;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
-import net.tecdroid.util.GearRatio;
-import net.tecdroid.util.MotionMagicSettings;
-import net.tecdroid.util.PidfCoefficients;
-import net.tecdroid.util.SvagGains;
+import net.tecdroid.util.*;
 
 import static edu.wpi.first.units.Units.*;
 
 public class Elevator extends SubsystemBase {
     TalonFX mLeftMotor;
     TalonFX mRightMotor;
-    DutyCycleEncoder absoluteEncoder;
     ElevatorConfig elevatorConfig = net.tecdroid.subsystems.Elevator.ElevatorConfig.elevatorConfig;
 
-    public Angle getAbsoluteEncoderRot() {
-        return Rotations.of(absoluteEncoder.get() - elevatorConfig.encoderProperties.encoderOffsets.in(Rotations));
-    }
-
-    public Distance getAbsoluteEncoderDistance() {
-        return Distance.ofBaseUnits(getAbsoluteEncoderRot().in(Rotations) * elevatorConfig.gearRatio.elevatorInchesPerRev.in(Inches), Inches);
-    }
 
     public Angle getRightMotorRot() {
         return Rotations.of(elevatorConfig.gearRatio.motorGearRatio.apply(mRightMotor.getPosition().getValueAsDouble()));
@@ -41,14 +29,9 @@ public class Elevator extends SubsystemBase {
         return Distance.ofBaseUnits(getRightMotorRot().in(Rotations) * elevatorConfig.gearRatio.elevatorInchesPerRev.in(Inches), Inches);
     }
 
-    public void resetMotorsPositionsToAbsoluteEncoderPosition() {
-        mRightMotor.setPosition(elevatorConfig.gearRatio.motorGearRatio.unapply(getAbsoluteEncoderRot().in(Rotations)));
-        mLeftMotor.setPosition(elevatorConfig.gearRatio.motorGearRatio.unapply(getAbsoluteEncoderRot().in(Rotations)));
-    }
-
     public void ElevatorConfig() {
-        mLeftMotor = new TalonFX(elevatorConfig.deviceIdentifier.leftMotorId);
-        mRightMotor = new TalonFX(elevatorConfig.deviceIdentifier.rightMotorId);
+        mLeftMotor = new TalonFX(elevatorConfig.deviceIdentifier.leftMotorId.getId());
+        mRightMotor = new TalonFX(elevatorConfig.deviceIdentifier.rightMotorId.getId());
 
         // Motion profile config
         var talonFXConfigs = new TalonFXConfiguration();
@@ -91,10 +74,6 @@ public class Elevator extends SubsystemBase {
         // Make the left motor to follow the right one
         mLeftMotor.setControl(new Follower(mRightMotor.getDeviceID(),
                 elevatorConfig.motorProperties.followerMotorInverted));
-
-        // Absolute Encoder
-        absoluteEncoder = new DutyCycleEncoder(elevatorConfig.deviceIdentifier.absoluteEncoderChannel);
-        absoluteEncoder.setInverted(elevatorConfig.encoderProperties.absoluteEncoderReversed);
     }
 
     public Elevator() {
@@ -136,7 +115,7 @@ public class Elevator extends SubsystemBase {
         // This method will be called once per scheduler run
     }
 
-    public record DeviceIdentifier(int leftMotorId, int rightMotorId, int absoluteEncoderChannel) {}
+    public record DeviceIdentifier(NumericId leftMotorId, NumericId rightMotorId, DigitId limitSwitchChannel) {}
     public record MotorProperties(Current ampLimits, InvertedValue leaderMotorInvertedType, boolean followerMotorInverted) {}
     public record ElevatorGearRatio(GearRatio motorGearRatio, Distance elevatorInchesPerRev) {}
     public record EncoderProperties(Boolean absoluteEncoderReversed, Angle encoderOffsets) {}

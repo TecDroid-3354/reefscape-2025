@@ -4,23 +4,25 @@ import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.units.measure.Current;
 import edu.wpi.first.units.measure.Distance;
 import net.tecdroid.subsystems.Elevator.Elevator.*;
-import net.tecdroid.util.GearRatio;
-import net.tecdroid.util.MotionMagicSettings;
-import net.tecdroid.util.PidfCoefficients;
-import net.tecdroid.util.SvagGains;
+import net.tecdroid.subsystems.Elevator.Elevator.MotorProperties;
+import net.tecdroid.util.*;
 
 import static edu.wpi.first.units.Units.*;
 
 public final class ElevatorConfig {
     private static class ElevatorIdentifiers {
         // Ids
-        private static final int LEFT_MOTOR_ID = 0;
-        private static final int RIGHT_MOTOR_ID = 1;
+        private static final DigitId DIGIT_MODULE = new DigitId(5);
+        private static final DigitId LEFT_MOTOR_ID = new DigitId(1);
+        private static final DigitId RIGHT_MOTOR_ID = new DigitId(2);
 
         // Channel
-        public static final int ABSOLUTE_ENCODER_CHANNEL = 2;
+        public static final DigitId LIMIT_SWITCH_CHANNEL = new DigitId(2);
 
-        private final DeviceIdentifier deviceIdentifier = new DeviceIdentifier(LEFT_MOTOR_ID, RIGHT_MOTOR_ID, ABSOLUTE_ENCODER_CHANNEL);
+        private final DeviceIdentifier deviceIdentifier = new DeviceIdentifier(
+                IdentifiersKt.joinDigits(DIGIT_MODULE, LEFT_MOTOR_ID),
+                IdentifiersKt.joinDigits(DIGIT_MODULE, RIGHT_MOTOR_ID),
+                LIMIT_SWITCH_CHANNEL);
 
     }
 
