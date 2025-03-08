@@ -27,37 +27,22 @@ data class SwerveModuleConfig(
     val steerControlGains: ControlGains
 )
 
-private val driveGearRatio = GearRatio(6.12, 1.0, 4)
-private val steerGearRatio = GearRatio(150.0, 7.0, 2)
-private val wheel = Wheel.fromRadius(Inches.of(2.0))
-
-private val driveWheelPositiveDirection = Counterclockwise;
-private val steerAzimuthPositiveDirection = Counterclockwise;
-
-private val driveMotorProperties = Motors.krakenX60
-private val steerMotorProperties = Motors.neo
-private val driveMotorCurrentLimit: Current = Amps.of(40.0)
-private val steerMotorCurrentLimit: Current = Amps.of(30.0)
-
-private val driveControlGains = ControlGains(s = 0.132, v = 0.12, a = 0.01)
-private val steerControlGains = ControlGains(p = 0.1, d = 0.01)
-
 fun makeConfig(moduleNumber: DigitId, magnetOffset: Angle) = SwerveModuleConfig(
-    driveMotorProperties = driveMotorProperties,
-    steerMotorProperties = steerMotorProperties,
+    driveMotorProperties = Motors.krakenX60,
+    steerMotorProperties = Motors.neo,
     driveControllerId = joinDigits(moduleNumber, DigitId(1)),
     steerControllerId = joinDigits(moduleNumber, DigitId(2)),
     absoluteEncoderId = joinDigits(moduleNumber, DigitId(3)),
-    driveGearRatio = driveGearRatio,
-    steerGearRatio = steerGearRatio,
-    wheel = wheel,
-    drivePositiveDirection = driveWheelPositiveDirection,
-    steerPositiveDirection =   steerAzimuthPositiveDirection,
+    driveGearRatio =  GearRatio(6.12, 1.0, 4),
+    steerGearRatio = GearRatio(150.0, 7.0, 2),
+    wheel =  Wheel.fromRadius(Inches.of(2.0)),
+    drivePositiveDirection = Counterclockwise,
+    steerPositiveDirection =   Counterclockwise,
     absoluteEncoderMagnetOffset = magnetOffset,
-    driveCurrentLimit = driveMotorCurrentLimit,
-    steerCurrentLimit = steerMotorCurrentLimit,
-    driveControlGains = driveControlGains,
-    steerControlGains = steerControlGains
+    driveCurrentLimit = Amps.of(40.0),
+    steerCurrentLimit = Amps.of(30.0),
+    driveControlGains = ControlGains(s = 0.132, v = 0.12, a = 0.01),
+    steerControlGains = ControlGains(p = 0.1, d = 0.01)
 )
 
 val frontRightModuleConfig= makeConfig(DigitId(1), (-0.09130859375).rotations)
