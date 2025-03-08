@@ -29,9 +29,7 @@ class RobotContainer {
     }
 
     private fun configureCommands() {
-        swerveDrive.defaultCommand = Commands.run({
-                                                      swerveDrive.drive(swerveDriver.obtainTargetSpeeds(swerveDrive.heading))
-                                                  }, swerveDrive)
+        swerveDriver.createDefaultCommand(swerveDrive)
     }
 
     private fun configureBindings() {

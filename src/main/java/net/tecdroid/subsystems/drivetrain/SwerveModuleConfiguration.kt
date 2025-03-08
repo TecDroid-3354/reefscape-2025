@@ -1,10 +1,10 @@
 package net.tecdroid.subsystems.drivetrain
 
-import edu.wpi.first.units.Units.*
+import edu.wpi.first.units.Units.Amps
+import edu.wpi.first.units.Units.Inches
 import edu.wpi.first.units.measure.Angle
 import edu.wpi.first.units.measure.Current
 import net.tecdroid.kt.rotations
-import net.tecdroid.subsystems.drivetrain.SwerveModule.*
 import net.tecdroid.util.*
 import net.tecdroid.util.RotationalDirection.Counterclockwise
 import net.tecdroid.util.geometry.Wheel

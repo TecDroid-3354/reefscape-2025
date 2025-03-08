@@ -3,7 +3,6 @@ package net.tecdroid.subsystems.drivetrain
 import edu.wpi.first.math.filter.SlewRateLimiter
 import edu.wpi.first.math.kinematics.ChassisSpeeds
 import edu.wpi.first.units.Units.Hertz
-import edu.wpi.first.units.Units.Seconds
 import edu.wpi.first.units.measure.Angle
 import edu.wpi.first.units.measure.AngularVelocity
 import edu.wpi.first.units.measure.LinearVelocity
@@ -62,6 +61,14 @@ class SwerveDriveDriver(
         return Commands.runOnce({
             toggleOrientation()
         })
+    }
+
+    fun createDefaultCommand(swerveDrive: SwerveDrive) {
+        val heading = swerveDrive.heading
+
+        swerveDrive.defaultCommand = Commands.run({
+            swerveDrive.drive(obtainTargetSpeeds(heading))
+        }, swerveDrive)
     }
 
     enum class DriveOrientation {
