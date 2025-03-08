@@ -62,8 +62,6 @@ public class WristController {
         return angle.gte(wristConfig.Limits.minimumAngleLimit) && angle.lte(wristConfig.Limits.maximumAngleLimit);
     }
 
-    // TODO: GET THROUGHBORE OFFSET
-
     // ///////////// //
     // Configuration //
     // ///////////// //
@@ -87,6 +85,7 @@ public class WristController {
         wristMotorConfig.CurrentLimits.withSupplyCurrentLimitEnable(true)
                 .withSupplyCurrentLimit(wristConfig.Limits.motorCurrentLimit);
 
+        // Sets all PID, SVAG control constants
         wristMotorConfig.Slot0
                 .withKP(wristConfig.ControlConstants.motorPidfCoefficients.getP())
                 .withKI(wristConfig.ControlConstants.motorPidfCoefficients.getI())

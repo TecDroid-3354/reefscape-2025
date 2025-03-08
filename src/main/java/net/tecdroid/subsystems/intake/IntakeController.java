@@ -24,9 +24,9 @@ public class IntakeController {
         intakeMotorInterface();
     }
 
-    // //////////// //
-    // ALGAE INTAKE //
-    // //////////// //
+    // ////////////// //
+    // INTAKE CONTROL //
+    // ////////////// //
 
     public void enableIntake(LinearVelocity wheelSpeed) {
         /* Takes a wheel linear velocity and applies a motor angular velocity */
@@ -90,7 +90,9 @@ public class IntakeController {
         TalonFXConfiguration intakeMotorConfig = new TalonFXConfiguration();
 
         // Sets the motor to brake and decides whether to invert it or not
-        intakeMotorConfig.MotorOutput.withNeutralMode(NeutralModeValue.Brake).withInverted(
+        intakeMotorConfig.MotorOutput.withNeutralMode(
+                intakeConfig.ControlConstants.intakeMotorNeutralMode
+        ).withInverted(
                 intakeConfig.PhysicalDescription.intakeMotorGearRatio.transformRotation(
                         intakeConfig.Conventions.intakeMotorRotationalPositiveDirection
                 ).toInvertedValue()
@@ -117,7 +119,8 @@ public class IntakeController {
     public record DeviceConventions(RotationalDirection intakeMotorRotationalPositiveDirection) {}
     public record PhysicalDescription(GearRatio intakeMotorGearRatio, Wheel intakeWheel) {}
     public record ControlConstants(
-            LinearVelocity intakeMaxWheelLinearVelocity, Voltage retainAlgaeMinimumVoltage, Time intakeRampRate) {}
+            LinearVelocity intakeMaxWheelLinearVelocity, Voltage retainAlgaeMinimumVoltage,
+            NeutralModeValue intakeMotorNeutralMode, Time intakeRampRate) {}
     public record Config(
             DeviceIdentifiers Identifiers, DeviceProperties Properties, DeviceLimits Limits,
             DeviceConventions Conventions, PhysicalDescription PhysicalDescription, ControlConstants ControlConstants

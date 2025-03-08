@@ -2,7 +2,9 @@ package net.tecdroid.subsystems.intake;
 
 import static edu.wpi.first.units.Units.*;
 import static net.tecdroid.util.RotationalDirection.Clockwise;
+import static com.ctre.phoenix6.signals.NeutralModeValue.*;
 
+import com.ctre.phoenix6.signals.NeutralModeValue;
 import edu.wpi.first.units.measure.*;
 import net.tecdroid.subsystems.intake.IntakeController.*;
 import net.tecdroid.util.*;
@@ -45,9 +47,10 @@ public class IntakeConfiguration {
     private static class Control {
         private final LinearVelocity intakeMaxWheelLinearVelocity = MetersPerSecond.of(2.0);
         private final Voltage retainAlgaeMinimumVoltage = Volts.of(0.18);
+        private final NeutralModeValue intakeMotorNeutralMode = Brake;
         private final Time intakeRampRate = Seconds.of(0.1);
         final ControlConstants intakeControlConstants = new ControlConstants(
-                intakeMaxWheelLinearVelocity, retainAlgaeMinimumVoltage, intakeRampRate
+                intakeMaxWheelLinearVelocity, retainAlgaeMinimumVoltage, intakeMotorNeutralMode, intakeRampRate
         );
     }
     
