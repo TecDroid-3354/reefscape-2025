@@ -13,15 +13,17 @@ import static edu.wpi.first.units.Units.*;
 
 public class ElevatorAngleConfiguration {
     private static class DeviceIDS {
-        private final DigitId mElevatorAngleDigit = new DigitId(6);
+        private final DigitId mElevatorAngleDigit = new DigitId(5);
         private final DigitId mLeadingMotorDigit = new DigitId(1);
         private final DigitId mFollowerMotorDigit = new DigitId(2);
+
+        // Pending: Throughbore port
         private final DigitId TroughBorePort = new DigitId(3);
 
         final DeviceIdentifiers elevatorAngleDevicesIDs = new DeviceIdentifiers(
                 IdentifiersKt.joinDigits(mElevatorAngleDigit, mLeadingMotorDigit),
                 IdentifiersKt.joinDigits(mElevatorAngleDigit, mFollowerMotorDigit),
-                TroughBorePort
+                IdentifiersKt.joinDigits(mElevatorAngleDigit, TroughBorePort)
         );
     }
 

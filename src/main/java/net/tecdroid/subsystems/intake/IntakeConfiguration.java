@@ -30,8 +30,11 @@ public class IntakeConfiguration {
     private static class Limits {
         private final Current algaeIntakeMotorCurrentLimit = Amps.of(40.0);
         private final Current coralIntakeMotorCurrentLimit = Amps.of(40.0);
+
+        private final Angle encoderOffset = Degrees.of(45.0);
         final DeviceLimits intakeDevicesLimits = new DeviceLimits(
                 algaeIntakeMotorCurrentLimit, coralIntakeMotorCurrentLimit);
+        
     }
     
     private static class Conventions {

@@ -13,8 +13,8 @@ public final class ElevatorConfig {
     private static class ElevatorIdentifiers {
         // Ids
         private static final DigitId DIGIT_MODULE = new DigitId(5);
-        private static final DigitId LEFT_MOTOR_ID = new DigitId(1);
-        private static final DigitId RIGHT_MOTOR_ID = new DigitId(2);
+        private static final DigitId LEFT_MOTOR_ID = new DigitId(3);
+        private static final DigitId RIGHT_MOTOR_ID = new DigitId(4);
 
         // Channel
         public static final DigitId LIMIT_SWITCH_CHANNEL = new DigitId(2);
@@ -75,6 +75,11 @@ public final class ElevatorConfig {
     }
 
     private static class ElevatorMotionMagicSettings {
+        
+        
+        // TODO: CHANGE FROM DOUBLES TO PREDEFINED METER CLASSES !!!!!
+        
+        
         public static final double MOTION_MAGIC_CRUISE_VELOCITY = 80.0; // Target cruise velocity of 80 rps
         public static final double MOTION_MAGIC_ACCELERATION = 160.0; // Target acceleration of 160 rps/s (0.5 seconds)
         public static final double MOTION_MAGIC_JERK = 1600; // Target jerk of 1600 rps/s/s (0.1 seconds)

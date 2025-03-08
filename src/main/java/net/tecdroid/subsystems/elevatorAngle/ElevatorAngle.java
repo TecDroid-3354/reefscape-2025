@@ -62,6 +62,7 @@ public class ElevatorAngle extends SubsystemBase {
     }
 
     public Angle getElevatorAngle() {
+        /* Applies the gear ratio to the motor's encoder reading to obtain the elevator angle position */
         return mElevatorAngleConfig.PhysicalDescription.elevatorAngleMotorGR.apply(
                getElevatorMotorsAngle()
         );
