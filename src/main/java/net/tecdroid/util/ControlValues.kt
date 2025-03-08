@@ -14,4 +14,4 @@ data class ControlGains(
     val g: Double = 0.0
 )
 
-data class MotionMagicCoefficients(val CruiseVelocity: Double = 0.0, val Acceleration: Double = 0.0, val Jerk: Double = 0.0)
+data class MotionMagicCoefficients(val cruiseVelocity: Double = 0.0, val acceleration: Double = 0.0, val jerk: Double = 0.0)
