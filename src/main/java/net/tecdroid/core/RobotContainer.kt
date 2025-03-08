@@ -7,16 +7,14 @@ import edu.wpi.first.wpilibj2.command.Commands
 import net.tecdroid.constants.GenericConstants.driverControllerId
 import net.tecdroid.input.CompliantXboxController
 import net.tecdroid.subsystems.drivetrain.SwerveDrive
-import net.tecdroid.subsystems.drivetrain.SwerveDriveConfiguration
 import net.tecdroid.subsystems.drivetrain.SwerveDriveDriver
+import net.tecdroid.subsystems.drivetrain.swerveDriveConfiguration
 
 class RobotContainer {
     private val controller = CompliantXboxController(driverControllerId)
-    private val swerveDrive = SwerveDrive(SwerveDriveConfiguration.configuration)
+    private val swerveDrive = SwerveDrive(swerveDriveConfiguration)
     private val swerveDriver = SwerveDriveDriver(
-        swerveDrive.maxLinearVelocity, swerveDrive.maxAngularVelocity,
-        Seconds.of(0.5), Seconds.of(2.0)
-    )
+        swerveDrive.maxLinearVelocity, swerveDrive.maxAngularVelocity, Seconds.of(0.5))
 
     init {
         configureDrivers()
@@ -31,9 +29,7 @@ class RobotContainer {
     }
 
     private fun configureCommands() {
-        swerveDrive.defaultCommand = Commands.run({
-                                                      swerveDrive.drive(swerveDriver.obtainTargetSpeeds(swerveDrive.heading))
-                                                  }, swerveDrive)
+        swerveDriver.createDefaultCommand(swerveDrive)
     }
 
     private fun configureBindings() {
