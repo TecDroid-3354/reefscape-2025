@@ -1,17 +1,16 @@
-package net.tecdroid.subsystems.elevatorAngle;
+package net.tecdroid.subsystems.elevatorjoint;
 
-import edu.wpi.first.units.Units;
 import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.units.measure.Current;
 
 import edu.wpi.first.units.measure.Time;
-import net.tecdroid.subsystems.elevatorAngle.ElevatorAngle.*;
+import net.tecdroid.subsystems.elevatorjoint.ElevatorJoint.*;
 import net.tecdroid.util.*;
 
 import static edu.wpi.first.units.Units.*;
 
 
-public class ElevatorAngleConfiguration {
+public class ElevatorJointConfiguration {
     private static class DeviceIDS {
         private final DigitId mElevatorAngleDigit = new DigitId(5);
         private final DigitId mLeadingMotorDigit = new DigitId(1);

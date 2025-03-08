@@ -1,15 +1,15 @@
-package net.tecdroid.subsystems.Elevator;
+package net.tecdroid.subsystems.elevator;
 import com.ctre.phoenix6.signals.InvertedValue;
 import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.units.measure.Current;
 import edu.wpi.first.units.measure.Distance;
-import net.tecdroid.subsystems.Elevator.Elevator.*;
-import net.tecdroid.subsystems.Elevator.Elevator.MotorProperties;
+import net.tecdroid.subsystems.elevator.Elevator.*;
+import net.tecdroid.subsystems.elevator.Elevator.MotorProperties;
 import net.tecdroid.util.*;
 
 import static edu.wpi.first.units.Units.*;
 
-public final class ElevatorConfig {
+public final class ElevatorConfiguration {
     private static class ElevatorIdentifiers {
         // Ids
         private static final DigitId DIGIT_MODULE = new DigitId(5);

@@ -1,4 +1,4 @@
-package net.tecdroid.subsystems.elevatorAngle;
+package net.tecdroid.subsystems.elevatorjoint;
 
 import static edu.wpi.first.units.Units.*;
 
@@ -15,13 +15,13 @@ import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import net.tecdroid.util.*;
 
-public class ElevatorAngle extends SubsystemBase {
+public class ElevatorJoint extends SubsystemBase {
     private final TalonFX mLeadingMotorController; // right motor
     private final TalonFX mFollowingMotorController; // left motor
     private final DutyCycleEncoder mTroughBoreController;
     private final Config mElevatorAngleConfig;
 
-    public ElevatorAngle(Config mElevatorAngleConfig) {
+    public ElevatorJoint(Config mElevatorAngleConfig) {
         this.mElevatorAngleConfig = mElevatorAngleConfig;
 
         //Both leading and follower motor are initialized here
