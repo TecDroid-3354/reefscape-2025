@@ -16,25 +16,27 @@ import com.revrobotics.spark.config.SparkMaxConfig
 import edu.wpi.first.math.kinematics.SwerveModulePosition
 import edu.wpi.first.math.kinematics.SwerveModuleState
 import edu.wpi.first.units.Units.*
-import edu.wpi.first.units.measure.*
+import edu.wpi.first.units.measure.Angle
+import edu.wpi.first.units.measure.AngularVelocity
+import edu.wpi.first.units.measure.Distance
+import edu.wpi.first.units.measure.LinearVelocity
 import edu.wpi.first.util.sendable.Sendable
 import edu.wpi.first.util.sendable.SendableBuilder
 import net.tecdroid.constants.UnitConstants.halfRotation
 import net.tecdroid.kt.toRotation2d
-import net.tecdroid.util.*
-import net.tecdroid.util.geometry.Wheel
 
 /**
  * Represents a single module of a [SwerveDrive]
  *
  * @param config The configuration for this module
  */
-class SwerveModule(private val config: Config) : Sendable {
-    private val driveInterface = TalonFX(config.identifiers.driveId.id)
-    private val steerController = SparkMax(config.identifiers.steerId.id, SparkLowLevel.MotorType.kBrushless)
+class SwerveModule(private val config: SwerveModuleConfig) : Sendable {
+    private val driveInterface = TalonFX(config.driveControllerId.id)
+    private val steerController = SparkMax(config.steerControllerId.id, SparkLowLevel.MotorType.kBrushless)
+    private val absoluteEncoder = CANcoder(config.absoluteEncoderId.id)
+
     private val steerEncoder = steerController.encoder
     private val steerClosedLoopController = steerController.closedLoopController
-    private val absoluteEncoder = CANcoder(config.identifiers.absoluteEncoderId.id)
 
     init {
         this.configureDriveInterface()
@@ -93,13 +95,13 @@ class SwerveModule(private val config: Config) : Sendable {
      * The accumulated angular displacement of the module's wheel
      */
     private val wheelAngularDisplacement: Angle
-        get() = config.physical.driveGearing.apply(driveMotorShaftPosition)
+        get() = config.driveGearRatio.apply(driveMotorShaftPosition)
 
     /**
      * The accumulated linear displacement of the module's wheel
      */
     val wheelLinearDisplacement: Distance
-        get() = config.physical.wheel.angularDisplacementToLinearDisplacement(wheelAngularDisplacement)
+        get() = config.wheel.angularDisplacementToLinearDisplacement(wheelAngularDisplacement)
 
     /**
      * The angular velocity of the module's drive motor shaft
@@ -111,26 +113,26 @@ class SwerveModule(private val config: Config) : Sendable {
      * The angular velocity of the module's wheel
      */
     private val wheelAngularVelocity: AngularVelocity
-        get() = config.physical.driveGearing.apply(driveMotorShaftAngularVelocity)
+        get() = config.driveGearRatio.apply(driveMotorShaftAngularVelocity)
 
     /**
      * The linear velocity of the module's wheel
      */
     val wheelLinearVelocity: LinearVelocity
-        get() = config.physical.wheel.angularVelocityToLinearVelocity(wheelAngularVelocity)
+        get() = config.wheel.angularVelocityToLinearVelocity(wheelAngularVelocity)
 
     /**
      * The max angular velocity of the drive motor's shaft
      */
     private val driveMotorShaftMaxAngularVelocity: AngularVelocity
-        get() = config.deviceProperties.driveMotorProperties.maxAngularVelocity
+        get() = config.driveMotorProperties.maxAngularVelocity
 
     /**
      * The max linear velocity of the drive wheel
      */
     val wheelMaxLinearVelocity: LinearVelocity
-        get() = config.physical.wheel.angularVelocityToLinearVelocity(
-            config.physical.driveGearing.apply(
+        get() = config.wheel.angularVelocityToLinearVelocity(
+            config.driveGearRatio.apply(
                 driveMotorShaftMaxAngularVelocity
             )
         )
@@ -145,7 +147,7 @@ class SwerveModule(private val config: Config) : Sendable {
      * The azimuth of the module's steer motor shaft (as indicated by absolute encoder)
      */
     private val absoluteSteerShaftAzimuth: Angle
-        get() = config.physical.steerGearing.unapply(absoluteWheelAzimuth)
+        get() = config.steerGearRatio.unapply(absoluteWheelAzimuth)
 
     /**
      * The azimuth of the module's steer motor shaft
@@ -157,7 +159,7 @@ class SwerveModule(private val config: Config) : Sendable {
      * The azimuth of the module's wheel
      */
     val wheelAzimuth: Angle
-        get() = config.physical.steerGearing.apply(steerShaftAzimuth)
+        get() = config.steerGearRatio.apply(steerShaftAzimuth)
 
     /**
      * The state of the module as a [SwerveModuleState]
@@ -182,7 +184,7 @@ class SwerveModule(private val config: Config) : Sendable {
      * @return The steer motor shaft azimuth
      */
     private fun wheelAzimuthToSteerMotorShaftAzimuth(wheelAzimuth: Angle): Angle {
-        return config.physical.steerGearing.unapply(wheelAzimuth)
+        return config.steerGearRatio.unapply(wheelAzimuth)
     }
 
     /**
@@ -193,7 +195,7 @@ class SwerveModule(private val config: Config) : Sendable {
      * @return The drive motor shaft angular velocity
      */
     private fun wheelLinearVelocityToDriveMotorShaftAngularVelocity(wheelVelocity: LinearVelocity): AngularVelocity {
-        return config.physical.driveGearing.unapply(config.physical.wheel.linearVelocityToAngularVelocity(wheelVelocity))
+        return config.driveGearRatio.unapply(config.wheel.linearVelocityToAngularVelocity(wheelVelocity))
     }
 
     // //////// //
@@ -238,16 +240,16 @@ class SwerveModule(private val config: Config) : Sendable {
         with(driveConfig) {
             Audio.withBeepOnBoot(true).withBeepOnConfig(true).withAllowMusicDurDisable(true)
 
-            CurrentLimits.withSupplyCurrentLimit(config.limits.driveCurrentLimit)
+            CurrentLimits.withSupplyCurrentLimit(config.driveCurrentLimit)
                 .withSupplyCurrentLimitEnable(true)
 
-            Slot0.withKP(config.control.drivePidf.p).withKI(config.control.drivePidf.i)
-                .withKD(config.control.drivePidf.d).withKS(config.control.driveSvag.s)
-                .withKV(config.control.driveSvag.v)
-                .withKA(config.control.driveSvag.a)
+            Slot0.withKP(config.driveControlGains.p).withKI(config.driveControlGains.i)
+                .withKD( config.driveControlGains.d).withKS(config.driveControlGains.s)
+                .withKV( config.driveControlGains.v)
+                .withKA( config.driveControlGains.a)
 
             MotorOutput.withNeutralMode(NeutralModeValue.Brake).withInverted(
-                config.physical.driveGearing.transformRotation(config.deviceConventions.driveWheelPositiveDirection)
+                config.driveGearRatio.transformRotation(config.drivePositiveDirection)
                     .toInvertedValue()
             )
         }
@@ -266,22 +268,22 @@ class SwerveModule(private val config: Config) : Sendable {
         with(steerConfig) {
 
             idleMode(IdleMode.kBrake).inverted(
-                config.physical.steerGearing.transformRotation(config.deviceConventions.steerWheelPositiveDirection)
+                config.steerGearRatio.transformRotation(config.steerPositiveDirection)
                     .differs(
-                        config.deviceProperties.steerMotorProperties.positiveDirection
+                        config.steerMotorProperties.positiveDirection
                     )
-            ).smartCurrentLimit(config.limits.steerCurrentLimit.`in`(Amps).toInt())
+            ).smartCurrentLimit(config.steerCurrentLimit.`in`(Amps).toInt())
 
             encoder.positionConversionFactor(1.0).velocityConversionFactor(1.0)
 
             closedLoop.positionWrappingEnabled(true).positionWrappingInputRange(
                 0.0,
-                config.physical.steerGearing.unapply(halfRotation.`in`(Rotations))
+                config.steerGearRatio.unapply(halfRotation.`in`(Rotations))
             ).pidf(
-                config.control.steerPidf.p,
-                config.control.steerPidf.i,
-                config.control.steerPidf.d,
-                config.control.steerPidf.f
+                config.steerControlGains.p,
+                config.steerControlGains.i,
+                config.steerControlGains.d,
+                config.steerControlGains.f
             )
         }
 
@@ -300,99 +302,12 @@ class SwerveModule(private val config: Config) : Sendable {
         val absoluteEncoderConfig = CANcoderConfiguration()
 
         with(absoluteEncoderConfig) {
-            MagnetSensor.withSensorDirection(config.deviceConventions.steerWheelPositiveDirection.toSensorDirectionValue())
-                .withMagnetOffset(config.specifics.absoluteEncoderOffset)
+            MagnetSensor.withSensorDirection(config.steerPositiveDirection.toSensorDirectionValue())
+                .withMagnetOffset(config.absoluteEncoderMagnetOffset)
         }
 
         absoluteEncoder.clearStickyFaults()
         absoluteEncoder.configurator.apply(absoluteEncoderConfig)
     }
 
-    // ///////////////////// //
-    // Configuration Classes //
-    // ///////////////////// //
-    /**
-     * Stores the device IDs of the module's electronic components
-     *
-     * @param driveId           The ID of the drive motor controller
-     * @param steerId           The ID of the steer motor controller
-     * @param absoluteEncoderId The ID of the absolute encoder
-     */
-    @JvmRecord
-    data class DeviceIdentifiers(val driveId: NumericId, val steerId: NumericId, val absoluteEncoderId: NumericId)
-
-    @JvmRecord
-    data class DeviceProperties(val driveMotorProperties: MotorProperties, val steerMotorProperties: MotorProperties)
-
-    /**
-     * Stores limits that regulate the module's motion
-     *
-     * @param driveCurrentLimit The current limit for the driving motor
-     * @param steerCurrentLimit The current limit for the steering motor
-     */
-    @JvmRecord
-    data class DeviceLimits(val driveCurrentLimit: Current, val steerCurrentLimit: Current)
-
-    /**
-     * Stores the considerations that must be taken into account due to the module's physical state
-     *
-     * @param driveWheelPositiveDirection The direction in which the drive wheel must turn when it receives a
-     * positive input
-     * @param steerWheelPositiveDirection The direction in which the steer wheel must turn when it receives a
-     * positive input
-     */
-    @JvmRecord
-    data class DeviceConventions(
-        val driveWheelPositiveDirection: RotationalDirection,
-        val steerWheelPositiveDirection: RotationalDirection
-    )
-
-    /**
-     * Stores the configuration parameters that are unique to each module
-     *
-     * @param absoluteEncoderOffset The magnet offset of the absolute encoder
-     */
-    @JvmRecord
-    data class ModuleSpecifics(val absoluteEncoderOffset: Angle)
-
-    /**
-     * Stores characteristics relating to the module's physical description
-     *
-     * @param driveGearing The gearing between the drive shaft and the wheel
-     * @param steerGearing The gearing between the steer shaft and the wheel
-     * @param wheel        The wheel's physical description
-     */
-    @JvmRecord
-    data class PhysicalDescription(val driveGearing: GearRatio, val steerGearing: GearRatio, val wheel: Wheel)
-
-    /**
-     * Stores the control constants that will be applied to the module's motion
-     *
-     * @param drivePidf The PIDF feedback coefficients used to control the driving motion
-     * @param driveSvag The SVAG feedforward gains used to control the driving motion
-     * @param steerPidf The PIDF feedback coefficients used to control the steering motion
-     * @param steerSvag The SVAG feedforward gains used to control the steering motion
-     */
-    @JvmRecord
-    data class ControlConstants(
-        val drivePidf: PidfCoefficients, val driveSvag: SvagGains, val steerPidf: PidfCoefficients,
-        val steerSvag: SvagGains
-    )
-
-    /**
-     * Stores the module's configuration parameters
-     *
-     * @param identifiers The identifier config
-     * @param physical    The physical config
-     * @param control     The control config
-     * @param limits      The limit config
-     */
-    @JvmRecord
-    data class Config(
-        val identifiers: DeviceIdentifiers, val deviceProperties: DeviceProperties,
-        val deviceConventions: DeviceConventions, val limits: DeviceLimits, val physical: PhysicalDescription,
-        val control: ControlConstants, val specifics: ModuleSpecifics
-    )
-
-    val talon = driveInterface;
 }

@@ -6,12 +6,16 @@ import edu.wpi.first.units.measure.AngularVelocity
 /**
  * Allows grouping the properties of a motor
  */
-data class MotorProperties(val positiveDirection: RotationalDirection, val maxAngularVelocity: AngularVelocity)
+data class MotorProperties(
+    val positiveDirection: RotationalDirection,
+    val maxAngularVelocity: AngularVelocity,
+    val efficiencyCurveMax: Double
+)
 
 /**
  * Contains an assortment FRC legal motor properties
  */
 object Motors {
-    val neo = MotorProperties(RotationalDirection.Counterclockwise, RotationsPerSecond.of(94.6))
-    val krakenX60 = MotorProperties(RotationalDirection.Counterclockwise, RotationsPerSecond.of(100.0))
+    val neo = MotorProperties(RotationalDirection.Counterclockwise, RotationsPerSecond.of(94.6), 87.5)
+    val krakenX60 = MotorProperties(RotationalDirection.Counterclockwise, RotationsPerSecond.of(100.0), 90.0)
 }
