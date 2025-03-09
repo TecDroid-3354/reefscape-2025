@@ -98,8 +98,27 @@ public class LimeLightsController {
      * @param swerveDriveDriver the driving subsystems
      * @param setpoint the distance setpoint
      * @param targetDistance distance from the target to the floor
+     * @param usingRight if true, you align the robot to the right camera, if false, to the left
      */
     public Command alignYAxisToAprilTagDetection(SwerveDriveDriver swerveDriveDriver, Distance setpoint,
+                                                 Distance targetDistance, Boolean usingRight) {
+        return Commands.run(() -> {
+            Distance aprilTagDistance = usingRight ? getRightLimeLightDistance(targetDistance) : getLeftLimeLightDistance(targetDistance);
+
+            double targetingLinearVelocityFactor = yAxisPIDController.calculate(
+                    getLimeLightAverageDistance(targetDistance).in(Units.Inches), setpoint.in(Units.Inches));
+
+            swerveDriveDriver.setLongitudinalVelocityFactorSource(() -> targetingLinearVelocityFactor);
+        });
+    }
+
+    /**
+     * Move the robot to the apriltag until be at the setpoint
+     * @param swerveDriveDriver the driving subsystems
+     * @param setpoint the distance setpoint
+     * @param targetDistance distance from the target to the floor
+     */
+    public Command alignYAxisToAprilTagDetectionUsingBothCameras(SwerveDriveDriver swerveDriveDriver, Distance setpoint,
                                                  Distance targetDistance) {
         return Commands.run(() -> {
             double targetingLinearVelocityFactor = yAxisPIDController.calculate(
