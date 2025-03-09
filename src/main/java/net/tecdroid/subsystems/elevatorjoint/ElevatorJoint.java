@@ -1,145 +1,123 @@
+
 package net.tecdroid.subsystems.elevatorjoint;
 
 import static edu.wpi.first.units.Units.*;
+import static net.tecdroid.util.units.NumericKt.clamp;
 
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.ctre.phoenix6.controls.Follower;
 import com.ctre.phoenix6.controls.MotionMagicVoltage;
+import com.ctre.phoenix6.controls.VoltageOut;
 import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.signals.NeutralModeValue;
 import edu.wpi.first.units.measure.Angle;
-import edu.wpi.first.units.measure.Current;
-import edu.wpi.first.units.measure.Time;
-import edu.wpi.first.wpilibj.DutyCycleEncoder;
+import edu.wpi.first.units.measure.Voltage;
 import edu.wpi.first.wpilibj2.command.Command;
+import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
-import net.tecdroid.util.*;
+import net.tecdroid.subsystems.generic.VoltageControlledSubsystem;
+import net.tecdroid.subsystems.generic.WithAbsoluteEncoders;
+import net.tecdroid.wrappers.ThroughBoreAbsoluteEncoder;
+import org.jetbrains.annotations.NotNull;
 
-public class ElevatorJoint extends SubsystemBase {
-    private final TalonFX mLeadingMotorController; // right motor
-    private final TalonFX mFollowingMotorController; // left motor
-    private final DutyCycleEncoder mTroughBoreController;
-    private final Config mElevatorAngleConfig;
+public class ElevatorJoint extends SubsystemBase implements VoltageControlledSubsystem, WithAbsoluteEncoders {
+    private final TalonFX leadMotorController; // right motor
+    private final TalonFX followerMotorController; // left motor
+    private final ThroughBoreAbsoluteEncoder absoluteEncoder;
+    private final ElevatorJointConfig config;
 
-    public ElevatorJoint(Config mElevatorAngleConfig) {
-        this.mElevatorAngleConfig = mElevatorAngleConfig;
+    public ElevatorJoint(ElevatorJointConfig config) {
+        this.config = config;
 
-        //Both leading and follower motor are initialized here
-        mLeadingMotorController = new TalonFX(mElevatorAngleConfig.Identifiers.leadingMotorId.getId());
-        mFollowingMotorController = new TalonFX(mElevatorAngleConfig.Identifiers.followerMotorId.getId());
-        mTroughBoreController = new DutyCycleEncoder(mElevatorAngleConfig.Identifiers.troughBorePort.getId());
+        leadMotorController = new TalonFX(config.getLeadMotorControllerId().getId());
+        followerMotorController = new TalonFX(config.getFollowerMotorId().getId());
+        absoluteEncoder = new ThroughBoreAbsoluteEncoder(config.getAbsoluteEncoderPort(), config.getAbsoluteEncoderIsInverted());
 
-        //Configures the elevator angle motors'
-        motorsInterface();
-
-        // ////////////// //
-        // Elevator Angle //
-        // ////////////// //
+        configureMotorsInterface();
     }
 
-    public Command goToPosition(Angle position) {
-        // Inline construction of command goes here.
-        // Subsystem::RunOnce implicitly requires `this` subsystem.
-        if (!isAngleWithinRange(position)) {
-            return null;
-        }
-        return runOnce(
-                () -> {
-                    // create a Motion Magic request, voltage output
-                    final MotionMagicVoltage m_request = new MotionMagicVoltage(0);
-                    Angle requestedPosition = Rotations.of(
-                            mElevatorAngleConfig.PhysicalDescription.elevatorAngleMotorGR
-                                    .unapply(position.in(Rotations)));
-
-                    // set motor position to target angle
-                    mLeadingMotorController.setControl(m_request.withPosition(requestedPosition.in(Rotations)));
-                });
-    }
-    public boolean isAngleWithinRange(Angle angle) {
-        //Ensures that the desired elevator´s angle is within the allowed range
-        //gte = greater than or equal value            lte = less than or equal value
-        return angle.gte(mElevatorAngleConfig.Limits.minimunElevatorAngle) && angle.lte(mElevatorAngleConfig.Limits.maximunElevatorAngle);
+    @Override
+    public void setVoltage(@NotNull Voltage voltage) {
+        VoltageOut request = new VoltageOut(voltage);
+        leadMotorController.setControl(request);
     }
 
-    public Angle getElevatorAngle() {
-        /* Applies the gear ratio to the motor's encoder reading to obtain the elevator angle position */
-        return mElevatorAngleConfig.PhysicalDescription.elevatorAngleMotorGR.apply(
-               getElevatorMotorsAngle()
-        );
+    @NotNull
+    @Override
+    public Command setVoltageCommand(@NotNull Voltage voltage) {
+        return VoltageControlledSubsystem.super.setVoltageCommand(voltage);
     }
 
-    private Angle getElevatorMotorsAngle() {
-        return Rotations.of(mLeadingMotorController.getPosition().getValueAsDouble());
+    @Override
+    public void stop() {
+        VoltageControlledSubsystem.super.stop();
     }
 
-    public void motorsInterface() {
-        //Sets elevator´s angle motors configurations
+    @NotNull
+    @Override
+    public Command stopCommand() {
+        return VoltageControlledSubsystem.super.stopCommand();
+    }
 
-        //  Initialize configuration object
+    public void setTargetAngle(Angle angle) {
+        Angle targetAngle = (Angle) clamp(config.getMinimumAngle(), config.getMaximumAngle(), angle);
+        MotionMagicVoltage request = new MotionMagicVoltage(config.getGearRatio().unapply(targetAngle));
+        leadMotorController.setControl(request);
+    }
+
+    public Command setTargetAngleCommand(Angle angle) {
+        return Commands.runOnce(() -> {
+            setTargetAngle(angle);
+        });
+    }
+
+    public Angle getAngle() {
+        return config.getGearRatio().apply(leadMotorController.getPosition().getValue());
+    }
+
+    public Angle getAbsoluteAngle() {
+        return config.getGearRatio().apply(absoluteEncoder.getPosition());
+    }
+
+    @Override
+    public void matchRelativeEncodersToAbsoluteEncoders() {
+        leadMotorController.setPosition(config.getGearRatio().unapply(getAbsoluteAngle()));
+    }
+
+    public void configureMotorsInterface() {
         TalonFXConfiguration motorsConfig = new TalonFXConfiguration();
 
-        //Sets the motor to brake and defines whether to invert it or not
-        motorsConfig.MotorOutput.withNeutralMode(NeutralModeValue.Brake).withInverted(
-                mElevatorAngleConfig.PhysicalDescription.elevatorAngleMotorGR.transformRotation(
-                        mElevatorAngleConfig.Conventions.elevatorAngleMotorsPositiveDirection
-                ).toInvertedValue()
-        );
+        motorsConfig.MotorOutput
+                .withNeutralMode(NeutralModeValue.Brake)
+                .withInverted(config.getGearRatio().transformRotation(config.getPositiveDirection()).toInvertedValue());
 
-        //Limit the motor´s current
-        motorsConfig.CurrentLimits.withSupplyCurrentLimitEnable(true)
-                .withSupplyCurrentLimit(mElevatorAngleConfig.Limits.motorsCurrent);
+        motorsConfig.CurrentLimits
+                .withSupplyCurrentLimitEnable(true)
+                .withSupplyCurrentLimit(config.getCurrentLimit());
 
-        //Get the PID´s and SVAG´s values
         motorsConfig.Slot0
-                .withKP(mElevatorAngleConfig.ControlConstants.elevatorAnglePidfCoefficients.getP())
-                .withKI(mElevatorAngleConfig.ControlConstants.elevatorAnglePidfCoefficients.getI())
-                .withKD(mElevatorAngleConfig.ControlConstants.elevatorAnglePidfCoefficients.getD())
-                .withKS(mElevatorAngleConfig.ControlConstants.elevatorAngleSvagGains.getS())
-                .withKV(mElevatorAngleConfig.ControlConstants.elevatorAngleSvagGains.getV())
-                .withKA(mElevatorAngleConfig.ControlConstants.elevatorAngleSvagGains.getA())
-                .withKG(mElevatorAngleConfig.ControlConstants.elevatorAngleSvagGains.getG());
+                .withKP(config.getControlGains().getP())
+                .withKI(config.getControlGains().getI())
+                .withKD(config.getControlGains().getD())
+                .withKS(config.getControlGains().getS())
+                .withKV(config.getControlGains().getV())
+                .withKA(config.getControlGains().getA())
+                .withKG(config.getControlGains().getG());
 
-        //Get the Motion Magic values
         motorsConfig.MotionMagic
-                .withMotionMagicCruiseVelocity(mElevatorAngleConfig.ControlConstants.elevatorAngleMotionMagicTargets.getCruiseVelocity())
-                .withMotionMagicAcceleration(mElevatorAngleConfig.ControlConstants.elevatorAngleMotionMagicTargets.getAcceleration())
-                .withMotionMagicJerk(mElevatorAngleConfig.ControlConstants.elevatorAngleMotionMagicTargets.getJerk());
+                .withMotionMagicCruiseVelocity(config.getMotionTargets().getCruiseVelocity())
+                .withMotionMagicAcceleration(config.getMotionTargets().getAcceleration())
+                .withMotionMagicJerk(config.getMotionTargets().getJerk());
 
-        // Sets the time the motor should take to get to the desired speed / position
-        motorsConfig.ClosedLoopRamps.withVoltageClosedLoopRampPeriod(mElevatorAngleConfig.ControlConstants.elevatorAngleRampRate);
+        leadMotorController.clearStickyFaults();
+        followerMotorController.clearStickyFaults();
 
-        //Clear all sticky faults when initializing
-        mLeadingMotorController.clearStickyFaults();
-        mFollowingMotorController.clearStickyFaults();
+        leadMotorController.getConfigurator().apply(motorsConfig);
+        followerMotorController.getConfigurator().apply(motorsConfig);
 
-        //Apply the motor´s configuration
-        mLeadingMotorController.getConfigurator().apply(motorsConfig);
-        mFollowingMotorController.getConfigurator().apply(motorsConfig);
-
-        //Setting motors reading to the troughbore with the specified zero position
-        mLeadingMotorController.setPosition(
-                mTroughBoreController.get() - mElevatorAngleConfig.PhysicalDescription.encoderOffset.in(Rotations));
-
-        // Set follower motor
-        mFollowingMotorController.setControl(new Follower(mLeadingMotorController.getDeviceID(), true));
+        followerMotorController.setControl(new Follower(leadMotorController.getDeviceID(), true));
     }
 
-    public record DeviceIdentifiers(NumericId leadingMotorId, NumericId followerMotorId, NumericId troughBorePort) {}
-    public record DeviceProperties(MotorProperties motorsProperties) {}
-    public record DeviceLimits(
-            Current motorsCurrent, Angle minimunElevatorAngle,
-            Angle maximunElevatorAngle) {}
-    public record DeviceConventions(RotationalDirection elevatorAngleMotorsPositiveDirection) {}
-    public record PhysicalDescription(GearRatio elevatorAngleMotorGR, Angle encoderOffset) {}
-    public record ControlConstants(
-            PidfCoefficients elevatorAnglePidfCoefficients,
-            SvagGains elevatorAngleSvagGains,
-            MotionMagicTargets elevatorAngleMotionMagicTargets,
-            Time elevatorAngleRampRate) {}
-    public record Config(
-            DeviceIdentifiers Identifiers, DeviceProperties Properties,
-            DeviceLimits Limits, DeviceConventions Conventions,
-            PhysicalDescription PhysicalDescription, ControlConstants ControlConstants) {}
 }
 
 

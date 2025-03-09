@@ -9,7 +9,7 @@ import edu.wpi.first.units.measure.LinearVelocity
 import edu.wpi.first.units.measure.Time
 import edu.wpi.first.wpilibj2.command.Command
 import edu.wpi.first.wpilibj2.command.Commands
-import net.tecdroid.kt.toRotation2d
+import net.tecdroid.util.units.toRotation2d
 
 class SwerveDriveDriver(
     private val maxLinearVelocity: LinearVelocity,

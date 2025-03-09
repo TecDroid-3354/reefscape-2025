@@ -4,7 +4,6 @@ import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.units.measure.Current;
 
 import edu.wpi.first.units.measure.Time;
-import net.tecdroid.subsystems.elevatorjoint.ElevatorJoint.*;
 import net.tecdroid.util.*;
 
 import static edu.wpi.first.units.Units.*;
@@ -64,12 +63,12 @@ public class ElevatorJointConfiguration {
     private static class Control {
         private final PidfCoefficients elevatorAnglePidfCoefficients = new PidfCoefficients(0.0, 0.0, 0.0, 0.0);
         private final SvagGains elevatorAngleSvagGains = new SvagGains(0.0, 0.0, 0.0, 0.0);
-        private final MotionMagicTargets elevatorAngleMotionMagicTargets = new MotionMagicTargets(0.0, 0.0, 0.0);
+        private final MotionTargets elevatorAngleMotionTargets = new MotionTargets(0.0, 0.0, 0.0);
         private final Time elevatorAngleRampRate = Seconds.of(0.1);
 
         final ControlConstants elevatorAngleControlConstants = new ControlConstants(
                 elevatorAnglePidfCoefficients, elevatorAngleSvagGains,
-                elevatorAngleMotionMagicTargets, elevatorAngleRampRate
+                elevatorAngleMotionTargets, elevatorAngleRampRate
         );
 
     }

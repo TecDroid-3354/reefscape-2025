@@ -8,10 +8,7 @@ import com.ctre.phoenix6.signals.NeutralModeValue;
 import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.units.measure.Voltage;
 import edu.wpi.first.wpilibj.DutyCycleEncoder;
-import edu.wpi.first.wpilibj.shuffleboard.Shuffleboard;
-import edu.wpi.first.wpilibj.shuffleboard.ShuffleboardTab;
 import edu.wpi.first.wpilibj2.command.Command;
-import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import net.tecdroid.subsystems.generic.VoltageControlledSubsystem;
 import org.jetbrains.annotations.NotNull;
@@ -22,22 +19,15 @@ public class Wrist extends SubsystemBase implements VoltageControlledSubsystem {
     private final TalonFX motorController;
     private final DutyCycleEncoder absoluteEncoder;
     private final WristConfig config;
-    private Voltage sv = Volts.of(0.0);
 
     public Wrist(WristConfig config) {
         this.config = config;
 
         motorController = new TalonFX(this.config.getMotorControllerId().getId());
-        // wrist encoder --> throughbore (roboRIO connected)
         absoluteEncoder = new DutyCycleEncoder(this.config.getAbsoluteEncoderPort().getId());
 
         // Configure motors
         configureMotorInterface();
-    }
-
-    @Override
-    public void periodic() {
-        setVoltage(sv);
     }
 
     @Override
@@ -46,6 +36,7 @@ public class Wrist extends SubsystemBase implements VoltageControlledSubsystem {
         motorController.setControl(request);
     }
 
+    @NotNull
     @Override
     public Command setVoltageCommand(@NotNull Voltage voltage) {
         return VoltageControlledSubsystem.super.setVoltageCommand(voltage);
@@ -56,6 +47,7 @@ public class Wrist extends SubsystemBase implements VoltageControlledSubsystem {
         VoltageControlledSubsystem.super.stop();
     }
 
+    @NotNull
     @Override
     public Command stopCommand() {
         return VoltageControlledSubsystem.super.stopCommand();
@@ -131,9 +123,9 @@ public class Wrist extends SubsystemBase implements VoltageControlledSubsystem {
                 .withKG(config.getControlGains().getG());
 
         wristMotorConfig.MotionMagic
-                .withMotionMagicCruiseVelocity(config.getGearRatio().unapply(config.getMotionMagicTargets().getCruiseVelocity()))
-                .withMotionMagicAcceleration(config.getGearRatio().unapply(config.getMotionMagicTargets().getAcceleration()))
-                .withMotionMagicJerk(config.getGearRatio().unapply(config.getMotionMagicTargets().getJerk()));
+                .withMotionMagicCruiseVelocity(config.getGearRatio().unapply(config.getMotionTargets().getCruiseVelocity()))
+                .withMotionMagicAcceleration(config.getGearRatio().unapply(config.getMotionTargets().getAcceleration()))
+                .withMotionMagicJerk(config.getGearRatio().unapply(config.getMotionTargets().getJerk()));
 
         // Clear all sticky faults when initializing
         motorController.clearStickyFaults();

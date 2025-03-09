@@ -1,7 +1,7 @@
 package net.tecdroid.subsystems.intake
 
 import edu.wpi.first.units.measure.Current
-import net.tecdroid.kt.amps
+import net.tecdroid.util.units.amps
 import net.tecdroid.util.*
 
 data class IntakeConfig(
@@ -10,7 +10,7 @@ data class IntakeConfig(
     val currentLimit: Current,
     val positiveDirection: RotationalDirection,
     val controlGains: ControlGains,
-    val motionMagicTargets: MotionMagicTargets
+    val motionTargets: MotionTargets
 )
 
 val intakeConfig = IntakeConfig(
@@ -19,5 +19,5 @@ val intakeConfig = IntakeConfig(
     currentLimit = 30.0.amps,
     positiveDirection = RotationalDirection.Clockwise,
     controlGains = ControlGains(),
-    motionMagicTargets = MotionMagicTargets()
+    motionTargets = MotionTargets()
 )

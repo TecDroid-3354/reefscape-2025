@@ -68,12 +68,12 @@ public class ClimberConfiguration {
     }
     //hay que revisar los MetersPerSecond
     private static class Control {
-        private final MotionMagicTargets climberMotionMagicTargets = new MotionMagicTargets(0.0, 0.0, 0.0);
+        private final MotionTargets climberMotionTargets = new MotionTargets(0.0, 0.0, 0.0);
         private final Time climberRampRate = Seconds.of(0.1);
         private final NeutralModeValue climberNeutralModeValue = NeutralModeValue.Brake;
 
         final ClimberController.ControlConstants climberControlConstants = new ClimberController.ControlConstants(
-                climberMotionMagicTargets, climberRampRate, climberNeutralModeValue);
+                climberMotionTargets, climberRampRate, climberNeutralModeValue);
     }
 
     static final ClimberController.Config climberConfiguration = new ClimberController.Config(

@@ -34,6 +34,7 @@ public class Intake extends SubsystemBase implements VoltageControlledSubsystem 
         motorController.setControl(request);
     }
 
+    @NotNull
     @Override
     public Command setVoltageCommand(@NotNull Voltage voltage) {
         return VoltageControlledSubsystem.super.setVoltageCommand(voltage);
@@ -44,6 +45,7 @@ public class Intake extends SubsystemBase implements VoltageControlledSubsystem 
         VoltageControlledSubsystem.super.stop();
     }
 
+    @NotNull
     @Override
     public Command stopCommand() {
         return VoltageControlledSubsystem.super.stopCommand();

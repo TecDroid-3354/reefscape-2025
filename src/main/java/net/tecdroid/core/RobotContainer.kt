@@ -1,13 +1,11 @@
 package net.tecdroid.core
 
-import edu.wpi.first.units.Units.Radians
 import edu.wpi.first.units.Units.Seconds
 import edu.wpi.first.wpilibj2.command.Command
 import edu.wpi.first.wpilibj2.command.Commands
 import net.tecdroid.constants.GenericConstants.driverControllerId
 import net.tecdroid.input.CompliantXboxController
-import net.tecdroid.kt.radians
-import net.tecdroid.kt.volts
+import net.tecdroid.util.units.radians
 import net.tecdroid.subsystems.drivetrain.SwerveDrive
 import net.tecdroid.subsystems.drivetrain.SwerveDriveDriver
 import net.tecdroid.subsystems.drivetrain.swerveDriveConfiguration
@@ -32,7 +30,6 @@ class RobotContainer {
 
     private fun publishShuffleboardContents() {
         swerveDrive.publishToShuffleboard()
-        wrist.publishToShuffleboard()
     }
 
     private fun configureDrivers() {
