@@ -16,7 +16,7 @@ import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import net.tecdroid.subsystems.generic.VoltageControlledSubsystem;
 import org.jetbrains.annotations.NotNull;
 
-import static edu.wpi.first.units.Units.*;
+import java.util.function.Supplier;import static edu.wpi.first.units.Units.*;
 
 public class Wrist extends SubsystemBase implements VoltageControlledSubsystem {
     private final TalonFX motorController;
@@ -142,4 +142,12 @@ public class Wrist extends SubsystemBase implements VoltageControlledSubsystem {
         motorController.getConfigurator().apply(wristMotorConfig);
     }
 
+    public void publishToShuffleboard() {
+        ShuffleboardTab tab = Shuffleboard.getTab("Wrist");
+        tab.addDouble("WristAngle - getAbsoluteAngle", () -> getAbsoluteAngle().in(Degrees));
+        tab.addDouble("WristAngle - getAngle", () -> getAngle().in(Degrees));
+    }
 }
+
+
+

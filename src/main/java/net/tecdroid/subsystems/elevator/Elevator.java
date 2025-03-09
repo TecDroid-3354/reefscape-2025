@@ -10,6 +10,8 @@ import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.units.measure.Current;
 import edu.wpi.first.units.measure.Distance;
 import edu.wpi.first.wpilibj.DigitalInput;
+import edu.wpi.first.wpilibj.shuffleboard.Shuffleboard;
+import edu.wpi.first.wpilibj.shuffleboard.ShuffleboardTab;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
@@ -146,6 +148,11 @@ public class Elevator extends SubsystemBase {
             // set target position to 100 rotations
             mRightMotor.setControl(m_request);
         }
+    }
+
+    public void publishToShuffleboard() {
+        ShuffleboardTab tab = Shuffleboard.getTab("Elevator");
+        tab.addDouble("Elevator distance from base position", () -> getElevatorDistance().in(Meters));
     }
 
     // Test functions

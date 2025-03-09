@@ -11,6 +11,8 @@ import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.units.measure.Current;
 import edu.wpi.first.units.measure.Time;
 import edu.wpi.first.wpilibj.DutyCycleEncoder;
+import edu.wpi.first.wpilibj.shuffleboard.Shuffleboard;
+import edu.wpi.first.wpilibj.shuffleboard.ShuffleboardTab;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import net.tecdroid.util.*;
@@ -157,6 +159,12 @@ public class ElevatorJoint extends SubsystemBase {
 
         // Set follower motor
         mFollowingMotorController.setControl(new Follower(mLeadingMotorController.getDeviceID(), true));
+    }
+
+    public void publishToShuffleboard() {
+        ShuffleboardTab tab = Shuffleboard.getTab("ElevatorJoint");
+        tab.addDouble("ElevatorJointAngle - getAbsoluteEncoderAngle", () -> getAbsouluteEncoderAngle().in(Degrees));
+        tab.addDouble("ElevatorJointAngle - getAngle", () -> getElevatorAngle().in(Degrees));
     }
 
     public record DeviceIdentifiers(NumericId leadingMotorId, NumericId followerMotorId, NumericId troughBorePort) {}

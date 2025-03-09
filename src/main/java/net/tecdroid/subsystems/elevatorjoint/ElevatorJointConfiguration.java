@@ -81,7 +81,7 @@ public class ElevatorJointConfiguration {
 
     }
 
-    final Config elevatorAngleConfig = new Config(
+    public static final Config elevatorJointConfig = new Config(
             new DeviceIDS().elevatorAngleDevicesIDs, new Devices().elevatorAngleDeviceProperties,
             new Limits().elevatorAngleDeviceLimits, new Conventions().elevatorAngleDeviceConventions,
             new Structure().elevatorAnglePhysicalDescription, new Control().elevatorAngleControlConstants
