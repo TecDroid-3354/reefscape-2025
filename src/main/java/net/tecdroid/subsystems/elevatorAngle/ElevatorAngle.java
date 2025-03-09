@@ -7,6 +7,7 @@ import com.ctre.phoenix6.controls.Follower;
 import com.ctre.phoenix6.controls.MotionMagicVoltage;
 import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.signals.NeutralModeValue;
+import edu.wpi.first.units.Units;
 import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.units.measure.Current;
 import edu.wpi.first.units.measure.Time;
@@ -61,12 +62,15 @@ public class ElevatorAngle extends SubsystemBase {
 
     private void goToPosition(Angle position) {
         if (isAngleWithinRange(position)) {
+            // Know if we are going to have gravity to change the slot
+            int slot = position.in(Degrees)
+                    > mElevatorAngleConfig.Limits.gravityPointAngle.in(Degrees) ? 0 : 1;
             // create a Motion Magic request, voltage output
             final MotionMagicVoltage m_request = new MotionMagicVoltage(
                     Rotations.of(
                             mElevatorAngleConfig.PhysicalDescription.elevatorAngleMotorGR
                                     .unapply(position.in(Rotations)))
-            );
+            ).withSlot(slot);
 
             // set motor position to target angle
             mLeadingMotorController.setControl(m_request);
@@ -157,7 +161,7 @@ public class ElevatorAngle extends SubsystemBase {
     public record DeviceProperties(MotorProperties motorsProperties) {}
     public record DeviceLimits(
             Current motorsCurrent, Angle minimunElevatorAngle,
-            Angle maximunElevatorAngle) {}
+            Angle maximunElevatorAngle, Angle gravityPointAngle) {}
     public record DeviceConventions(RotationalDirection elevatorAngleMotorsPositiveDirection) {}
     public record PhysicalDescription(GearRatio elevatorAngleMotorGR, Angle encoderOffset) {}
     public record ControlConstants(

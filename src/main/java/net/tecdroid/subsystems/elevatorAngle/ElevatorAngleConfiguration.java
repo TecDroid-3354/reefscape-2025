@@ -1,6 +1,5 @@
 package net.tecdroid.subsystems.elevatorAngle;
 
-import edu.wpi.first.units.Units;
 import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.units.measure.Current;
 
@@ -37,9 +36,11 @@ public class ElevatorAngleConfiguration {
         private final Current motorsCurrent = Amps.of(40);
         private final Angle minimumElevatorAngle = Degrees.of(10.0);
         private final Angle maximumElevatorAngle = Degrees.of(90.0);
+        private final Angle gravityPointAngle = Degrees.of(75.0);
 
         final DeviceLimits elevatorAngleDeviceLimits = new DeviceLimits (
-                motorsCurrent, minimumElevatorAngle, maximumElevatorAngle
+                motorsCurrent, minimumElevatorAngle, maximumElevatorAngle,
+                gravityPointAngle
         );
     }
 
@@ -64,10 +65,10 @@ public class ElevatorAngleConfiguration {
         private final PidfCoefficients elevatorAnglePidfCoefficients = new PidfCoefficients(0.0, 0.0, 0.0, 0.0);
 
         // Svag gains when we have no gravity Slot0
-        private final SvagGains elevatorAngleNoGravitySvagGains = new SvagGains(0.0, 0.0, 0.0, 0.0);
+        private final SvagGains elevatorAngleNoGravitySvagGains = new SvagGains(0.0, 0.0, 0.1, 0.0);
 
         // Svag gains when we have gravity Slot1
-        private final SvagGains elevatorAngleGravitySvagGains = new SvagGains(0.0, 0.0, 0.0, 0.0);
+        private final SvagGains elevatorAngleGravitySvagGains = new SvagGains(0.0, 0.0, 0.1, 0.0);
 
         private final MotionMagicCoefficients elevatorAngleMotionMagicCoefficients = new MotionMagicCoefficients(0.0, 0.0, 0.0);
         private final Time elevatorAngleRampRate = Seconds.of(0.1);
