@@ -11,7 +11,9 @@ import edu.wpi.first.units.measure.Current;
 import edu.wpi.first.units.measure.Distance;
 import edu.wpi.first.wpilibj.DigitalInput;
 import edu.wpi.first.wpilibj2.command.Command;
+import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
+import edu.wpi.first.wpilibj2.command.button.Trigger;
 import net.tecdroid.util.*;
 
 import static edu.wpi.first.units.Units.*;
@@ -70,6 +72,9 @@ public class Elevator extends SubsystemBase {
 
         // limit switch
         elevatorLimitSwitch = new DigitalInput(elevatorConfig.deviceIdentifier.limitSwitchChannel.getId());
+
+        // Limits switch usage
+        new Trigger(this::limitSwitchActive).onTrue(Commands.run(this::stopMotors));
     }
 
     public Elevator() {
@@ -148,13 +153,6 @@ public class Elevator extends SubsystemBase {
     public void stopMotors() {
         mLeftMotor.setVoltage(0.0);
         mRightMotor.setVoltage(0.0);
-    }
-
-    @Override
-    public void periodic() {
-        if (limitSwitchActive()) {
-            stopMotors();
-        }
     }
 
     public record DeviceIdentifier(NumericId leftMotorId, NumericId rightMotorId, DigitId limitSwitchChannel) {}
