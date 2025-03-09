@@ -46,7 +46,13 @@ public class LimeLightModule {
         return Angle.ofBaseUnits(tync, Units.Degrees);
     }
 
-    public Distance getDistance() {
+
+    /**
+     * Gets the distance of the apriltag
+     * @param targetDistance distance from the target to the floor
+     * @return the distance of the robot and the apriltag
+     */
+    public Distance getDistance(Distance targetDistance) {
         // how many degrees back is your limelight rotated from perfectly vertical?
         double limelightMountAngleDegrees = deviceConfig.deviceStructure.limelightMountAngleDegrees
                 .in(Units.Degrees);
@@ -56,8 +62,7 @@ public class LimeLightModule {
                 .in(Units.Inches);
 
         // distance from the target to the floor
-        double goalHeightInches = deviceConfig.deviceStructure.goalHeightDistance
-                .in(Units.Inches);
+        double goalHeightInches = targetDistance.in(Units.Inches);
 
         double angleToGoalDegrees = limelightMountAngleDegrees + getTy().in(Units.Degrees);
         double angleToGoalRadians = angleToGoalDegrees * (3.14159 / 180.0);

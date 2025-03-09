@@ -28,12 +28,41 @@ public class LimeLightsController {
 
     }
 
-    public Distance getLeftLimeLightDistance() {
-        return leftLimeLight.getDistance();
+    /**
+     * Gets the distance of the apriltag according to left camera
+     * @param targetDistance distance from the target to the floor
+     * @return the distance of the robot and the apriltag according to left camera
+     */
+    public Distance getLeftLimeLightDistance(Distance targetDistance) {
+        return leftLimeLight.getDistance(targetDistance);
     }
 
-    public Distance getRightLimeLightDistance() {
-        return rightLimeLight.getDistance();
+    /**
+     * Gets the distance of the apriltag according to right camera
+     * @param targetDistance distance from the target to the floor
+     * @return the distance of the robot and the apriltag according to right camera
+     */
+    public Distance getRightLimeLightDistance(Distance targetDistance) {
+        return rightLimeLight.getDistance(targetDistance);
+    }
+
+    /**
+     * Gets the distance average of the apriltag according to both cameras
+     * @param targetDistance distance from the target to the floor
+     * @return the distance of the robot and the apriltag according to both cameras
+     */
+    public Distance getLimeLightAverageDistance(Distance targetDistance) {
+        if (leftLimeLight.hasTarget() && rightLimeLight.hasTarget()) {
+            double distanceAverage = (getLeftLimeLightDistance(targetDistance).in(Units.Inches)
+                    + getRightLimeLightDistance(targetDistance).in(Units.Inches)) / 2;
+            return Distance.ofBaseUnits(distanceAverage, Units.Inches);
+        } else if (leftLimeLight.hasTarget() && !rightLimeLight.hasTarget()) {
+            return leftLimeLight.getDistance(targetDistance);
+        } else if (!leftLimeLight.hasTarget() && rightLimeLight.hasTarget()) {
+            return rightLimeLight.getDistance(targetDistance);
+        } else {
+            return Distance.ofBaseUnits(0, Units.Inches);
+        }
     }
 
     public Angle getLeftLimeLightTx() {
@@ -43,6 +72,13 @@ public class LimeLightsController {
     public Angle getRightLimeLightTx() {
         return rightLimeLight.getTx();
     }
+
+    /**
+     * Rotate the robot to the apriltag until align at the setpoint
+     * @param swerveDriveDriver the driving subsystems
+     * @param setPoint the angle setpoint
+     * @param usingRight if true, you align the robot to the right camera, if false, to the left
+     */
 
     public Command alignZAxisToAprilTagDetection(SwerveDriveDriver swerveDriveDriver, Angle setPoint,
                                                  Boolean usingRight) {
@@ -57,14 +93,17 @@ public class LimeLightsController {
         });
     }
 
+    /**
+     * Move the robot to the apriltag until be at the setpoint
+     * @param swerveDriveDriver the driving subsystems
+     * @param setpoint the distance setpoint
+     * @param targetDistance distance from the target to the floor
+     */
     public Command alignYAxisToAprilTagDetection(SwerveDriveDriver swerveDriveDriver, Distance setpoint,
-                                                 Boolean usingRight) {
+                                                 Distance targetDistance) {
         return Commands.run(() -> {
-
-            Distance detectionDistance = usingRight ? getRightLimeLightDistance() : getLeftLimeLightDistance();
-
             double targetingLinearVelocityFactor = yAxisPIDController.calculate(
-                    detectionDistance.in(Units.Inches), setpoint.in(Units.Inches));
+                    getLimeLightAverageDistance(targetDistance).in(Units.Inches), setpoint.in(Units.Inches));
 
             swerveDriveDriver.setLongitudinalVelocityFactorSource(() -> targetingLinearVelocityFactor);
         });
