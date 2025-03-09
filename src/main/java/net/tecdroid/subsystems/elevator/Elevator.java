@@ -118,12 +118,11 @@ public class Elevator extends SubsystemBase {
     public record DeviceIdentifier(NumericId leftMotorId, NumericId rightMotorId, DigitId limitSwitchChannel) {}
     public record MotorProperties(Current ampLimits, InvertedValue leaderMotorInvertedType, boolean followerMotorInverted) {}
     public record ElevatorGearRatio(GearRatio motorGearRatio, Distance elevatorInchesPerRev) {}
-    public record EncoderProperties(Boolean absoluteEncoderReversed, Angle encoderOffsets) {}
     public record Coefficients(PidfCoefficients pidfCoefficients, SvagGains svagGains) {}
     public record MotionMagicProperties(MotionMagicSettings motionMagicSettings) {}
 
     public record ElevatorConfig(DeviceIdentifier deviceIdentifier, MotorProperties motorProperties,
-                                 ElevatorGearRatio gearRatio, EncoderProperties encoderProperties,
+                                 ElevatorGearRatio gearRatio,
                                  Coefficients coefficients,
                                  MotionMagicProperties motionMagicProperties) {}
 

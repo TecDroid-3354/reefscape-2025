@@ -54,7 +54,7 @@ public class IntakeConfiguration {
         );
     }
     
-    final Config intakeConfig = new Config(
+    public static final Config intakeConfig = new Config(
             new DeviceIDs().intakeDevicesIDs, new Devices().intakeDevicesProperties, new Limits().intakeDevicesLimits,
             new Conventions().intakeDevicesConventions, new Structure().intakePhysicalDescription, new Control().intakeControlConstants
     );

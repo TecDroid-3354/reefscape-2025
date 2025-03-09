@@ -45,8 +45,6 @@ public final class ElevatorConfiguration {
 
         // Encoder zero position
         private static final Angle OFFSET_POSITION = Rotations.of(0.0);
-
-        private final EncoderProperties encoderProperties = new EncoderProperties(IS_INVERTED, OFFSET_POSITION);
     }
 
     private static class ElevatorReductions {
@@ -91,7 +89,7 @@ public final class ElevatorConfiguration {
 
     public static final Elevator.ElevatorConfig elevatorConfig = new Elevator.ElevatorConfig(
             new ElevatorIdentifiers().deviceIdentifier, new ElevatorMotorProperties().motorProperties,
-            new ElevatorReductions().elevatorGearRatio, new AbsoluteEncoder().encoderProperties,
+            new ElevatorReductions().elevatorGearRatio,
             new ElevatorCoefficients().coefficients, new ElevatorMotionMagicSettings().motionMagicProperties
     );
 

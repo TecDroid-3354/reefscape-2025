@@ -32,11 +32,11 @@ public class IntakeController {
         /* Takes a wheel linear velocity and applies a motor angular velocity */
         // Checks that the desired speed is within the allowed range
         if (wheelSpeed.lte(intakeConfig.ControlConstants.intakeMaxWheelLinearVelocity)) {
-            enableIntake(intakeWheelLinearVelocityToMotorAngularVelocity(wheelSpeed));
+            enableClosedIntake(intakeWheelLinearVelocityToMotorAngularVelocity(wheelSpeed));
         }
     }
 
-    private void enableIntake(AngularVelocity motorAngularVelocity) {
+    public void enableClosedIntake(AngularVelocity motorAngularVelocity) {
         /* Applies a voltage based on the desired motor angular velocity */
         intakeMotorController.setControl(
                 new VelocityVoltage(motorAngularVelocity)
