@@ -9,6 +9,7 @@ import edu.wpi.first.units.Units.Rotations
 import edu.wpi.first.units.measure.Angle
 import edu.wpi.first.units.measure.AngularVelocity
 import edu.wpi.first.units.measure.LinearVelocity
+import edu.wpi.first.wpilibj.shuffleboard.Shuffleboard
 import edu.wpi.first.wpilibj2.command.Command
 import edu.wpi.first.wpilibj2.command.Commands
 import edu.wpi.first.wpilibj2.command.SubsystemBase
@@ -16,7 +17,7 @@ import net.tecdroid.kt.toRotation2d
 import kotlin.math.PI
 
 class SwerveDrive(private val config: SwerveDriveConfig) : SubsystemBase() {
-    private val gyro = Pigeon2(config.imuId.id)
+    private val imu = Pigeon2(config.imuId.id)
 
     private val modules = config.moduleConfigs.map { SwerveModule(it.first) }
 
@@ -78,10 +79,12 @@ class SwerveDrive(private val config: SwerveDriveConfig) : SubsystemBase() {
         }
 
     var heading: Angle
-        get() = gyro.yaw.value
+        get() = imu.yaw.value
         set(angle) {
-            gyro.setYaw(angle)
+            imu.setYaw(angle)
         }
+
+    fun setHeadingCommand(angle: Angle) = Commands.runOnce({heading = angle});
 
     val moduleStates: List<SwerveModuleState>
         get() = modules.map { SwerveModuleState(it.wheelLinearVelocity, it.wheelAzimuth.toRotation2d()) }
@@ -95,6 +98,11 @@ class SwerveDrive(private val config: SwerveDriveConfig) : SubsystemBase() {
     val maxAngularVelocity: AngularVelocity =
         Rotations.one().div((config.longestDiagonal * PI) / maxLinearVelocity);
 
+    fun publishToShuffleboard() {
+        val tab = Shuffleboard.getTab("Swerve")
+        tab.add(imu)
+    }
+
 
     // ///////////// //
     // Configuration //
@@ -103,8 +111,8 @@ class SwerveDrive(private val config: SwerveDriveConfig) : SubsystemBase() {
     private fun configureImuInterface() {
         val imuConfiguration = Pigeon2Configuration()
 
-        gyro.clearStickyFaults()
-        gyro.configurator.apply(imuConfiguration)
+        imu.clearStickyFaults()
+        imu.configurator.apply(imuConfiguration)
     }
 
 }

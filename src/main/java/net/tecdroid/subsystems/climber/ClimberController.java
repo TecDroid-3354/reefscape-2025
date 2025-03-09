@@ -78,9 +78,9 @@ public class ClimberController {
 
         // Apply Motion Magic control constants
         motorsConfig.MotionMagic
-            .withMotionMagicCruiseVelocity(climberConfig.ControlConstants.climberMotionMagicCoefficients.getCruiseVelocity())
-            .withMotionMagicAcceleration(climberConfig.ControlConstants.climberMotionMagicCoefficients.getAcceleration())
-            .withMotionMagicJerk(climberConfig.ControlConstants.climberMotionMagicCoefficients.getJerk());
+            .withMotionMagicCruiseVelocity(climberConfig.ControlConstants.climberMotionMagicTargets.getCruiseVelocity())
+            .withMotionMagicAcceleration(climberConfig.ControlConstants.climberMotionMagicTargets.getAcceleration())
+            .withMotionMagicJerk(climberConfig.ControlConstants.climberMotionMagicTargets.getJerk());
 
         // Motors will take 0.1 seconds to achieve the desired speed
         motorsConfig.ClosedLoopRamps.withVoltageClosedLoopRampPeriod(climberConfig.ControlConstants.climberRampRate);
@@ -107,8 +107,8 @@ public class ClimberController {
         Current climberMotorsCurrentLimit, Angle minimumClimberAngle, Angle maximumClimberAngle) {}
     public record DeviceConventions(RotationalDirection climberRotationalPositiveDirection) {}
     public record PhysicalDescription(GearRatio climberGearRatio, Angle encoderOffSet) {}
-    public record ControlConstants(MotionMagicCoefficients climberMotionMagicCoefficients,
-                                     Time climberRampRate, NeutralModeValue motorsNeutralMode) {}
+    public record ControlConstants(MotionMagicTargets climberMotionMagicTargets,
+                                   Time climberRampRate, NeutralModeValue motorsNeutralMode) {}
     public record Config(DeviceIdentifiers Identifiers, DeviceProperties Properties, DeviceLimits Limits,
                          DeviceConventions Conventions, PhysicalDescription PhysicalDescription, ControlConstants ControlConstants) {}
 }

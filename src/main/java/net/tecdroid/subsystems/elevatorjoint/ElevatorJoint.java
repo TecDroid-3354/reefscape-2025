@@ -101,9 +101,9 @@ public class ElevatorJoint extends SubsystemBase {
 
         //Get the Motion Magic values
         motorsConfig.MotionMagic
-                .withMotionMagicCruiseVelocity(mElevatorAngleConfig.ControlConstants.elevatorAngleMotionMagicCoefficients.getCruiseVelocity())
-                .withMotionMagicAcceleration(mElevatorAngleConfig.ControlConstants.elevatorAngleMotionMagicCoefficients.getAcceleration())
-                .withMotionMagicJerk(mElevatorAngleConfig.ControlConstants.elevatorAngleMotionMagicCoefficients.getJerk());
+                .withMotionMagicCruiseVelocity(mElevatorAngleConfig.ControlConstants.elevatorAngleMotionMagicTargets.getCruiseVelocity())
+                .withMotionMagicAcceleration(mElevatorAngleConfig.ControlConstants.elevatorAngleMotionMagicTargets.getAcceleration())
+                .withMotionMagicJerk(mElevatorAngleConfig.ControlConstants.elevatorAngleMotionMagicTargets.getJerk());
 
         // Sets the time the motor should take to get to the desired speed / position
         motorsConfig.ClosedLoopRamps.withVoltageClosedLoopRampPeriod(mElevatorAngleConfig.ControlConstants.elevatorAngleRampRate);
@@ -134,7 +134,7 @@ public class ElevatorJoint extends SubsystemBase {
     public record ControlConstants(
             PidfCoefficients elevatorAnglePidfCoefficients,
             SvagGains elevatorAngleSvagGains,
-            MotionMagicCoefficients elevatorAngleMotionMagicCoefficients,
+            MotionMagicTargets elevatorAngleMotionMagicTargets,
             Time elevatorAngleRampRate) {}
     public record Config(
             DeviceIdentifiers Identifiers, DeviceProperties Properties,

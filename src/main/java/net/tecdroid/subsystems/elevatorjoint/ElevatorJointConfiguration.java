@@ -64,12 +64,12 @@ public class ElevatorJointConfiguration {
     private static class Control {
         private final PidfCoefficients elevatorAnglePidfCoefficients = new PidfCoefficients(0.0, 0.0, 0.0, 0.0);
         private final SvagGains elevatorAngleSvagGains = new SvagGains(0.0, 0.0, 0.0, 0.0);
-        private final MotionMagicCoefficients elevatorAngleMotionMagicCoefficients = new MotionMagicCoefficients(0.0, 0.0, 0.0);
+        private final MotionMagicTargets elevatorAngleMotionMagicTargets = new MotionMagicTargets(0.0, 0.0, 0.0);
         private final Time elevatorAngleRampRate = Seconds.of(0.1);
 
         final ControlConstants elevatorAngleControlConstants = new ControlConstants(
                 elevatorAnglePidfCoefficients, elevatorAngleSvagGains,
-                elevatorAngleMotionMagicCoefficients, elevatorAngleRampRate
+                elevatorAngleMotionMagicTargets, elevatorAngleRampRate
         );
 
     }
