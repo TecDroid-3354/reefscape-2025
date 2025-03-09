@@ -17,8 +17,13 @@ import net.tecdroid.wrappers.ThroughBoreAbsoluteEncoder
 
 class Wrist(private val config: WristConfig) : SubsystemBase(), VoltageControlledSubsystem, WithAbsoluteEncoders {
     private val motorController = TalonFX(config.motorControllerId.id)
+
     private val absoluteEncoder =
-        ThroughBoreAbsoluteEncoder(config.absoluteEncoderPort, config.absoluteEncoderIsInverted)
+        ThroughBoreAbsoluteEncoder(
+            port = config.absoluteEncoderPort,
+            offset = config.absoluteEncoderOffset,
+            inverted = config.absoluteEncoderIsInverted
+        )
 
     init {
         configureMotorInterface()

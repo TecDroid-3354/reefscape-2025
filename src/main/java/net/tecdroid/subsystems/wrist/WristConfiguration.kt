@@ -20,7 +20,7 @@ data class WristConfig(
     val maximumAngle: Angle,
     val positiveDirection: RotationalDirection,
     val gearRatio: GearRatio,
-    val encoderOffset: Angle,
+    val absoluteEncoderOffset: Angle,
     val controlGains: ControlGains,
     val motionTargets: MotionTargets
 )
@@ -37,7 +37,7 @@ val wristConfig = WristConfig(
     maximumAngle = 0.33.rotations,
     positiveDirection = Clockwise,
     gearRatio = GearRatio(89.2857, 1.0, 0),
-    encoderOffset = 0.32876.rotations,
+    absoluteEncoderOffset = 0.32876.rotations,
     controlGains = ControlGains(
         s = 0.15,
         g = 0.0

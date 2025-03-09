@@ -19,10 +19,15 @@ import net.tecdroid.wrappers.ThroughBoreAbsoluteEncoder
 
 class ElevatorJoint(private val config: ElevatorJointConfig) : SubsystemBase(), VoltageControlledSubsystem,
     WithAbsoluteEncoders {
-    private val leadMotorController = TalonFX(config.leadMotorControllerId.id) // right motor
-    private val followerMotorController = TalonFX(config.followerMotorId.id) // left motor
+    private val leadMotorController = TalonFX(config.leadMotorControllerId.id)
+    private val followerMotorController = TalonFX(config.followerMotorId.id)
+
     private val absoluteEncoder =
-        ThroughBoreAbsoluteEncoder(config.absoluteEncoderPort, config.absoluteEncoderIsInverted)
+        ThroughBoreAbsoluteEncoder(
+            port = config.absoluteEncoderPort,
+            offset = config.absoluteEncoderOffset,
+            inverted = config.absoluteEncoderIsInverted
+        )
 
     init {
         configureMotorsInterface()

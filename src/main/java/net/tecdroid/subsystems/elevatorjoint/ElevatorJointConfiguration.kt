@@ -22,7 +22,8 @@ data class ElevatorJointConfig(
     val minimumAngle: Angle,
     val maximumAngle: Angle,
     val controlGains: ControlGains,
-    val motionTargets: MotionTargets
+    val motionTargets: MotionTargets,
+    val absoluteEncoderOffset: Angle
 )
 
 val elevatorJointConfig = ElevatorJointConfig(
@@ -39,5 +40,6 @@ val elevatorJointConfig = ElevatorJointConfig(
     minimumAngle = 0.0.rotations,
     maximumAngle = 0.0.rotations,
     controlGains = ControlGains(),
-    motionTargets = MotionTargets()
+    motionTargets = MotionTargets(),
+    absoluteEncoderOffset = 0.0.rotations
 )
