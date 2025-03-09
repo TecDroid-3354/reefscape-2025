@@ -62,13 +62,20 @@ public class ElevatorAngleConfiguration {
 
     private static class Control {
         private final PidfCoefficients elevatorAnglePidfCoefficients = new PidfCoefficients(0.0, 0.0, 0.0, 0.0);
-        private final SvagGains elevatorAngleSvagGains = new SvagGains(0.0, 0.0, 0.0, 0.0);
+
+        // Svag gains when we have no gravity Slot0
+        private final SvagGains elevatorAngleNoGravitySvagGains = new SvagGains(0.0, 0.0, 0.0, 0.0);
+
+        // Svag gains when we have gravity Slot1
+        private final SvagGains elevatorAngleGravitySvagGains = new SvagGains(0.0, 0.0, 0.0, 0.0);
+
         private final MotionMagicCoefficients elevatorAngleMotionMagicCoefficients = new MotionMagicCoefficients(0.0, 0.0, 0.0);
         private final Time elevatorAngleRampRate = Seconds.of(0.1);
 
         final ControlConstants elevatorAngleControlConstants = new ControlConstants(
-                elevatorAnglePidfCoefficients, elevatorAngleSvagGains,
-                elevatorAngleMotionMagicCoefficients, elevatorAngleRampRate
+                elevatorAnglePidfCoefficients, elevatorAngleNoGravitySvagGains,
+                elevatorAngleGravitySvagGains, elevatorAngleMotionMagicCoefficients,
+                elevatorAngleRampRate
         );
 
     }
