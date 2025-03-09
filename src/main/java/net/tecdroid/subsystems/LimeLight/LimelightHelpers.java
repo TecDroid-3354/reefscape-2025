@@ -1,6 +1,6 @@
 //LimelightHelpers v1.12 (REQUIRES LLOS 2025.0 OR LATER)
 
-package net.tecdroid.subsystems.drivetrain.LimeLight;
+package net.tecdroid.subsystems.LimeLight;
 
 import edu.wpi.first.networktables.DoubleArrayEntry;
 import edu.wpi.first.networktables.NetworkTable;

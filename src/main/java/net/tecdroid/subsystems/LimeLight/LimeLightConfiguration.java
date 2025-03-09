@@ -1,4 +1,4 @@
-package net.tecdroid.subsystems.drivetrain.LimeLight;
+package net.tecdroid.subsystems.LimeLight;
 
 public class LimeLightConfiguration {
     public static class LimeLightNames {

@@ -1,4 +1,4 @@
-package net.tecdroid.subsystems.drivetrain.LimeLight;
+package net.tecdroid.subsystems.LimeLight;
 
 import edu.wpi.first.units.Units;
 import edu.wpi.first.units.measure.Angle;
