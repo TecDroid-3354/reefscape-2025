@@ -1,11 +1,14 @@
 package net.tecdroid.subsystems.Elevator;
 import com.ctre.phoenix6.signals.InvertedValue;
+import edu.wpi.first.units.Units;
 import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.units.measure.Current;
 import edu.wpi.first.units.measure.Distance;
 import net.tecdroid.subsystems.Elevator.Elevator.*;
 import net.tecdroid.subsystems.Elevator.Elevator.MotorProperties;
 import net.tecdroid.util.*;
+
+import java.lang.reflect.Field;
 
 import static edu.wpi.first.units.Units.*;
 
@@ -39,16 +42,6 @@ public final class ElevatorConfig {
 
     }
 
-    private static class AbsoluteEncoder {
-        // Set inverted
-        private static final boolean IS_INVERTED = false;
-
-        // Encoder zero position
-        private static final Angle OFFSET_POSITION = Rotations.of(0.0);
-
-        private final EncoderProperties encoderProperties = new EncoderProperties(IS_INVERTED, OFFSET_POSITION);
-    }
-
     private static class ElevatorReductions {
         // Gear Ratio
         public static final double ELEVATOR_GEAR_RATIO = 8.9285;
@@ -58,6 +51,13 @@ public final class ElevatorConfig {
 
         private final ElevatorGearRatio elevatorGearRatio = new ElevatorGearRatio(motorGearRatio, ELEVATOR_INCHES_PER_REV);
 
+    }
+
+    private static class ElevatorLimits {
+        public static final Distance upLimitDistance = Distance.ofBaseUnits(20.0, Inches);
+        public static final Distance downLimitDistance = Distance.ofBaseUnits(0.0, Inches);
+
+        private final ElevatorDistanceLimits elevatorDistanceLimits = new ElevatorDistanceLimits(upLimitDistance, downLimitDistance);
     }
 
     private static class ElevatorCoefficients {
@@ -86,8 +86,8 @@ public final class ElevatorConfig {
 
     public static final Elevator.ElevatorConfig elevatorConfig = new Elevator.ElevatorConfig(
             new ElevatorIdentifiers().deviceIdentifier, new ElevatorMotorProperties().motorProperties,
-            new ElevatorReductions().elevatorGearRatio, new AbsoluteEncoder().encoderProperties,
-            new ElevatorCoefficients().coefficients, new ElevatorMotionMagicSettings().motionMagicProperties
+            new ElevatorReductions().elevatorGearRatio, new ElevatorLimits().elevatorDistanceLimits,new ElevatorCoefficients().coefficients,
+            new ElevatorMotionMagicSettings().motionMagicProperties
     );
 
 }
