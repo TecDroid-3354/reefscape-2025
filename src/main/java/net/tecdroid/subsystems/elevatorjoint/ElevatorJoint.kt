@@ -1,123 +1,98 @@
+package net.tecdroid.subsystems.elevatorjoint
 
-package net.tecdroid.subsystems.elevatorjoint;
+import com.ctre.phoenix6.configs.TalonFXConfiguration
+import com.ctre.phoenix6.controls.Follower
+import com.ctre.phoenix6.controls.MotionMagicVoltage
+import com.ctre.phoenix6.controls.VoltageOut
+import com.ctre.phoenix6.hardware.TalonFX
+import com.ctre.phoenix6.signals.NeutralModeValue
+import edu.wpi.first.units.measure.Angle
+import edu.wpi.first.units.measure.Voltage
+import edu.wpi.first.wpilibj.shuffleboard.Shuffleboard
+import edu.wpi.first.wpilibj2.command.Command
+import edu.wpi.first.wpilibj2.command.Commands
+import edu.wpi.first.wpilibj2.command.SubsystemBase
+import net.tecdroid.subsystems.generic.VoltageControlledSubsystem
+import net.tecdroid.subsystems.generic.WithAbsoluteEncoders
+import net.tecdroid.util.units.clamp
+import net.tecdroid.wrappers.ThroughBoreAbsoluteEncoder
 
-import static edu.wpi.first.units.Units.*;
-import static net.tecdroid.util.units.NumericKt.clamp;
+class ElevatorJoint(private val config: ElevatorJointConfig) : SubsystemBase(), VoltageControlledSubsystem,
+    WithAbsoluteEncoders {
+    private val leadMotorController = TalonFX(config.leadMotorControllerId.id) // right motor
+    private val followerMotorController = TalonFX(config.followerMotorId.id) // left motor
+    private val absoluteEncoder =
+        ThroughBoreAbsoluteEncoder(config.absoluteEncoderPort, config.absoluteEncoderIsInverted)
 
-import com.ctre.phoenix6.configs.TalonFXConfiguration;
-import com.ctre.phoenix6.controls.Follower;
-import com.ctre.phoenix6.controls.MotionMagicVoltage;
-import com.ctre.phoenix6.controls.VoltageOut;
-import com.ctre.phoenix6.hardware.TalonFX;
-import com.ctre.phoenix6.signals.NeutralModeValue;
-import edu.wpi.first.units.measure.Angle;
-import edu.wpi.first.units.measure.Voltage;
-import edu.wpi.first.wpilibj2.command.Command;
-import edu.wpi.first.wpilibj2.command.Commands;
-import edu.wpi.first.wpilibj2.command.SubsystemBase;
-import net.tecdroid.subsystems.generic.VoltageControlledSubsystem;
-import net.tecdroid.subsystems.generic.WithAbsoluteEncoders;
-import net.tecdroid.wrappers.ThroughBoreAbsoluteEncoder;
-import org.jetbrains.annotations.NotNull;
-
-public class ElevatorJoint extends SubsystemBase implements VoltageControlledSubsystem, WithAbsoluteEncoders {
-    private final TalonFX leadMotorController; // right motor
-    private final TalonFX followerMotorController; // left motor
-    private final ThroughBoreAbsoluteEncoder absoluteEncoder;
-    private final ElevatorJointConfig config;
-
-    public ElevatorJoint(ElevatorJointConfig config) {
-        this.config = config;
-
-        leadMotorController = new TalonFX(config.getLeadMotorControllerId().getId());
-        followerMotorController = new TalonFX(config.getFollowerMotorId().getId());
-        absoluteEncoder = new ThroughBoreAbsoluteEncoder(config.getAbsoluteEncoderPort(), config.getAbsoluteEncoderIsInverted());
-
-        configureMotorsInterface();
+    init {
+        configureMotorsInterface()
     }
 
-    @Override
-    public void setVoltage(@NotNull Voltage voltage) {
-        VoltageOut request = new VoltageOut(voltage);
-        leadMotorController.setControl(request);
+    override fun setVoltage(voltage: Voltage) {
+        val request = VoltageOut(voltage)
+        leadMotorController.setControl(request)
     }
 
-    @NotNull
-    @Override
-    public Command setVoltageCommand(@NotNull Voltage voltage) {
-        return VoltageControlledSubsystem.super.setVoltageCommand(voltage);
+    fun setTargetAngle(angle: Angle) {
+        val targetAngle = clamp(config.minimumAngle, config.maximumAngle, angle) as Angle
+        val request = MotionMagicVoltage(config.gearRatio.unapply(targetAngle))
+        leadMotorController.setControl(request)
     }
 
-    @Override
-    public void stop() {
-        VoltageControlledSubsystem.super.stop();
+    fun setTargetAngleCommand(angle: Angle): Command = Commands.runOnce({ setTargetAngle(angle) })
+
+    val angle: Angle
+        get() = config.gearRatio.apply(leadMotorController.position.value)
+
+    private val absoluteAngle: Angle
+        get() = config.gearRatio.apply(absoluteEncoder.position)
+
+    override fun matchRelativeEncodersToAbsoluteEncoders() {
+        leadMotorController.setPosition(config.gearRatio.unapply(absoluteAngle))
     }
 
-    @NotNull
-    @Override
-    public Command stopCommand() {
-        return VoltageControlledSubsystem.super.stopCommand();
+    fun publishToShuffleboard() {
+        val tab = Shuffleboard.getTab("Elevator Joint")
+        tab.addString("Current Angle") { angle.toString() }
+        tab.addString("Current Absolute Angle") { absoluteAngle.toString() }
     }
 
-    public void setTargetAngle(Angle angle) {
-        Angle targetAngle = (Angle) clamp(config.getMinimumAngle(), config.getMaximumAngle(), angle);
-        MotionMagicVoltage request = new MotionMagicVoltage(config.getGearRatio().unapply(targetAngle));
-        leadMotorController.setControl(request);
-    }
+    private fun configureMotorsInterface() {
+        val talonConfig = TalonFXConfiguration()
 
-    public Command setTargetAngleCommand(Angle angle) {
-        return Commands.runOnce(() -> {
-            setTargetAngle(angle);
-        });
-    }
-
-    public Angle getAngle() {
-        return config.getGearRatio().apply(leadMotorController.getPosition().getValue());
-    }
-
-    public Angle getAbsoluteAngle() {
-        return config.getGearRatio().apply(absoluteEncoder.getPosition());
-    }
-
-    @Override
-    public void matchRelativeEncodersToAbsoluteEncoders() {
-        leadMotorController.setPosition(config.getGearRatio().unapply(getAbsoluteAngle()));
-    }
-
-    public void configureMotorsInterface() {
-        TalonFXConfiguration motorsConfig = new TalonFXConfiguration();
-
-        motorsConfig.MotorOutput
+        with(talonConfig) {
+            MotorOutput
                 .withNeutralMode(NeutralModeValue.Brake)
-                .withInverted(config.getGearRatio().transformRotation(config.getPositiveDirection()).toInvertedValue());
+                .withInverted(config.gearRatio.transformRotation(config.positiveDirection).toInvertedValue())
 
-        motorsConfig.CurrentLimits
+            CurrentLimits
                 .withSupplyCurrentLimitEnable(true)
-                .withSupplyCurrentLimit(config.getCurrentLimit());
+                .withSupplyCurrentLimit(config.currentLimit)
 
-        motorsConfig.Slot0
-                .withKP(config.getControlGains().getP())
-                .withKI(config.getControlGains().getI())
-                .withKD(config.getControlGains().getD())
-                .withKS(config.getControlGains().getS())
-                .withKV(config.getControlGains().getV())
-                .withKA(config.getControlGains().getA())
-                .withKG(config.getControlGains().getG());
+            Slot0
+                .withKP(config.controlGains.p)
+                .withKI(config.controlGains.i)
+                .withKD(config.controlGains.d)
+                .withKS(config.controlGains.s)
+                .withKV(config.controlGains.v)
+                .withKA(config.controlGains.a)
+                .withKG(config.controlGains.g)
 
-        motorsConfig.MotionMagic
-                .withMotionMagicCruiseVelocity(config.getMotionTargets().getCruiseVelocity())
-                .withMotionMagicAcceleration(config.getMotionTargets().getAcceleration())
-                .withMotionMagicJerk(config.getMotionTargets().getJerk());
+            MotionMagic
+                .withMotionMagicCruiseVelocity(config.motionTargets.cruiseVelocity)
+                .withMotionMagicAcceleration(config.motionTargets.acceleration)
+                .withMotionMagicJerk(config.motionTargets.jerk)
+        }
 
-        leadMotorController.clearStickyFaults();
-        followerMotorController.clearStickyFaults();
 
-        leadMotorController.getConfigurator().apply(motorsConfig);
-        followerMotorController.getConfigurator().apply(motorsConfig);
+        leadMotorController.clearStickyFaults()
+        followerMotorController.clearStickyFaults()
 
-        followerMotorController.setControl(new Follower(leadMotorController.getDeviceID(), true));
+        leadMotorController.configurator.apply(talonConfig)
+        followerMotorController.configurator.apply(talonConfig)
+
+        followerMotorController.setControl(Follower(leadMotorController.deviceID, true))
     }
-
 }
 
 

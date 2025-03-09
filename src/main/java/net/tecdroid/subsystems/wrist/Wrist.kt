@@ -1,143 +1,90 @@
-package net.tecdroid.subsystems.wrist;
+package net.tecdroid.subsystems.wrist
 
-import com.ctre.phoenix6.configs.TalonFXConfiguration;
-import com.ctre.phoenix6.controls.MotionMagicVoltage;
-import com.ctre.phoenix6.controls.VoltageOut;
-import com.ctre.phoenix6.hardware.TalonFX;
-import com.ctre.phoenix6.signals.NeutralModeValue;
-import edu.wpi.first.units.measure.Angle;
-import edu.wpi.first.units.measure.Voltage;
-import edu.wpi.first.wpilibj.DutyCycleEncoder;
-import edu.wpi.first.wpilibj2.command.Command;
-import edu.wpi.first.wpilibj2.command.SubsystemBase;
-import net.tecdroid.subsystems.generic.VoltageControlledSubsystem;
-import org.jetbrains.annotations.NotNull;
+import com.ctre.phoenix6.configs.TalonFXConfiguration
+import com.ctre.phoenix6.controls.MotionMagicVoltage
+import com.ctre.phoenix6.controls.VoltageOut
+import com.ctre.phoenix6.hardware.TalonFX
+import com.ctre.phoenix6.signals.NeutralModeValue
+import edu.wpi.first.units.Units
+import edu.wpi.first.units.measure.Angle
+import edu.wpi.first.units.measure.Voltage
+import edu.wpi.first.wpilibj.shuffleboard.Shuffleboard
+import edu.wpi.first.wpilibj2.command.SubsystemBase
+import net.tecdroid.subsystems.generic.VoltageControlledSubsystem
+import net.tecdroid.subsystems.generic.WithAbsoluteEncoders
+import net.tecdroid.util.units.clamp
+import net.tecdroid.wrappers.ThroughBoreAbsoluteEncoder
 
-import java.util.function.Supplier;import static edu.wpi.first.units.Units.*;
+class Wrist(private val config: WristConfig) : SubsystemBase(), VoltageControlledSubsystem, WithAbsoluteEncoders {
+    private val motorController = TalonFX(config.motorControllerId.id)
+    private val absoluteEncoder =
+        ThroughBoreAbsoluteEncoder(config.absoluteEncoderPort, config.absoluteEncoderIsInverted)
 
-public class Wrist extends SubsystemBase implements VoltageControlledSubsystem {
-    private final TalonFX motorController;
-    private final DutyCycleEncoder absoluteEncoder;
-    private final WristConfig config;
-
-    public Wrist(WristConfig config) {
-        this.config = config;
-
-        motorController = new TalonFX(this.config.getMotorControllerId().getId());
-        absoluteEncoder = new DutyCycleEncoder(this.config.getAbsoluteEncoderPort().getId());
-
-        // Configure motors
-        configureMotorInterface();
+    init {
+        configureMotorInterface()
     }
 
-    @Override
-    public void setVoltage(@NotNull Voltage voltage) {
-        VoltageOut request = new VoltageOut(voltage);
-        motorController.setControl(request);
+    override fun setVoltage(voltage: Voltage) {
+        val request = VoltageOut(voltage)
+        motorController.setControl(request)
     }
 
-    @NotNull
-    @Override
-    public Command setVoltageCommand(@NotNull Voltage voltage) {
-        return VoltageControlledSubsystem.super.setVoltageCommand(voltage);
+    fun setWristAngle(angle: Angle) {
+        val targetAngle = clamp(angle, config.minimumAngle, config.maximumAngle) as Angle
+        val request = MotionMagicVoltage(config.gearRatio.unapply(targetAngle)).withSlot(0)
+        motorController.setControl(request)
     }
 
-    @Override
-    public void stop() {
-        VoltageControlledSubsystem.super.stop();
+    val angle: Angle
+        get() =
+            config.gearRatio.apply(motorController.position.value)
+
+    private val absoluteAngle: Angle
+        get() = config.gearRatio.apply(absoluteEncoder.position)
+
+    override fun matchRelativeEncodersToAbsoluteEncoders() {
+        motorController.setPosition(absoluteAngle)
     }
 
-    @NotNull
-    @Override
-    public Command stopCommand() {
-        return VoltageControlledSubsystem.super.stopCommand();
-    }
-
-    public void setWristAngle(Angle angle) {
-        Angle targetAngle = angle;
-
-        if (targetAngle.lt(config.getMinimumAngle())) {
-            targetAngle = config.getMinimumAngle();
-        }
-
-        if (targetAngle.gt(config.getMaximumAngle())) {
-            targetAngle = config.getMaximumAngle();
-        }
-
-        MotionMagicVoltage request = new MotionMagicVoltage(config.getGearRatio().unapply(targetAngle)).withSlot(0);
-        motorController.setControl(request);
-    }
-
-    private Angle getMotorPosition() {
-        /* Returns the leading motor's encoder reading as an Angle object from rotations */
-        return motorController.getPosition().getValue();
-    }
-
-    public Angle getAngle() {
-        /* Gets the leading motor's encoder reading and applies the gear ratio to obtain the wrist angle */
-        return config.getGearRatio().apply(getMotorPosition());
-    }
-
-    private Angle getAbsoluteAngle() {
-        Angle reportedAngle = Rotations.of(absoluteEncoder.get()).minus(config.getEncoderOffset());
-
-        if (config.getAbsoluteEncoderIsInverted()) {
-            reportedAngle = Rotations.of(1.0).minus(reportedAngle);
-        }
-
-        return config.getGearRatio().apply(reportedAngle);
-    }
-
-    public void matchMotorEncoderAngleToAbsoluteEncoderAngle() {
-        motorController.setPosition(getAbsoluteAngle());
+    fun publishToShuffleboard() {
+        val tab = Shuffleboard.getTab("Wrist")
+        tab.addDouble("Current Angle (deg)") { angle.`in`(Units.Degrees) }
     }
 
     // ///////////// //
     // Configuration //
     // ///////////// //
 
-    private void configureMotorInterface() {
-        /* Sets all motor's configurations */
+    private fun configureMotorInterface() {
+        val talonConfig = TalonFXConfiguration()
 
-        // Initialize configuration object
-        TalonFXConfiguration wristMotorConfig = new TalonFXConfiguration();
-
-        // Sets the motor to brake and decides whether to invert it or not
-        wristMotorConfig.MotorOutput
+        with(talonConfig) {
+            MotorOutput
                 .withNeutralMode(NeutralModeValue.Brake)
-                .withInverted(config.getGearRatio().transformRotation(config.getPositiveDirection()).toInvertedValue());
+                .withInverted(config.gearRatio.transformRotation(config.positiveDirection).toInvertedValue())
 
-        // Limits the motor's current
-        wristMotorConfig.CurrentLimits
+            CurrentLimits
                 .withSupplyCurrentLimitEnable(true)
-                .withSupplyCurrentLimit(config.getMotorCurrentLimit());
+                .withSupplyCurrentLimit(config.motorCurrentLimit)
 
-        // Sets all PID, SVAG control constants
-        wristMotorConfig.Slot0
-                .withKP(config.getControlGains().getP())
-                .withKI(config.getControlGains().getI())
-                .withKD(config.getControlGains().getD())
-                .withKS(config.getControlGains().getS())
-                .withKV(config.getControlGains().getV())
-                .withKA(config.getControlGains().getA())
-                .withKG(config.getControlGains().getG());
+            Slot0
+                .withKP(config.controlGains.p)
+                .withKI(config.controlGains.i)
+                .withKD(config.controlGains.d)
+                .withKS(config.controlGains.s)
+                .withKV(config.controlGains.v)
+                .withKA(config.controlGains.a)
+                .withKG(config.controlGains.g)
 
-        wristMotorConfig.MotionMagic
-                .withMotionMagicCruiseVelocity(config.getGearRatio().unapply(config.getMotionTargets().getCruiseVelocity()))
-                .withMotionMagicAcceleration(config.getGearRatio().unapply(config.getMotionTargets().getAcceleration()))
-                .withMotionMagicJerk(config.getGearRatio().unapply(config.getMotionTargets().getJerk()));
+            MotionMagic
+                .withMotionMagicCruiseVelocity(config.gearRatio.unapply(config.motionTargets.cruiseVelocity))
+                .withMotionMagicAcceleration(config.gearRatio.unapply(config.motionTargets.acceleration))
+                .withMotionMagicJerk(config.gearRatio.unapply(config.motionTargets.jerk))
+        }
 
-        // Clear all sticky faults when initializing
-        motorController.clearStickyFaults();
 
-        // Apply the configuration
-        motorController.getConfigurator().apply(wristMotorConfig);
-    }
-
-    public void publishToShuffleboard() {
-        ShuffleboardTab tab = Shuffleboard.getTab("Wrist");
-        tab.addDouble("WristAngle - getAbsoluteAngle", () -> getAbsoluteAngle().in(Degrees));
-        tab.addDouble("WristAngle - getAngle", () -> getAngle().in(Degrees));
+        motorController.clearStickyFaults()
+        motorController.configurator.apply(talonConfig)
     }
 }
 

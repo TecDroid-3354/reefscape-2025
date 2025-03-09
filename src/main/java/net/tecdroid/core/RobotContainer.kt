@@ -1,13 +1,10 @@
 package net.tecdroid.core
 
-import edu.wpi.first.units.Units.Radians
 import edu.wpi.first.units.Units.Seconds
 import edu.wpi.first.wpilibj2.command.Command
 import edu.wpi.first.wpilibj2.command.Commands
 import net.tecdroid.constants.GenericConstants.driverControllerId
 import net.tecdroid.input.CompliantXboxController
-import net.tecdroid.kt.radians
-import net.tecdroid.kt.volts
 import net.tecdroid.subsystems.drivetrain.SwerveDrive
 import net.tecdroid.subsystems.drivetrain.SwerveDriveDriver
 import net.tecdroid.subsystems.drivetrain.swerveDriveConfiguration
@@ -16,9 +13,9 @@ import net.tecdroid.subsystems.intake.intakeConfig
 import net.tecdroid.subsystems.wrist.Wrist
 import net.tecdroid.subsystems.wrist.wristConfig
 import net.tecdroid.subsystems.elevator.Elevator
-import net.tecdroid.subsystems.elevator.ElevatorConfiguration.elevatorConfig
 import net.tecdroid.subsystems.elevatorjoint.ElevatorJoint
-import net.tecdroid.subsystems.elevatorjoint.ElevatorJointConfiguration.elevatorJointConfig
+import net.tecdroid.subsystems.elevatorjoint.elevatorJointConfig
+import net.tecdroid.util.units.radians
 
 class RobotContainer {
     private val controller = CompliantXboxController(driverControllerId)
@@ -73,7 +70,8 @@ class RobotContainer {
         get() = null
 
     fun setup() {
-        swerveDrive.matchModuleSteeringEncodersToAbsoluteEncoders()
-        wrist.matchMotorEncoderAngleToAbsoluteEncoderAngle();
+        swerveDrive.matchRelativeEncodersToAbsoluteEncoders()
+        wrist.matchRelativeEncodersToAbsoluteEncoders()
+        joint.matchRelativeEncodersToAbsoluteEncoders()
     }
 }

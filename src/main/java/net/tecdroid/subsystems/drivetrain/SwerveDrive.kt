@@ -13,10 +13,11 @@ import edu.wpi.first.wpilibj.shuffleboard.Shuffleboard
 import edu.wpi.first.wpilibj2.command.Command
 import edu.wpi.first.wpilibj2.command.Commands
 import edu.wpi.first.wpilibj2.command.SubsystemBase
+import net.tecdroid.subsystems.generic.WithAbsoluteEncoders
 import net.tecdroid.util.units.toRotation2d
 import kotlin.math.PI
 
-class SwerveDrive(private val config: SwerveDriveConfig) : SubsystemBase() {
+class SwerveDrive(private val config: SwerveDriveConfig) : SubsystemBase(), WithAbsoluteEncoders {
     private val imu = Pigeon2(config.imuId.id)
 
     private val modules = config.moduleConfigs.map { SwerveModule(it.first) }
@@ -58,9 +59,9 @@ class SwerveDrive(private val config: SwerveDriveConfig) : SubsystemBase() {
         setModuleTargetStates(*desiredStates)
     }
 
-    fun matchModuleSteeringEncodersToAbsoluteEncoders() {
+    override fun matchRelativeEncodersToAbsoluteEncoders() {
         for (module in modules) {
-            module.matchSteeringEncoderToAbsoluteEncoder()
+            module.matchRelativeEncodersToAbsoluteEncoders()
         }
     }
 

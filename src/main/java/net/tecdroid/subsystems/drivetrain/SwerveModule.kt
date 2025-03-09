@@ -23,6 +23,7 @@ import edu.wpi.first.units.measure.LinearVelocity
 import edu.wpi.first.util.sendable.Sendable
 import edu.wpi.first.util.sendable.SendableBuilder
 import net.tecdroid.constants.UnitConstants.halfRotation
+import net.tecdroid.subsystems.generic.WithAbsoluteEncoders
 import net.tecdroid.util.units.toRotation2d
 
 /**
@@ -30,7 +31,7 @@ import net.tecdroid.util.units.toRotation2d
  *
  * @param config The configuration for this module
  */
-class SwerveModule(private val config: SwerveModuleConfig) : Sendable {
+class SwerveModule(private val config: SwerveModuleConfig) : Sendable, WithAbsoluteEncoders {
     private val driveInterface = TalonFX(config.driveControllerId.id)
     private val steerController = SparkMax(config.steerControllerId.id, SparkLowLevel.MotorType.kBrushless)
     private val absoluteEncoder = CANcoder(config.absoluteEncoderId.id)
@@ -75,10 +76,7 @@ class SwerveModule(private val config: SwerveModuleConfig) : Sendable {
         setTargetVelocity(MetersPerSecond.of(targetState.speedMetersPerSecond))
     }
 
-    /**
-     * Assigns the position of the absolute encoder to the steering encoder
-     */
-    fun matchSteeringEncoderToAbsoluteEncoder() {
+    override fun matchRelativeEncodersToAbsoluteEncoders() {
         steerEncoder.setPosition(absoluteSteerShaftAzimuth.`in`(Rotations))
     }
 
