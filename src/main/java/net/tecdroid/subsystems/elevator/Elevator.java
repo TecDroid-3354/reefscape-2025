@@ -1,4 +1,4 @@
-package net.tecdroid.subsystems.Elevator;
+package net.tecdroid.subsystems.elevator;
 
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.ctre.phoenix6.controls.Follower;
@@ -21,7 +21,7 @@ import static edu.wpi.first.units.Units.*;
 public class Elevator extends SubsystemBase {
     TalonFX mLeftMotor;
     TalonFX mRightMotor;
-    ElevatorConfig elevatorConfig = net.tecdroid.subsystems.Elevator.ElevatorConfig.elevatorConfig;
+    ElevatorConfig elevatorConfig = net.tecdroid.subsystems.elevator.ElevatorConfiguration.elevatorConfig;
     DigitalInput elevatorLimitSwitch;
 
     public void ElevatorConfig() {
