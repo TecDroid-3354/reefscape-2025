@@ -37,39 +37,58 @@ public class ElevatorJoint extends SubsystemBase {
         // ////////////// //
     }
 
-    public Command goToPosition(Angle position) {
-        // Inline construction of command goes here.
-        // Subsystem::RunOnce implicitly requires `this` subsystem.
-        if (!isAngleWithinRange(position)) {
-            return null;
-        }
-        return runOnce(
-                () -> {
-                    // create a Motion Magic request, voltage output
-                    final MotionMagicVoltage m_request = new MotionMagicVoltage(0);
-                    Angle requestedPosition = Rotations.of(
-                            mElevatorAngleConfig.PhysicalDescription.elevatorAngleMotorGR
-                                    .unapply(position.in(Rotations)));
-
-                    // set motor position to target angle
-                    mLeadingMotorController.setControl(m_request.withPosition(requestedPosition.in(Rotations)));
-                });
-    }
     public boolean isAngleWithinRange(Angle angle) {
         //Ensures that the desired elevator´s angle is within the allowed range
         //gte = greater than or equal value            lte = less than or equal value
         return angle.gte(mElevatorAngleConfig.Limits.minimunElevatorAngle) && angle.lte(mElevatorAngleConfig.Limits.maximunElevatorAngle);
     }
 
+    private Angle getElevatorMotorsAngle() {
+        return Rotations.of(mLeadingMotorController.getPosition().getValueAsDouble());
+    }
+
     public Angle getElevatorAngle() {
-        /* Applies the gear ratio to the motor's encoder reading to obtain the elevator angle position */
-        return mElevatorAngleConfig.PhysicalDescription.elevatorAngleMotorGR.apply(
-               getElevatorMotorsAngle()
+        return Rotations.of(
+                mElevatorAngleConfig.PhysicalDescription.elevatorAngleMotorGR.apply(
+                        getElevatorMotorsAngle().in(Rotations)
+                )
         );
     }
 
-    private Angle getElevatorMotorsAngle() {
-        return Rotations.of(mLeadingMotorController.getPosition().getValueAsDouble());
+    private Angle getAbsouluteEncoderAngle() {
+        return Rotations.of(mTroughBoreController.get() - mElevatorAngleConfig.PhysicalDescription.encoderOffset.in(Rotations));
+    }
+
+    private void goToPosition(Angle position) {
+        if (isAngleWithinRange(position)) {
+            // Know if we are going to have gravity to change the slot
+            int slot = position.in(Degrees)
+                    > mElevatorAngleConfig.Limits.gravityPointAngle.in(Degrees) ? 0 : 1;
+            // create a Motion Magic request, voltage output
+            final MotionMagicVoltage m_request = new MotionMagicVoltage(
+                    Rotations.of(
+                            mElevatorAngleConfig.PhysicalDescription.elevatorAngleMotorGR
+                                    .unapply(position.in(Rotations)))
+            ).withSlot(slot);
+
+            // set motor position to target angle
+            mLeadingMotorController.setControl(m_request);
+        }
+    }
+
+    public Command goToPositionCMD(Angle position) {
+        return runOnce(
+                () -> {
+                    goToPosition(position);
+                });
+    }
+
+    public void setVoltage(double voltage) {
+        mLeadingMotorController.set(voltage);
+    }
+
+    public void stopMotors() {
+        setVoltage(0.0);
     }
 
     public void motorsInterface() {
@@ -90,35 +109,51 @@ public class ElevatorJoint extends SubsystemBase {
                 .withSupplyCurrentLimit(mElevatorAngleConfig.Limits.motorsCurrent);
 
         //Get the PID´s and SVAG´s values
+        // The slot 0 is when we have no gravity
         motorsConfig.Slot0
                 .withKP(mElevatorAngleConfig.ControlConstants.elevatorAnglePidfCoefficients.getP())
                 .withKI(mElevatorAngleConfig.ControlConstants.elevatorAnglePidfCoefficients.getI())
                 .withKD(mElevatorAngleConfig.ControlConstants.elevatorAnglePidfCoefficients.getD())
-                .withKS(mElevatorAngleConfig.ControlConstants.elevatorAngleSvagGains.getS())
-                .withKV(mElevatorAngleConfig.ControlConstants.elevatorAngleSvagGains.getV())
-                .withKA(mElevatorAngleConfig.ControlConstants.elevatorAngleSvagGains.getA())
-                .withKG(mElevatorAngleConfig.ControlConstants.elevatorAngleSvagGains.getG());
+                .withKS(mElevatorAngleConfig.ControlConstants.elevatorAngleNoGravitySvagGains.getS())
+                .withKV(mElevatorAngleConfig.ControlConstants.elevatorAngleNoGravitySvagGains.getV())
+                .withKA(mElevatorAngleConfig.ControlConstants.elevatorAngleNoGravitySvagGains.getA())
+                .withKG(mElevatorAngleConfig.ControlConstants.elevatorAngleNoGravitySvagGains.getG());
+
+        // The slot 1 is when we have gravity
+        motorsConfig.Slot1
+                .withKP(mElevatorAngleConfig.ControlConstants.elevatorAnglePidfCoefficients.getP())
+                .withKI(mElevatorAngleConfig.ControlConstants.elevatorAnglePidfCoefficients.getI())
+                .withKD(mElevatorAngleConfig.ControlConstants.elevatorAnglePidfCoefficients.getD())
+                .withKS(mElevatorAngleConfig.ControlConstants.elevatorAngleGravitySvagGains.getS())
+                .withKV(mElevatorAngleConfig.ControlConstants.elevatorAngleGravitySvagGains.getV())
+                .withKA(mElevatorAngleConfig.ControlConstants.elevatorAngleGravitySvagGains.getA())
+                .withKG(mElevatorAngleConfig.ControlConstants.elevatorAngleGravitySvagGains.getG());
 
         //Get the Motion Magic values
         motorsConfig.MotionMagic
-                .withMotionMagicCruiseVelocity(mElevatorAngleConfig.ControlConstants.elevatorAngleMotionMagicTargets.getCruiseVelocity())
-                .withMotionMagicAcceleration(mElevatorAngleConfig.ControlConstants.elevatorAngleMotionMagicTargets.getAcceleration())
-                .withMotionMagicJerk(mElevatorAngleConfig.ControlConstants.elevatorAngleMotionMagicTargets.getJerk());
+                .withMotionMagicCruiseVelocity(mElevatorAngleConfig.ControlConstants.elevatorAngleMotionMagicCoefficients.getMotionMagicCruiseVelocity())
+                .withMotionMagicAcceleration(mElevatorAngleConfig.ControlConstants.elevatorAngleMotionMagicCoefficients.getMotionMagicAcceleration())
+                .withMotionMagicJerk(mElevatorAngleConfig.ControlConstants.elevatorAngleMotionMagicCoefficients.getMotionMagicJerk());
 
         // Sets the time the motor should take to get to the desired speed / position
         motorsConfig.ClosedLoopRamps.withVoltageClosedLoopRampPeriod(mElevatorAngleConfig.ControlConstants.elevatorAngleRampRate);
 
-        //Clear all sticky faults when initializing
+        // Clear all sticky faults when initializing
         mLeadingMotorController.clearStickyFaults();
         mFollowingMotorController.clearStickyFaults();
 
-        //Apply the motor´s configuration
+        // Apply the motor´s configuration
         mLeadingMotorController.getConfigurator().apply(motorsConfig);
         mFollowingMotorController.getConfigurator().apply(motorsConfig);
 
-        //Setting motors reading to the troughbore with the specified zero position
+        // Setting motors reading to the trough bore with the specified zero position
         mLeadingMotorController.setPosition(
-                mTroughBoreController.get() - mElevatorAngleConfig.PhysicalDescription.encoderOffset.in(Rotations));
+                mElevatorAngleConfig.PhysicalDescription.elevatorAngleMotorGR.unapply(
+                        getAbsouluteEncoderAngle()));
+
+        mFollowingMotorController.setPosition(
+                mElevatorAngleConfig.PhysicalDescription.elevatorAngleMotorGR.unapply(
+                        getAbsouluteEncoderAngle()));
 
         // Set follower motor
         mFollowingMotorController.setControl(new Follower(mLeadingMotorController.getDeviceID(), true));
@@ -128,18 +163,17 @@ public class ElevatorJoint extends SubsystemBase {
     public record DeviceProperties(MotorProperties motorsProperties) {}
     public record DeviceLimits(
             Current motorsCurrent, Angle minimunElevatorAngle,
-            Angle maximunElevatorAngle) {}
+            Angle maximunElevatorAngle, Angle gravityPointAngle) {}
     public record DeviceConventions(RotationalDirection elevatorAngleMotorsPositiveDirection) {}
     public record PhysicalDescription(GearRatio elevatorAngleMotorGR, Angle encoderOffset) {}
     public record ControlConstants(
             PidfCoefficients elevatorAnglePidfCoefficients,
-            SvagGains elevatorAngleSvagGains,
-            MotionMagicTargets elevatorAngleMotionMagicTargets,
+            SvagGains elevatorAngleNoGravitySvagGains,
+            SvagGains elevatorAngleGravitySvagGains,
+            MotionMagicSettings elevatorAngleMotionMagicCoefficients,
             Time elevatorAngleRampRate) {}
     public record Config(
             DeviceIdentifiers Identifiers, DeviceProperties Properties,
             DeviceLimits Limits, DeviceConventions Conventions,
             PhysicalDescription PhysicalDescription, ControlConstants ControlConstants) {}
 }
-
-
