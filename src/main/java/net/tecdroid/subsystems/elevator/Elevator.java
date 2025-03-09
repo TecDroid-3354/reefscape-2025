@@ -63,8 +63,8 @@ public class Elevator extends SubsystemBase {
         mRightMotor.getConfigurator().apply(talonFXConfigs);
 
         // Set brake
-        mLeftMotor.setNeutralMode(NeutralModeValue.Brake);
-        mRightMotor.setNeutralMode(NeutralModeValue.Brake);
+        mLeftMotor.setNeutralMode(NeutralModeValue.Coast);
+        mRightMotor.setNeutralMode(NeutralModeValue.Coast);
 
         // Make the left motor to follow the right one
         mLeftMotor.setControl(new Follower(mRightMotor.getDeviceID(),
