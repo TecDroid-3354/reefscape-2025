@@ -1,4 +1,4 @@
-package net.tecdroid.subsystems.elevator;
+package net.tecdroid.subsystems.Elevator;
 
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.ctre.phoenix6.controls.Follower;
@@ -9,8 +9,11 @@ import com.ctre.phoenix6.signals.NeutralModeValue;
 import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.units.measure.Current;
 import edu.wpi.first.units.measure.Distance;
+import edu.wpi.first.wpilibj.DigitalInput;
 import edu.wpi.first.wpilibj2.command.Command;
+import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
+import edu.wpi.first.wpilibj2.command.button.Trigger;
 import net.tecdroid.util.*;
 
 import static edu.wpi.first.units.Units.*;
@@ -18,16 +21,8 @@ import static edu.wpi.first.units.Units.*;
 public class Elevator extends SubsystemBase {
     TalonFX mLeftMotor;
     TalonFX mRightMotor;
-    ElevatorConfig elevatorConfig = ElevatorConfiguration.elevatorConfig;
-
-
-    public Angle getRightMotorRot() {
-        return Rotations.of(elevatorConfig.gearRatio.motorGearRatio.apply(mRightMotor.getPosition().getValueAsDouble()));
-    }
-
-    public Distance getRightMotorDistance() {
-        return Distance.ofBaseUnits(getRightMotorRot().in(Rotations) * elevatorConfig.gearRatio.elevatorInchesPerRev.in(Inches), Inches);
-    }
+    ElevatorConfig elevatorConfig = net.tecdroid.subsystems.Elevator.ElevatorConfig.elevatorConfig;
+    DigitalInput elevatorLimitSwitch;
 
     public void ElevatorConfig() {
         mLeftMotor = new TalonFX(elevatorConfig.deviceIdentifier.leftMotorId.getId());
@@ -74,6 +69,12 @@ public class Elevator extends SubsystemBase {
         // Make the left motor to follow the right one
         mLeftMotor.setControl(new Follower(mRightMotor.getDeviceID(),
                 elevatorConfig.motorProperties.followerMotorInverted));
+
+        // limit switch
+        elevatorLimitSwitch = new DigitalInput(elevatorConfig.deviceIdentifier.limitSwitchChannel.getId());
+
+        // Limits switch usage
+        new Trigger(this::limitSwitchActive).onTrue(Commands.run(this::stopMotors));
     }
 
     public Elevator() {
@@ -83,20 +84,64 @@ public class Elevator extends SubsystemBase {
         //resetMotorPositionsToAbsoluteEncoderPosition();
     }
 
-    public Command goToPosition(Distance requestedPosition) {
+    public Angle getRightMotorRot() {
+        return Rotations.of(elevatorConfig.gearRatio.motorGearRatio.apply(mRightMotor.getPosition().getValueAsDouble()));
+    }
+
+    public Distance getRightMotorDistance() {
+        return Distance.ofBaseUnits(getRightMotorRot().in(Rotations) * elevatorConfig.gearRatio.elevatorInchesPerRev.in(Inches), Inches);
+    }
+
+    public Boolean getLimitSwitchRead() {
+        return elevatorLimitSwitch.get();
+    }
+
+    /**
+     * check if the limit switch is active, and we want to down, this to avoid force the subsystem
+     * @return if the limit switch is active, and we want to go down
+     */
+    public boolean limitSwitchActive(Distance requestedPosition) {
+        return elevatorLimitSwitch.get() && requestedPosition.in(Inches) < getRightMotorDistance().in(Inches);
+    }
+
+    public boolean limitSwitchActive() {
+        return elevatorLimitSwitch.get() && mRightMotor.getMotorVoltage().getValueAsDouble() < 0.0;
+    }
+
+    /**
+     * check if the requested position is inside the limits and that the limit switch isn't active
+     * @param requestedPosition
+     * @return if the requested position respect the limits of the elevator
+     */
+    public boolean elevatorIsInsideLimits(Distance requestedPosition) {
+        double requestedInches = requestedPosition.in(Inches);
+        double upLimit = elevatorConfig.limits.upDistanceLimit.in(Inches);
+        double downLimit = elevatorConfig.limits.downDistanceLimit.in(Inches);
+
+        return downLimit <= requestedInches && requestedInches <= upLimit
+                && !limitSwitchActive(requestedPosition);
+    }
+
+    public Command goToPositionCMD(Distance requestedPosition) {
         return runOnce(
                 () -> {
-                    // pre-process position (inches to rotations)
-                    Angle requestedRotations = Rotations.of(elevatorConfig.gearRatio.motorGearRatio.unapply(
-                            requestedPosition.in(Inches) / elevatorConfig.gearRatio.elevatorInchesPerRev.in(Inches)
-                    ));
-
-                    // create a Motion Magic request, voltage output
-                    final MotionMagicVoltage m_request = new MotionMagicVoltage(0);
-
-                    // set target position to 100 rotations
-                    mRightMotor.setControl(m_request.withPosition(requestedRotations.in(Rotations)));
+                    goToPosition(requestedPosition);
                 });
+    }
+
+    private void goToPosition(Distance requestedPosition) {
+        if (elevatorIsInsideLimits(requestedPosition)) {
+            // pre-process position (inches to rotations)
+            Angle requestedRotations = Rotations.of(elevatorConfig.gearRatio.motorGearRatio.unapply(
+                    requestedPosition.in(Inches) / elevatorConfig.gearRatio.elevatorInchesPerRev.in(Inches)
+            ));
+
+            // create a Motion Magic request, voltage output
+            final MotionMagicVoltage m_request = new MotionMagicVoltage(requestedRotations);
+
+            // set target position to 100 rotations
+            mRightMotor.setControl(m_request);
+        }
     }
 
     // Test functions
@@ -110,19 +155,16 @@ public class Elevator extends SubsystemBase {
         mRightMotor.setVoltage(0.0);
     }
 
-    @Override
-    public void periodic() {
-        // This method will be called once per scheduler run
-    }
-
     public record DeviceIdentifier(NumericId leftMotorId, NumericId rightMotorId, DigitId limitSwitchChannel) {}
     public record MotorProperties(Current ampLimits, InvertedValue leaderMotorInvertedType, boolean followerMotorInverted) {}
     public record ElevatorGearRatio(GearRatio motorGearRatio, Distance elevatorInchesPerRev) {}
+    public record ElevatorDistanceLimits(Distance upDistanceLimit, Distance downDistanceLimit) {}
     public record Coefficients(PidfCoefficients pidfCoefficients, SvagGains svagGains) {}
     public record MotionMagicProperties(MotionMagicSettings motionMagicSettings) {}
 
     public record ElevatorConfig(DeviceIdentifier deviceIdentifier, MotorProperties motorProperties,
                                  ElevatorGearRatio gearRatio,
+                                 ElevatorDistanceLimits limits,
                                  Coefficients coefficients,
                                  MotionMagicProperties motionMagicProperties) {}
 

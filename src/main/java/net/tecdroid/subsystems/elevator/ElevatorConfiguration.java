@@ -1,20 +1,23 @@
-package net.tecdroid.subsystems.elevator;
+package net.tecdroid.subsystems.Elevator;
 import com.ctre.phoenix6.signals.InvertedValue;
+import edu.wpi.first.units.Units;
 import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.units.measure.Current;
 import edu.wpi.first.units.measure.Distance;
-import net.tecdroid.subsystems.elevator.Elevator.*;
-import net.tecdroid.subsystems.elevator.Elevator.MotorProperties;
+import net.tecdroid.subsystems.Elevator.Elevator.*;
+import net.tecdroid.subsystems.Elevator.Elevator.MotorProperties;
 import net.tecdroid.util.*;
+
+import java.lang.reflect.Field;
 
 import static edu.wpi.first.units.Units.*;
 
-public final class ElevatorConfiguration {
+public final class ElevatorConfig {
     private static class ElevatorIdentifiers {
         // Ids
         private static final DigitId DIGIT_MODULE = new DigitId(5);
-        private static final DigitId LEFT_MOTOR_ID = new DigitId(3);
-        private static final DigitId RIGHT_MOTOR_ID = new DigitId(4);
+        private static final DigitId LEFT_MOTOR_ID = new DigitId(1);
+        private static final DigitId RIGHT_MOTOR_ID = new DigitId(2);
 
         // Channel
         public static final DigitId LIMIT_SWITCH_CHANNEL = new DigitId(2);
@@ -39,14 +42,6 @@ public final class ElevatorConfiguration {
 
     }
 
-    private static class AbsoluteEncoder {
-        // Set inverted
-        private static final boolean IS_INVERTED = false;
-
-        // Encoder zero position
-        private static final Angle OFFSET_POSITION = Rotations.of(0.0);
-    }
-
     private static class ElevatorReductions {
         // Gear Ratio
         public static final double ELEVATOR_GEAR_RATIO = 8.9285;
@@ -56,6 +51,13 @@ public final class ElevatorConfiguration {
 
         private final ElevatorGearRatio elevatorGearRatio = new ElevatorGearRatio(motorGearRatio, ELEVATOR_INCHES_PER_REV);
 
+    }
+
+    private static class ElevatorLimits {
+        public static final Distance upLimitDistance = Distance.ofBaseUnits(20.0, Inches);
+        public static final Distance downLimitDistance = Distance.ofBaseUnits(0.0, Inches);
+
+        private final ElevatorDistanceLimits elevatorDistanceLimits = new ElevatorDistanceLimits(upLimitDistance, downLimitDistance);
     }
 
     private static class ElevatorCoefficients {
@@ -73,11 +75,6 @@ public final class ElevatorConfiguration {
     }
 
     private static class ElevatorMotionMagicSettings {
-        
-        
-        // TODO: CHANGE FROM DOUBLES TO PREDEFINED METER CLASSES !!!!!
-        
-        
         public static final double MOTION_MAGIC_CRUISE_VELOCITY = 80.0; // Target cruise velocity of 80 rps
         public static final double MOTION_MAGIC_ACCELERATION = 160.0; // Target acceleration of 160 rps/s (0.5 seconds)
         public static final double MOTION_MAGIC_JERK = 1600; // Target jerk of 1600 rps/s/s (0.1 seconds)
@@ -89,8 +86,8 @@ public final class ElevatorConfiguration {
 
     public static final Elevator.ElevatorConfig elevatorConfig = new Elevator.ElevatorConfig(
             new ElevatorIdentifiers().deviceIdentifier, new ElevatorMotorProperties().motorProperties,
-            new ElevatorReductions().elevatorGearRatio,
-            new ElevatorCoefficients().coefficients, new ElevatorMotionMagicSettings().motionMagicProperties
+            new ElevatorReductions().elevatorGearRatio, new ElevatorLimits().elevatorDistanceLimits,new ElevatorCoefficients().coefficients,
+            new ElevatorMotionMagicSettings().motionMagicProperties
     );
 
 }
