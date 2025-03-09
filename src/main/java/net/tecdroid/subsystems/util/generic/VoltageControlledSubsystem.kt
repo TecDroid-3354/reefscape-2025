@@ -1,4 +1,4 @@
-package net.tecdroid.subsystems.generic
+package net.tecdroid.subsystems.util.generic
 
 import edu.wpi.first.units.measure.Voltage
 import edu.wpi.first.wpilibj2.command.Command

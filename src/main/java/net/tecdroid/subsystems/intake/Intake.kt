@@ -6,7 +6,7 @@ import com.ctre.phoenix6.hardware.TalonFX
 import com.ctre.phoenix6.signals.NeutralModeValue
 import edu.wpi.first.units.measure.Voltage
 import edu.wpi.first.wpilibj2.command.SubsystemBase
-import net.tecdroid.subsystems.generic.VoltageControlledSubsystem
+import net.tecdroid.subsystems.util.generic.VoltageControlledSubsystem
 
 class Intake(private val config: IntakeConfig) : SubsystemBase(), VoltageControlledSubsystem {
     private val motorController = TalonFX(config.motorControllerId.id)

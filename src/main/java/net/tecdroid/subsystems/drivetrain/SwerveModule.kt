@@ -23,7 +23,7 @@ import edu.wpi.first.units.measure.LinearVelocity
 import edu.wpi.first.util.sendable.Sendable
 import edu.wpi.first.util.sendable.SendableBuilder
 import net.tecdroid.constants.UnitConstants.halfRotation
-import net.tecdroid.subsystems.generic.WithAbsoluteEncoders
+import net.tecdroid.subsystems.util.generic.WithAbsoluteEncoders
 import net.tecdroid.util.units.toRotation2d
 
 /**

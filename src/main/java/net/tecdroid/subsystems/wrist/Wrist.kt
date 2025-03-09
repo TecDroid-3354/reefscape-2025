@@ -5,23 +5,25 @@ import com.ctre.phoenix6.controls.MotionMagicVoltage
 import com.ctre.phoenix6.controls.VoltageOut
 import com.ctre.phoenix6.hardware.TalonFX
 import com.ctre.phoenix6.signals.NeutralModeValue
-import edu.wpi.first.units.Units
-import edu.wpi.first.units.Units.Degrees
-import edu.wpi.first.units.measure.Angle
-import edu.wpi.first.units.measure.Voltage
+import edu.wpi.first.units.Units.*
+import edu.wpi.first.units.measure.*
 import edu.wpi.first.util.sendable.Sendable
 import edu.wpi.first.util.sendable.SendableBuilder
+import edu.wpi.first.wpilibj.RobotController
 import edu.wpi.first.wpilibj.shuffleboard.Shuffleboard
+import edu.wpi.first.wpilibj.sysid.SysIdRoutineLog
 import edu.wpi.first.wpilibj2.command.Command
 import edu.wpi.first.wpilibj2.command.Commands
 import edu.wpi.first.wpilibj2.command.SubsystemBase
-import net.tecdroid.subsystems.generic.VoltageControlledSubsystem
-import net.tecdroid.subsystems.generic.WithAbsoluteEncoders
+import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine
+import net.tecdroid.subsystems.util.generic.VoltageControlledSubsystem
+import net.tecdroid.subsystems.util.generic.WithAbsoluteEncoders
+import net.tecdroid.subsystems.util.identification.AngularSysIdRoutine
 import net.tecdroid.util.units.clamp
 import net.tecdroid.wrappers.ThroughBoreAbsoluteEncoder
 
 class Wrist(private val config: WristConfig) : SubsystemBase(), Sendable, VoltageControlledSubsystem, WithAbsoluteEncoders {
-    private val motorController = TalonFX(config.motorControllerId.id)
+    internal val motorController = TalonFX(config.motorControllerId.id)
 
     private val absoluteEncoder =
         ThroughBoreAbsoluteEncoder(
@@ -47,9 +49,19 @@ class Wrist(private val config: WristConfig) : SubsystemBase(), Sendable, Voltag
 
     fun setAngleCommand(angle: Angle): Command = Commands.runOnce({ setAngle(angle) }, this)
 
+    internal val motorPosition: Angle
+        get() = motorController.position.value
+
+    internal val motorVelocity: AngularVelocity
+        get() = motorController.velocity.value
+
     val angle: Angle
         get() =
-            config.gearRatio.apply(motorController.position.value)
+            config.gearRatio.apply(motorPosition)
+
+    val angularVelocity: AngularVelocity
+        get() =
+            config.gearRatio.apply(motorVelocity)
 
     private val absoluteAngle: Angle
         get() = config.gearRatio.apply(absoluteEncoder.position)
@@ -107,5 +119,19 @@ class Wrist(private val config: WristConfig) : SubsystemBase(), Sendable, Voltag
     }
 }
 
-
+class WristSystemIdentificationRoutine(wrist: Wrist) : AngularSysIdRoutine() {
+    override val routine: SysIdRoutine = SysIdRoutine(
+        SysIdRoutine.Config(),
+        SysIdRoutine.Mechanism(
+            wrist::setVoltage,
+            { log: SysIdRoutineLog ->
+                log.motor("Wrist Motor")
+                   .voltage(voltage.mut_replace(RobotController.getBatteryVoltage() * wrist.motorController.get(), Volts))
+                   .angularPosition(position.mut_replace(wrist.motorPosition))
+                   .angularVelocity(velocity.mut_replace(wrist.motorVelocity))
+            },
+            wrist
+        )
+    )
+}
 

@@ -13,7 +13,7 @@ import edu.wpi.first.wpilibj.shuffleboard.Shuffleboard
 import edu.wpi.first.wpilibj2.command.Command
 import edu.wpi.first.wpilibj2.command.Commands
 import edu.wpi.first.wpilibj2.command.SubsystemBase
-import net.tecdroid.subsystems.generic.WithAbsoluteEncoders
+import net.tecdroid.subsystems.util.generic.WithAbsoluteEncoders
 import net.tecdroid.util.units.toRotation2d
 import kotlin.math.PI
 
