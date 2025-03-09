@@ -13,10 +13,12 @@ import edu.wpi.first.wpilibj.shuffleboard.ShuffleboardTab;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
+import net.tecdroid.subsystems.generic.VoltageControlledSubsystem;
+import org.jetbrains.annotations.NotNull;
 
 import static edu.wpi.first.units.Units.*;
 
-public class Wrist extends SubsystemBase {
+public class Wrist extends SubsystemBase implements VoltageControlledSubsystem {
     private final TalonFX motorController;
     private final DutyCycleEncoder absoluteEncoder;
     private final WristConfig config;
@@ -38,15 +40,25 @@ public class Wrist extends SubsystemBase {
         setVoltage(sv);
     }
 
-    public void setVoltage(Voltage voltage) {
+    @Override
+    public void setVoltage(@NotNull Voltage voltage) {
         VoltageOut request = new VoltageOut(voltage);
         motorController.setControl(request);
     }
 
-    public Command setVoltageCommand(Voltage voltage) {
-        return Commands.runOnce(() -> {
-            setVoltage(voltage);
-        }, this);
+    @Override
+    public Command setVoltageCommand(@NotNull Voltage voltage) {
+        return VoltageControlledSubsystem.super.setVoltageCommand(voltage);
+    }
+
+    @Override
+    public void stop() {
+        VoltageControlledSubsystem.super.stop();
+    }
+
+    @Override
+    public Command stopCommand() {
+        return VoltageControlledSubsystem.super.stopCommand();
     }
 
     public void setWristAngle(Angle angle) {
@@ -129,4 +141,5 @@ public class Wrist extends SubsystemBase {
         // Apply the configuration
         motorController.getConfigurator().apply(wristMotorConfig);
     }
+
 }
