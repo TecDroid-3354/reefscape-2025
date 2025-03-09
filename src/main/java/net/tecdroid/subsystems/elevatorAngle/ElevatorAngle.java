@@ -85,8 +85,7 @@ public class ElevatorAngle extends SubsystemBase {
     }
 
     public void setVoltage(double voltage) {
-        mLeadingMotorController.setVoltage(voltage);
-        mFollowingMotorController.setVoltage(voltage);
+        mLeadingMotorController.set(voltage);
     }
 
     public void stopMotors() {
@@ -175,3 +174,5 @@ public class ElevatorAngle extends SubsystemBase {
             DeviceLimits Limits, DeviceConventions Conventions,
             PhysicalDescription PhysicalDescription, ControlConstants ControlConstants) {}
 }
+
+
