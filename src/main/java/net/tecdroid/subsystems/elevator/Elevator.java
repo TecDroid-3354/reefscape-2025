@@ -88,7 +88,7 @@ public class Elevator extends SubsystemBase {
         return Rotations.of(elevatorConfig.gearRatio.motorGearRatio.apply(mRightMotor.getPosition().getValueAsDouble()));
     }
 
-    public Distance getRightMotorDistance() {
+    public Distance getElevatorDistance() {
         return Distance.ofBaseUnits(getRightMotorRot().in(Rotations) * elevatorConfig.gearRatio.elevatorInchesPerRev.in(Inches), Inches);
     }
 
@@ -101,7 +101,7 @@ public class Elevator extends SubsystemBase {
      * @return if the limit switch is active, and we want to go down
      */
     public boolean limitSwitchActive(Distance requestedPosition) {
-        return elevatorLimitSwitch.get() && requestedPosition.in(Inches) < getRightMotorDistance().in(Inches);
+        return elevatorLimitSwitch.get() && requestedPosition.in(Inches) < getElevatorDistance().in(Inches);
     }
 
     public boolean limitSwitchActive() {
