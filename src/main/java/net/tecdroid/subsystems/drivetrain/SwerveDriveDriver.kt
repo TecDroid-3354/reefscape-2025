@@ -71,6 +71,14 @@ class SwerveDriveDriver(
         }, swerveDrive)
     }
 
+    fun getMaxAngularVelocity() : AngularVelocity {
+        return maxAngularVelocity;
+    }
+
+    fun getMaxLinearVelocity() : LinearVelocity {
+        return maxLinearVelocity;
+    }
+
     enum class DriveOrientation {
         FieldOriented,
         RobotOriented

@@ -48,13 +48,16 @@ public class LimeLightModule {
 
     public Distance getDistance() {
         // how many degrees back is your limelight rotated from perfectly vertical?
-        double limelightMountAngleDegrees = deviceConfig.deviceStructure.limelightMountAngleDegrees;
+        double limelightMountAngleDegrees = deviceConfig.deviceStructure.limelightMountAngleDegrees
+                .in(Units.Degrees);
 
         // distance from the center of the Limelight lens to the floor
-        double limelightLensHeightInches = deviceConfig.deviceStructure.limelightLensHeightInches;
+        double limelightLensHeightInches = deviceConfig.deviceStructure.limelightLensHeightDistance
+                .in(Units.Inches);
 
         // distance from the target to the floor
-        double goalHeightInches = deviceConfig.deviceStructure.goalHeightInches;
+        double goalHeightInches = deviceConfig.deviceStructure.goalHeightDistance
+                .in(Units.Inches);
 
         double angleToGoalDegrees = limelightMountAngleDegrees + getTy().in(Units.Degrees);
         double angleToGoalRadians = angleToGoalDegrees * (3.14159 / 180.0);
@@ -66,8 +69,8 @@ public class LimeLightModule {
     }
 
     public record DeviceName(String limeLightName) {}
-    public record DeviceStructure(Double limelightMountAngleDegrees, Double limelightLensHeightInches,
-                                  Double goalHeightInches) {}
+    public record DeviceMeasures(Angle limelightMountAngleDegrees, Distance limelightLensHeightDistance,
+                                 Distance goalHeightDistance) {}
 
-    public record DeviceConfig(DeviceName DeviceName, DeviceStructure deviceStructure) {}
+    public record DeviceConfig(DeviceName DeviceName, DeviceMeasures deviceStructure) {}
 }

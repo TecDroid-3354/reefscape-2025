@@ -1,5 +1,9 @@
 package net.tecdroid.subsystems.LimeLight;
 
+import edu.wpi.first.units.Units;
+import edu.wpi.first.units.measure.Angle;
+import edu.wpi.first.units.measure.Distance;
+
 public class LimeLightConfiguration {
     public static class LimeLightNames {
         private final String leftLimelightName = "leftLimeLight";
@@ -13,15 +17,15 @@ public class LimeLightConfiguration {
 
     public static class LimeLightMeasures {
         // how many degrees back is your limelight rotated from perfectly vertical?
-        private final Double limelightMountAngleDegrees = 25.0;
+        private final Angle limelightMountAngleDegrees = Angle.ofBaseUnits(25.0, Units.Degrees);
 
         // distance from the center of the Limelight lens to the floor
-        private final Double limelightLensHeightInches = 20.0;
+        private final Distance limelightLensHeightDistance = Distance.ofBaseUnits(20.0, Units.Inches);
 
         // distance from the target to the floor
-        private final Double goalHeightInches = 60.0;
+        private final Distance goalHeightDistance = Distance.ofBaseUnits(17.0, Units.Centimeters);
 
-        LimeLightModule.DeviceStructure deviceStructure = new LimeLightModule.DeviceStructure(limelightMountAngleDegrees,limelightLensHeightInches, goalHeightInches);
+        LimeLightModule.DeviceMeasures deviceStructure = new LimeLightModule.DeviceMeasures(limelightMountAngleDegrees, limelightLensHeightDistance, goalHeightDistance);
 
 
     }
