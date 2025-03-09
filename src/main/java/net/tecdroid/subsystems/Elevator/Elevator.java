@@ -99,10 +99,8 @@ public class Elevator extends SubsystemBase {
         return elevatorLimitSwitch.get() && requestedPosition.in(Inches) < getRightMotorDistance().in(Inches);
     }
 
-    public void limitSwitchActive() {
-        if (elevatorLimitSwitch.get() && mRightMotor.getMotorVoltage().getValueAsDouble() < 0.0) {
-            stopMotors();
-        }
+    public boolean limitSwitchActive() {
+        return elevatorLimitSwitch.get() && mRightMotor.getMotorVoltage().getValueAsDouble() < 0.0;
     }
 
     /**
@@ -154,7 +152,9 @@ public class Elevator extends SubsystemBase {
 
     @Override
     public void periodic() {
-        limitSwitchActive();
+        if (limitSwitchActive()) {
+            stopMotors();
+        }
     }
 
     public record DeviceIdentifier(NumericId leftMotorId, NumericId rightMotorId, DigitId limitSwitchChannel) {}
