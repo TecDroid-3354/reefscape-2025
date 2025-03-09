@@ -37,7 +37,20 @@ public class ElevatorAngle extends SubsystemBase {
         // ////////////// //
     }
 
-    public Command goToPosition(Angle position) {
+    private void goToPosition (Angle position) {
+        Angle requestedPosition = Rotations.of(
+                mElevatorAngleConfig.PhysicalDescription.elevatorAngleMotorGR
+                        .unapply(position.in(Rotations)));
+
+        // create a Motion Magic request, voltage output
+        final MotionMagicVoltage m_request = new MotionMagicVoltage(requestedPosition);
+
+        // set motor position to target angle
+        mLeadingMotorController.setControl(m_request);
+    }
+
+
+    public Command goToPositionCMD (Angle position) {
         // Inline construction of command goes here.
         // Subsystem::RunOnce implicitly requires `this` subsystem.
         if (!isAngleWithinRange(position)) {
@@ -45,16 +58,12 @@ public class ElevatorAngle extends SubsystemBase {
         }
         return runOnce(
                 () -> {
-                    // create a Motion Magic request, voltage output
-                    final MotionMagicVoltage m_request = new MotionMagicVoltage(0);
-                    Angle requestedPosition = Rotations.of(
-                            mElevatorAngleConfig.PhysicalDescription.elevatorAngleMotorGR
-                                    .unapply(position.in(Rotations)));
-
-                    // set motor position to target angle
-                    mLeadingMotorController.setControl(m_request.withPosition(requestedPosition.in(Rotations)));
+                    goToPosition(position);
                 });
     }
+
+
+
     public boolean isAngleWithinRange(Angle angle) {
         //Ensures that the desired elevator´s angle is within the allowed range
         //gte = greater than or equal value            lte = less than or equal value
