@@ -11,8 +11,8 @@ public final class ElevatorConfiguration {
     private static class ElevatorIdentifiers {
         // Ids
         private static final DigitId DIGIT_MODULE = new DigitId(5);
-        private static final DigitId LEFT_MOTOR_ID = new DigitId(1);
-        private static final DigitId RIGHT_MOTOR_ID = new DigitId(2);
+        private static final DigitId LEFT_MOTOR_ID = new DigitId(3);
+        private static final DigitId RIGHT_MOTOR_ID = new DigitId(4);
 
         // Channel
         public static final DigitId LIMIT_SWITCH_CHANNEL = new DigitId(2);
@@ -30,7 +30,7 @@ public final class ElevatorConfiguration {
         private static final Current AMP_LIMITS = Amps.of(40.0);
 
         // Set inverted
-        private static final InvertedValue LEADER_MOTOR_INVERTED_TYPE = InvertedValue.Clockwise_Positive;
+        private static final InvertedValue LEADER_MOTOR_INVERTED_TYPE = InvertedValue.CounterClockwise_Positive;
         private static final boolean FOLLOWER_MOTOR_INVERTED = true;
 
         private final Elevator.MotorProperties motorProperties = new Elevator.MotorProperties(AMP_LIMITS, LEADER_MOTOR_INVERTED_TYPE, FOLLOWER_MOTOR_INVERTED);

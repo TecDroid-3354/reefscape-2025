@@ -74,7 +74,7 @@ public class Elevator extends SubsystemBase {
         elevatorLimitSwitch = new DigitalInput(elevatorConfig.deviceIdentifier.limitSwitchChannel.getId());
 
         // Limits switch usage
-        new Trigger(this::limitSwitchActive).onTrue(Commands.run(this::stopMotors));
+        //new Trigger(this::limitSwitchActive).onTrue(Commands.run(this::stopMotors));
     }
 
     public Elevator() {
@@ -86,6 +86,10 @@ public class Elevator extends SubsystemBase {
 
     public Angle getRightMotorRot() {
         return Rotations.of(elevatorConfig.gearRatio.motorGearRatio.apply(mRightMotor.getPosition().getValueAsDouble()));
+    }
+
+    public Angle getLeftMotorRot() {
+        return Rotations.of(elevatorConfig.gearRatio.motorGearRatio.apply(mLeftMotor.getPosition().getValueAsDouble()));
     }
 
     public Distance getElevatorDistance() {
@@ -146,13 +150,11 @@ public class Elevator extends SubsystemBase {
 
     // Test functions
     public void moveMotors(double voltage) {
-        mLeftMotor.setVoltage(voltage);
-        mRightMotor.setVoltage(voltage);
+        mRightMotor.set(voltage);
     }
 
     public void stopMotors() {
-        mLeftMotor.setVoltage(0.0);
-        mRightMotor.setVoltage(0.0);
+        mRightMotor.set(0.0);
     }
 
     public record DeviceIdentifier(NumericId leftMotorId, NumericId rightMotorId, DigitId limitSwitchChannel) {}
