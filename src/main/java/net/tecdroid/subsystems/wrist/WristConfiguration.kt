@@ -1,10 +1,12 @@
 package net.tecdroid.subsystems.wrist
 
+import edu.wpi.first.units.Units.Second
 import edu.wpi.first.units.measure.Angle
 import edu.wpi.first.units.measure.Current
 import net.tecdroid.util.units.amps
 import net.tecdroid.util.units.degrees
 import net.tecdroid.util.units.rotations
+import net.tecdroid.util.units.seconds
 import net.tecdroid.util.*
 import net.tecdroid.util.RotationalDirection.Clockwise
 
@@ -22,7 +24,7 @@ data class WristConfig(
     val gearRatio: GearRatio,
     val absoluteEncoderOffset: Angle,
     val controlGains: ControlGains,
-    val motionTargets: MotionTargets
+    val motionTargets: AngularMotionTargets
 )
 
 val wristConfig = WristConfig(
@@ -42,5 +44,9 @@ val wristConfig = WristConfig(
         s = 0.15,
         g = 0.0
     ),
-    motionTargets = MotionTargets()
+    motionTargets = AngularMotionTargets(
+        cruiseVelocity = 0.33.rotations.per(Second),
+        accelerationTimePeriod = 1.0.seconds,
+        jerkTimePeriod = 1.0.seconds
+    )
 )
