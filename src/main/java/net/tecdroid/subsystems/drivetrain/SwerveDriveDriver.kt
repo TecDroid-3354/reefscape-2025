@@ -18,8 +18,8 @@ import net.tecdroid.util.units.toRotation2d
 class SwerveDriveDriver(
     private val maxLinearVelocity: LinearVelocity,
     private val maxAngularVelocity: AngularVelocity,
-    private accelerationPeriod: Time,
-    private decelerationPeriod: Time = accelerationPeriod
+    accelerationPeriod: Time,
+    decelerationPeriod: Time = accelerationPeriod
 ): Sendable {
     var longitudinalVelocityFactorSource = { 0.0 }
     var transversalVelocityFactorSource = { 0.0 }
