@@ -15,15 +15,17 @@ class SysIdRoutines(
 abstract class GenericSysIdRoutine {
     abstract val routine: SysIdRoutine
     protected val voltage: MutVoltage = Volts.mutable(0.0)
+    protected var forwardsRunningCondition : () -> Boolean = { true }
+    protected var backwardsRunningCondition : () -> Boolean = { true }
 
     private fun createQuasistaticTest(direction: SysIdRoutine.Direction) = routine.quasistatic(direction)
     private fun createDynamicTest(direction: SysIdRoutine.Direction) = routine.dynamic(direction)
 
     fun createTests() = SysIdRoutines(
-        quasistaticForward = createQuasistaticTest(SysIdRoutine.Direction.kForward),
-        quasistaticBackward = createQuasistaticTest(SysIdRoutine.Direction.kReverse),
-        dynamicForward = createDynamicTest(SysIdRoutine.Direction.kForward),
-        dynamicBackward = createDynamicTest(SysIdRoutine.Direction.kReverse),
+        quasistaticForward = createQuasistaticTest(SysIdRoutine.Direction.kForward).onlyWhile(forwardsRunningCondition),
+        quasistaticBackward = createQuasistaticTest(SysIdRoutine.Direction.kReverse).onlyWhile(backwardsRunningCondition),
+        dynamicForward = createDynamicTest(SysIdRoutine.Direction.kForward).onlyWhile(forwardsRunningCondition),
+        dynamicBackward = createDynamicTest(SysIdRoutine.Direction.kReverse).onlyWhile(backwardsRunningCondition),
     )
 }
 

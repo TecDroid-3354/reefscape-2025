@@ -11,6 +11,7 @@ import edu.wpi.first.util.sendable.Sendable
 import edu.wpi.first.util.sendable.SendableBuilder
 import edu.wpi.first.wpilibj.RobotController
 import edu.wpi.first.wpilibj.shuffleboard.Shuffleboard
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard
 import edu.wpi.first.wpilibj.sysid.SysIdRoutineLog
 import edu.wpi.first.wpilibj2.command.Command
 import edu.wpi.first.wpilibj2.command.Commands
@@ -22,7 +23,7 @@ import net.tecdroid.subsystems.util.identification.AngularSysIdRoutine
 import net.tecdroid.util.units.clamp
 import net.tecdroid.wrappers.ThroughBoreAbsoluteEncoder
 
-class Wrist(private val config: WristConfig) : SubsystemBase(), Sendable, VoltageControlledSubsystem, WithAbsoluteEncoders {
+class Wrist(internal val config: WristConfig) : SubsystemBase(), Sendable, VoltageControlledSubsystem, WithAbsoluteEncoders {
     internal val motorController = TalonFX(config.motorControllerId.id)
 
     private val absoluteEncoder =
@@ -41,13 +42,14 @@ class Wrist(private val config: WristConfig) : SubsystemBase(), Sendable, Voltag
         motorController.setControl(request)
     }
 
-    fun setAngle(angle: Angle) {
-        val targetAngle = clamp(angle, config.minimumAngle, config.maximumAngle) as Angle
+    fun setAngle(newAngle: Angle) {
+        val targetAngle = newAngle // clamp(config.minimumAngle, config.maximumAngle, newAngle) as Angle
+        SmartDashboard.putString("Wrist Target Angle", targetAngle.toString())
         val request = MotionMagicVoltage(config.gearRatio.unapply(targetAngle)).withSlot(0)
         motorController.setControl(request)
     }
 
-    fun setAngleCommand(angle: Angle): Command = Commands.runOnce({ setAngle(angle) }, this)
+    fun setAngleCommand(newAngle: Angle): Command = Commands.runOnce({ setAngle(newAngle) }, this)
 
     internal val motorPosition: Angle
         get() = motorController.position.value
@@ -64,15 +66,10 @@ class Wrist(private val config: WristConfig) : SubsystemBase(), Sendable, Voltag
             config.gearRatio.apply(motorVelocity)
 
     private val absoluteAngle: Angle
-        get() = config.gearRatio.apply(absoluteEncoder.position)
+        get() = absoluteEncoder.position
 
     override fun matchRelativeEncodersToAbsoluteEncoders() {
-        motorController.setPosition(absoluteAngle)
-    }
-
-    fun publishToShuffleboard() {
-        val tab = Shuffleboard.getTab("Wrist")
-        tab.addDouble("Current Angle (deg)") { angle.`in`(Degrees) }
+        motorController.setPosition(config.gearRatio.unapply(absoluteAngle))
     }
 
     // ///////////// //
@@ -113,13 +110,24 @@ class Wrist(private val config: WristConfig) : SubsystemBase(), Sendable, Voltag
 
     override fun initSendable(builder: SendableBuilder) {
         with(builder) {
-            addDoubleProperty("Current Angle (Degrees)", { angle.`in`(Degrees) }, {})
-            addDoubleProperty("Current Absolute Angle (Degrees)", { absoluteAngle.`in`(Degrees) }, {})
+            addDoubleProperty("Current Angle (Rotations)", { angle.`in`(Rotations) }, {})
+            addDoubleProperty("Current Absolute Angle (Rotations)", { absoluteAngle.`in`(Rotations) }, {})
         }
+    }
+
+    fun publishToShuffleboard() {
+        val tab = Shuffleboard.getTab("Subsystems")
+        tab.add("Wrist" , this)
     }
 }
 
 class WristSystemIdentificationRoutine(wrist: Wrist) : AngularSysIdRoutine() {
+
+    init {
+        forwardsRunningCondition = { wrist.angle < wrist.config.maximumAngle }
+        backwardsRunningCondition = { wrist.angle > wrist.config.minimumAngle }
+    }
+
     override val routine: SysIdRoutine = SysIdRoutine(
         SysIdRoutine.Config(),
         SysIdRoutine.Mechanism(
