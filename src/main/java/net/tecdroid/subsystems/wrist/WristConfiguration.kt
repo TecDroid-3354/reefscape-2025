@@ -28,7 +28,7 @@ data class WristConfig(
     val motionTargets: AngularMotionTargets
 )
 
-val wristConfig = WristConfig(
+public val wristConfig = WristConfig(
     motorProperties = Motors.krakenX60,
     absoluteEncoderIsInverted = false,
     motorControllerId = NumericId(61),
