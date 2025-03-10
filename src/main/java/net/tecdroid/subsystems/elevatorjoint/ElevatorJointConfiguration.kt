@@ -25,7 +25,7 @@ data class ElevatorJointConfig(
     val motionTargets: MotionTargets
 )
 
-val elevatorJointConfig = ElevatorJointConfig(
+public val elevatorJointConfig = ElevatorJointConfig(
     leadMotorControllerId = NumericId(51),
     followerMotorId = NumericId(52),
     absoluteEncoderPort = NumericId(1),

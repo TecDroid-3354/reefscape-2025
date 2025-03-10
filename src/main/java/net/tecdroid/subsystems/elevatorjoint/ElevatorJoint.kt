@@ -46,7 +46,7 @@ class ElevatorJoint(private val config: ElevatorJointConfig) : SubsystemBase(), 
 
     private val absoluteAngle: Angle
         get() = config.gearRatio.apply(absoluteEncoder.position)
-
+    
     override fun matchRelativeEncodersToAbsoluteEncoders() {
         leadMotorController.setPosition(config.gearRatio.unapply(absoluteAngle))
     }

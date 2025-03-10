@@ -13,7 +13,7 @@ data class IntakeConfig(
     val motionTargets: MotionTargets
 )
 
-val intakeConfig = IntakeConfig(
+public val intakeConfig = IntakeConfig(
     motorControllerId = NumericId(62),
     motorProperties = Motors.krakenX60,
     currentLimit = 30.0.amps,
