@@ -51,7 +51,7 @@ class ElevatorJoint(private val config: ElevatorJointConfig) : IdentifiableSubsy
         leadMotorController.setControl(request)
     }
 
-    fun setTargetAngleCommand(angle: Angle): Command = Commands.runOnce({ setTargetAngle(angle) })
+    fun setAngleCommand(angle: Angle): Command = Commands.runOnce({ setTargetAngle(angle) })
 
     override val power: Double
         get() = leadMotorController.get()

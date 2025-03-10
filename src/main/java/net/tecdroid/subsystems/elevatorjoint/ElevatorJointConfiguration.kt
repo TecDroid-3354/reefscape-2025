@@ -48,6 +48,7 @@ val elevatorJointConfig = ElevatorJointConfig(
         a = 0.0018075,
         g = 0.0064604
     ),
-    motionTargets = AngularMotionTargets(0.5.rotations.per(Second), 0.5.seconds, 0.1.seconds),
+    // motionTargets = AngularMotionTargets(0.5.rotations.per(Second), 0.5.seconds, 0.1.seconds),
+    motionTargets = AngularMotionTargets(0.1.rotations.per(Second), 0.5.seconds, 0.1.seconds),
     absoluteEncoderOffset = 0.5081.rotations,
 )

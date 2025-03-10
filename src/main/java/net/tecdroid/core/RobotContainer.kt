@@ -4,6 +4,8 @@ import edu.wpi.first.units.Units.Seconds
 import edu.wpi.first.wpilibj2.command.Command
 import net.tecdroid.constants.GenericConstants.driverControllerId
 import net.tecdroid.input.CompliantXboxController
+import net.tecdroid.subsystems.climber.Climber
+import net.tecdroid.subsystems.climber.climberConfig
 import net.tecdroid.subsystems.drivetrain.SwerveDrive
 import net.tecdroid.subsystems.drivetrain.SwerveDriveDriver
 import net.tecdroid.subsystems.drivetrain.swerveDriveConfiguration
@@ -15,7 +17,7 @@ import net.tecdroid.subsystems.intake.Intake
 import net.tecdroid.subsystems.intake.intakeConfig
 import net.tecdroid.subsystems.wrist.Wrist
 import net.tecdroid.subsystems.wrist.wristConfig
-import net.tecdroid.util.units.meters
+import net.tecdroid.util.units.rotations
 
 class RobotContainer {
     private val controller = CompliantXboxController(driverControllerId)
@@ -26,9 +28,7 @@ class RobotContainer {
     private val elevator = Elevator(elevatorConfig)
     private val wrist = Wrist(wristConfig)
     private val intake = Intake(intakeConfig)
-
-    val routine = elevator.createIdentificationRoutine()
-    val tests = routine.createTests()
+    private val climber = Climber(climberConfig)
 
     init {
         publishShuffleboardContents()
@@ -42,6 +42,7 @@ class RobotContainer {
         wrist.publishToShuffleboard()
         joint.publishToShuffleboard()
         elevator.publishToShuffleboard()
+        climber.publishToShuffleboard()
     }
 
     private fun configureDrivers() {
@@ -56,10 +57,10 @@ class RobotContainer {
 
     private fun configureBindings() {
         // controller.x().onTrue(swerveDrive.setHeadingCommand(0.0.radians).andThen(swerveDriver.toggleOrientationCommand()).andThen(Commands.print("Toggled Orientation")))
-        controller.y().onTrue(elevator.setTargetDisplacementCommand(0.85.meters))
-        controller.x().onTrue(elevator.setTargetDisplacementCommand(0.7.meters))
-        controller.b().onTrue(elevator.setTargetDisplacementCommand(0.3.meters))
-        controller.a().onTrue(elevator.setTargetDisplacementCommand(0.1.meters))
+        controller.y().onTrue(joint.setAngleCommand(0.26.rotations))
+        controller.x().onTrue(joint.setAngleCommand(0.25.rotations))
+        controller.b().onTrue(joint.setAngleCommand(0.15.rotations))
+        controller.a().onTrue(joint.setAngleCommand(0.05.rotations))
     }
 
     val autonomousCommand: Command?
@@ -69,5 +70,6 @@ class RobotContainer {
         swerveDrive.matchRelativeEncodersToAbsoluteEncoders()
         wrist.matchRelativeEncodersToAbsoluteEncoders()
         joint.matchRelativeEncodersToAbsoluteEncoders()
+        climber.matchRelativeEncodersToAbsoluteEncoders()
     }
 }

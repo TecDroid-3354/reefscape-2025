@@ -13,16 +13,19 @@ import edu.wpi.first.units.measure.Voltage
 import edu.wpi.first.util.sendable.Sendable
 import edu.wpi.first.util.sendable.SendableBuilder
 import edu.wpi.first.wpilibj.shuffleboard.Shuffleboard
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard
 import edu.wpi.first.wpilibj2.command.Command
 import edu.wpi.first.wpilibj2.command.Commands
 import edu.wpi.first.wpilibj2.command.SubsystemBase
 import net.tecdroid.constants.subsystemTabName
+import net.tecdroid.subsystems.util.generic.IdentifiableSubsystem
 import net.tecdroid.subsystems.util.generic.VoltageControlledSubsystem
 import net.tecdroid.subsystems.util.generic.WithAbsoluteEncoders
+import net.tecdroid.subsystems.util.identification.GenericSysIdRoutine
 import net.tecdroid.util.units.clamp
 import net.tecdroid.wrappers.ThroughBoreAbsoluteEncoder
 
-class Climber(private val config: ClimberConfig) : SubsystemBase(), Sendable, VoltageControlledSubsystem, WithAbsoluteEncoders
+class Climber(private val config: ClimberConfig) : IdentifiableSubsystem(), Sendable, VoltageControlledSubsystem, WithAbsoluteEncoders
  {
     private val leadMotorController = TalonFX(config.leadingMotorId.id)
     private val followerMotorController = TalonFX(config.followerMotorId.id)
@@ -49,10 +52,13 @@ class Climber(private val config: ClimberConfig) : SubsystemBase(), Sendable, Vo
 
      fun setAngleCommand(newAngle: Angle): Command = Commands.runOnce({ setAngle(newAngle) })
 
-     internal val motorPosition: Angle
+     override val power: Double
+         get() = leadMotorController.get()
+
+     override val motorPosition: Angle
          get() = leadMotorController.position.value
 
-     internal val motorVelocity: AngularVelocity
+     override val motorVelocity: AngularVelocity
          get() = leadMotorController.velocity.value
 
      val angle: Angle
@@ -112,4 +118,11 @@ class Climber(private val config: ClimberConfig) : SubsystemBase(), Sendable, Vo
          val tab = Shuffleboard.getTab(subsystemTabName)
          tab.add("Climber" , this)
      }
+     @SuppressWarnings("unusued")
+     fun createIdentificationRoutine() = GenericSysIdRoutine(
+         name = "Climber",
+         subsystem = this,
+         forwardsRunningCondition = { angle < config.maximumAngle },
+         backwardsRunningCondition = { angle > config.minimumAngle }
+     )
 }
