@@ -29,14 +29,14 @@ public class ArmController {
 
     public Command setArmPoseCMD(ArmPose armPose) {
         return Commands.parallel(
-                    Commands.run(() -> elevatorJointSubsystem.setTargetAngle(armPose.jointAngle())),
+                    elevatorJointSubsystem.setTargetAngleCommand(armPose.jointAngle()),
 
                     Commands.waitUntil(wristAllowedToMove::get).andThen(
-                        Commands.run(() -> wristSubsystem.setWristAngle(armPose.wristAngle())
-                    ),
+                        wristSubsystem.setAngleCommand(armPose.wristAngle())
+                    ,
 
                     Commands.waitUntil(elevatorAllowedToMove::get).andThen(
-                        Commands.run(() -> elevatorSubsystem.goToPositionCMD(armPose.elevatorExtension()))
+                        elevatorSubsystem.goToPositionCMD(armPose.elevatorExtension())
                     )
         ));
     }

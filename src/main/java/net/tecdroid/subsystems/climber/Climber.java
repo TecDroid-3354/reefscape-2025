@@ -12,14 +12,14 @@ import edu.wpi.first.wpilibj.DutyCycleEncoder;
 import edu.wpi.first.units.measure.*;
 import net.tecdroid.util.*;
 
-public class ClimberController {
+public class Climber {
     private final TalonFX leadingClimberMotorController;
     private final TalonFX followerClimberMotorController;
     private final DutyCycleEncoder climberEncoder;
     private final Config climberConfig = climberConfiguration;
 
 
-    public ClimberController(Config climberConfig) {
+    public Climber(Config climberConfig) {
         // Troughbore encoder (roboRIO connected)
         climberEncoder = new DutyCycleEncoder(climberConfig.Identifiers.encoderPort.getId());
 

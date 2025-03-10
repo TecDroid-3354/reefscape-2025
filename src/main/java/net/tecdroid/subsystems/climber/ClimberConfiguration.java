@@ -20,7 +20,7 @@ public class ClimberConfiguration {
         // TODO: CHECK THE THROUGHBORE'S ACTUAL ID
         private final DigitId throughboreClimberPort = new DigitId(7); // TODO: CHECK THE THROUGHBORE'S ACTUAL ID
 
-        final ClimberController.DeviceIdentifiers deviceIdentifiers = new ClimberController.DeviceIdentifiers(
+        final Climber.DeviceIdentifiers deviceIdentifiers = new Climber.DeviceIdentifiers(
                 throughboreClimberPort,
                 IdentifiersKt.joinDigits(digitModule, leadingClimberMotorID),
                 IdentifiersKt.joinDigits(digitModule, followerClimberMotorID)
@@ -30,8 +30,8 @@ public class ClimberConfiguration {
     private static class DeviceProperties {
         private final MotorProperties climberMotorProperties = Motors.INSTANCE.getKrakenX60();
 
-        final ClimberController.DeviceProperties climberDevicesProperties =
-                new ClimberController.DeviceProperties(
+        final Climber.DeviceProperties climberDevicesProperties =
+                new Climber.DeviceProperties(
                         climberMotorProperties);
     }
 
@@ -43,8 +43,8 @@ public class ClimberConfiguration {
         private final Angle minimumClimberAngle = Degrees.of(0.0);
         private final Angle maximumClimberAngle = Degrees.of(90.0);
 
-        final ClimberController.DeviceLimits climberDeviceLimits =
-                new ClimberController.DeviceLimits(
+        final Climber.DeviceLimits climberDeviceLimits =
+                new Climber.DeviceLimits(
                         climberMotorsCurrentLimit,
                         minimumClimberAngle,
                         maximumClimberAngle);
@@ -53,8 +53,8 @@ public class ClimberConfiguration {
     private static class Conventions {
         private final RotationalDirection climberRotationalPositiveDirection = RotationalDirection.Clockwise;
 
-        final ClimberController.DeviceConventions climberDeviceConventions =
-                new ClimberController.DeviceConventions (climberRotationalPositiveDirection);
+        final Climber.DeviceConventions climberDeviceConventions =
+                new Climber.DeviceConventions (climberRotationalPositiveDirection);
     }
 
     private static class Structure {
@@ -62,8 +62,8 @@ public class ClimberConfiguration {
         private final GearRatio climberMotorsGR = new GearRatio(288, 1, 0);
         private final Angle encoderOffset = Degrees.of(45.0); // TODO: GET REAL VALUE | 45 IS AN ARBITRARY VALUE
 
-        final ClimberController.PhysicalDescription climberPhysicalDescription =
-                new ClimberController.PhysicalDescription(
+        final Climber.PhysicalDescription climberPhysicalDescription =
+                new Climber.PhysicalDescription(
                         climberMotorsGR, encoderOffset);
     }
     //hay que revisar los MetersPerSecond
@@ -72,11 +72,11 @@ public class ClimberConfiguration {
         private final Time climberRampRate = Seconds.of(0.1);
         private final NeutralModeValue climberNeutralModeValue = NeutralModeValue.Brake;
 
-        final ClimberController.ControlConstants climberControlConstants = new ClimberController.ControlConstants(
+        final Climber.ControlConstants climberControlConstants = new Climber.ControlConstants(
                 climberMotionTargets, climberRampRate, climberNeutralModeValue);
     }
 
-    static final ClimberController.Config climberConfiguration = new ClimberController.Config(
+    static final Climber.Config climberConfiguration = new Climber.Config(
             new ClimberIdentifiers().deviceIdentifiers,
             new DeviceProperties().climberDevicesProperties,
             new Limits().climberDeviceLimits,

@@ -19,6 +19,7 @@ import edu.wpi.first.wpilibj2.command.Command
 import edu.wpi.first.wpilibj2.command.Commands
 import edu.wpi.first.wpilibj2.command.SubsystemBase
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine
+import net.tecdroid.constants.subsystemTabName
 import net.tecdroid.subsystems.util.generic.VoltageControlledSubsystem
 import net.tecdroid.subsystems.util.generic.WithAbsoluteEncoders
 import net.tecdroid.subsystems.util.identification.AngularSysIdRoutine
@@ -48,7 +49,7 @@ class ElevatorJoint(internal val config: ElevatorJointConfig) : SubsystemBase(),
     }
 
     fun setTargetAngle(angle: Angle) {
-        val targetAngle = angle // clampAngle(config.minimumAngle, config.maximumAngle, angle) as Angle
+        val targetAngle = clampAngle(config.minimumAngle, config.maximumAngle, angle) as Angle
         val request = MotionMagicVoltage(config.gearRatio.unapply(targetAngle))
         leadMotorController.setControl(request)
     }
@@ -119,7 +120,7 @@ class ElevatorJoint(internal val config: ElevatorJointConfig) : SubsystemBase(),
     }
 
     fun publishToShuffleboard() {
-        val tab = Shuffleboard.getTab("Subsystems")
+        val tab = Shuffleboard.getTab(subsystemTabName)
         tab.add("Elevator Joint", this)
 
     }

@@ -3,12 +3,11 @@ package net.tecdroid.subsystems.elevatorjoint
 import edu.wpi.first.units.Units.Second
 import edu.wpi.first.units.measure.Angle
 import edu.wpi.first.units.measure.Current
-import net.tecdroid.util.units.amps
-import net.tecdroid.util.units.rotations
 import net.tecdroid.util.*
 import net.tecdroid.util.Motors.krakenX60
-import net.tecdroid.util.RotationalDirection.Clockwise
 import net.tecdroid.util.RotationalDirection.Counterclockwise
+import net.tecdroid.util.units.amps
+import net.tecdroid.util.units.rotations
 import net.tecdroid.util.units.seconds
 
 data class ElevatorJointConfig(

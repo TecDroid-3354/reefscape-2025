@@ -7,8 +7,12 @@ import edu.wpi.first.units.measure.Angle
 import edu.wpi.first.units.measure.AngularVelocity
 import edu.wpi.first.units.measure.LinearVelocity
 import edu.wpi.first.units.measure.Time
+import edu.wpi.first.util.sendable.Sendable
+import edu.wpi.first.util.sendable.SendableBuilder
+import edu.wpi.first.wpilibj.shuffleboard.Shuffleboard
 import edu.wpi.first.wpilibj2.command.Command
 import edu.wpi.first.wpilibj2.command.Commands
+import net.tecdroid.constants.integratorTabName
 import net.tecdroid.util.units.toRotation2d
 
 class SwerveDriveDriver(
@@ -16,7 +20,7 @@ class SwerveDriveDriver(
     private val maxAngularVelocity: AngularVelocity,
     private val accelerationPeriod: Time,
     private val decelerationPeriod: Time = accelerationPeriod
-) {
+): Sendable {
     var longitudinalVelocityFactorSource = { 0.0 }
     var transversalVelocityFactorSource = { 0.0 }
     var angularVelocityFactorSource = { 0.0 }
@@ -77,6 +81,19 @@ class SwerveDriveDriver(
 
     fun getMaxLinearVelocity() : LinearVelocity {
         return maxLinearVelocity;
+    }
+
+    override fun initSendable(builder: SendableBuilder) {
+        with(builder) {
+            addDoubleProperty("Longitudinal Factor", longitudinalVelocityFactorSource) {}
+            addDoubleProperty("Transversal Factor", longitudinalVelocityFactorSource) {}
+            addDoubleProperty("Angular Factor", longitudinalVelocityFactorSource) {}
+        }
+    }
+
+    fun publishToShuffleboard() {
+        val tab = Shuffleboard.getTab(integratorTabName)
+        tab.add("Swerve Driver", this)
     }
 
     enum class DriveOrientation {

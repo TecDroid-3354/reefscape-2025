@@ -58,14 +58,7 @@ class RobotContainer {
     }
 
     private fun configureBindings() {
-//        controller.x().onTrue(swerveDrive.setHeadingCommand(0.0.radians).andThen(swerveDriver.toggleOrientationCommand()).andThen(Commands.print("Toggled Orientation")))
-        controller.rightBumper().onTrue(intake.setVoltageCommand(6.0.volts)).onFalse(intake.setVoltageCommand(0.0.volts))
-        controller.leftBumper().onTrue(intake.setVoltageCommand((-6.0).volts)).onFalse(intake.setVoltageCommand(0.0.volts))
-
-        controller.a().onTrue(joint.setTargetAngleCommand(0.0.rotations))
-        controller.b().onTrue(joint.setTargetAngleCommand(0.1.rotations))
-        controller.x().onTrue(joint.setTargetAngleCommand(0.2.rotations))
-        controller.y().onTrue(joint.setTargetAngleCommand(0.25.rotations))
+        controller.x().onTrue(swerveDrive.setHeadingCommand(0.0.radians).andThen(swerveDriver.toggleOrientationCommand()).andThen(Commands.print("Toggled Orientation")))
     }
 
     val autonomousCommand: Command?
