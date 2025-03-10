@@ -1,10 +1,13 @@
 package net.tecdroid.core
 
 import edu.wpi.first.units.Units.Seconds
+import edu.wpi.first.units.Units.Volts
 import edu.wpi.first.wpilibj2.command.Command
 import edu.wpi.first.wpilibj2.command.Commands
+import edu.wpi.first.wpilibj2.command.RunCommand
 import net.tecdroid.constants.GenericConstants.driverControllerId
 import net.tecdroid.input.CompliantXboxController
+import net.tecdroid.subsystems.climber.ClimberController
 import net.tecdroid.subsystems.drivetrain.SwerveDrive
 import net.tecdroid.subsystems.drivetrain.SwerveDriveDriver
 import net.tecdroid.subsystems.drivetrain.swerveDriveConfiguration
@@ -30,6 +33,7 @@ class RobotContainer {
     // TODO: Arm integration
     private val wrist = Wrist(wristConfig)
     private val intake = Intake(intakeConfig)
+    private val climber = ClimberController();
 
     private val jointSysIdRoutine = ElevatorJointSystemIdentificationRoutine(joint)
     private val tests = jointSysIdRoutine.createTests()
@@ -45,6 +49,7 @@ class RobotContainer {
         swerveDrive.publishToShuffleboard()
         wrist.publishToShuffleboard()
         joint.publishToShuffleboard()
+        climber.publishToShuffleboard()
     }
 
     private fun configureDrivers() {
@@ -58,7 +63,7 @@ class RobotContainer {
     }
 
     private fun configureBindings() {
-//        controller.x().onTrue(swerveDrive.setHeadingCommand(0.0.radians).andThen(swerveDriver.toggleOrientationCommand()).andThen(Commands.print("Toggled Orientation")))
+    /*
         controller.rightBumper().onTrue(intake.setVoltageCommand(6.0.volts)).onFalse(intake.setVoltageCommand(0.0.volts))
         controller.leftBumper().onTrue(intake.setVoltageCommand((-6.0).volts)).onFalse(intake.setVoltageCommand(0.0.volts))
 
@@ -66,6 +71,7 @@ class RobotContainer {
         controller.b().onTrue(joint.setTargetAngleCommand(0.1.rotations))
         controller.x().onTrue(joint.setTargetAngleCommand(0.2.rotations))
         controller.y().onTrue(joint.setTargetAngleCommand(0.25.rotations))
+        */
     }
 
     val autonomousCommand: Command?
@@ -75,5 +81,15 @@ class RobotContainer {
         swerveDrive.matchRelativeEncodersToAbsoluteEncoders()
         wrist.matchRelativeEncodersToAbsoluteEncoders()
         joint.matchRelativeEncodersToAbsoluteEncoders()
+    }
+
+    fun teleop() {
+        /*if (controller.y().asBoolean) {
+            climber.setVoltage(Volts.of(1.0))
+        } else if (controller.a().asBoolean) {
+            climber.setVoltage(Volts.of(-1.0))
+        } else {
+            climber.stopMotors()
+        }*/
     }
 }
