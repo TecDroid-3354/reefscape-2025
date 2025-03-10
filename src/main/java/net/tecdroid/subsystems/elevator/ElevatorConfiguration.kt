@@ -44,5 +44,5 @@ val elevatorConfig = ElevatorConfig(
         a = 0.0023818,
         g = 0.24064
     ),
-    motionTargets = LinearMotionTargets(1.3.meters.per(Second), 0.5.seconds, 0.1.seconds),
+    motionTargets = LinearMotionTargets(1.45.meters.per(Second), 0.5.seconds, 0.1.seconds),
 )
