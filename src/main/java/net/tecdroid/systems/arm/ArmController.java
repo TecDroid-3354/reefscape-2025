@@ -32,7 +32,7 @@ public class ArmController {
                     Commands.run(() -> elevatorJointSubsystem.setTargetAngle(armPose.jointAngle())),
 
                     Commands.waitUntil(wristAllowedToMove::get).andThen(
-                        Commands.run(() -> wristSubsystem.setWristAngle(armPose.wristAngle())
+                        Commands.run(() -> wristSubsystem.setAngleCommand(armPose.wristAngle())
                     ),
 
                     Commands.waitUntil(elevatorAllowedToMove::get).andThen(
