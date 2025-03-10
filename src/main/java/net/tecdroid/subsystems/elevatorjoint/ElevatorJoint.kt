@@ -6,8 +6,7 @@ import com.ctre.phoenix6.controls.MotionMagicVoltage
 import com.ctre.phoenix6.controls.VoltageOut
 import com.ctre.phoenix6.hardware.TalonFX
 import com.ctre.phoenix6.signals.NeutralModeValue
-import edu.wpi.first.units.Units.Degrees
-import edu.wpi.first.units.Units.Volts
+import edu.wpi.first.units.Units.*
 import edu.wpi.first.units.measure.Angle
 import edu.wpi.first.units.measure.AngularVelocity
 import edu.wpi.first.units.measure.Voltage
@@ -23,11 +22,11 @@ import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine
 import net.tecdroid.subsystems.util.generic.VoltageControlledSubsystem
 import net.tecdroid.subsystems.util.generic.WithAbsoluteEncoders
 import net.tecdroid.subsystems.util.identification.AngularSysIdRoutine
-import net.tecdroid.subsystems.wrist.Wrist
-import net.tecdroid.util.units.clamp
+import net.tecdroid.util.units.clampAngle
 import net.tecdroid.wrappers.ThroughBoreAbsoluteEncoder
 
-class ElevatorJoint(private val config: ElevatorJointConfig) : SubsystemBase(), Sendable, VoltageControlledSubsystem,
+class ElevatorJoint(internal val config: ElevatorJointConfig) : SubsystemBase(), Sendable, VoltageControlledSubsystem,
+
     WithAbsoluteEncoders {
     internal val leadMotorController = TalonFX(config.leadMotorControllerId.id)
     private val followerMotorController = TalonFX(config.followerMotorId.id)
@@ -49,7 +48,7 @@ class ElevatorJoint(private val config: ElevatorJointConfig) : SubsystemBase(), 
     }
 
     fun setTargetAngle(angle: Angle) {
-        val targetAngle = clamp(config.minimumAngle, config.maximumAngle, angle) as Angle
+        val targetAngle = angle // clampAngle(config.minimumAngle, config.maximumAngle, angle) as Angle
         val request = MotionMagicVoltage(config.gearRatio.unapply(targetAngle))
         leadMotorController.setControl(request)
     }
@@ -69,16 +68,10 @@ class ElevatorJoint(private val config: ElevatorJointConfig) : SubsystemBase(), 
         get() = config.gearRatio.apply(motorVelocity)
 
     private val absoluteAngle: Angle
-        get() = config.gearRatio.apply(absoluteEncoder.position)
+        get() = absoluteEncoder.position
 
     override fun matchRelativeEncodersToAbsoluteEncoders() {
         leadMotorController.setPosition(config.gearRatio.unapply(absoluteAngle))
-    }
-
-    fun publishToShuffleboard() {
-        val tab = Shuffleboard.getTab("Elevator Joint")
-        tab.addString("Current Angle") { angle.toString() }
-        tab.addString("Current Absolute Angle") { absoluteAngle.toString() }
     }
 
     private fun configureMotorsInterface() {
@@ -86,7 +79,7 @@ class ElevatorJoint(private val config: ElevatorJointConfig) : SubsystemBase(), 
 
         with(talonConfig) {
             MotorOutput
-                .withNeutralMode(NeutralModeValue.Brake)
+                .withNeutralMode(NeutralModeValue.Coast)
                 .withInverted(config.gearRatio.transformRotation(config.positiveDirection).toInvertedValue())
 
             CurrentLimits
@@ -120,19 +113,31 @@ class ElevatorJoint(private val config: ElevatorJointConfig) : SubsystemBase(), 
 
     override fun initSendable(builder: SendableBuilder) {
         with(builder) {
-            addDoubleProperty("Current Angle (Degrees)", { angle.`in`(Degrees) }, {})
-            addDoubleProperty("Current Absolute Angle (Degrees)", { absoluteAngle.`in`(Degrees) }, {})
+            addDoubleProperty("Current Angle (Rotations)", { angle.`in`(Rotations) }, {})
+            addDoubleProperty("Current Absolute Angle (Rotations)", { absoluteAngle.`in`(Rotations) }, {})
         }
+    }
+
+    fun publishToShuffleboard() {
+        val tab = Shuffleboard.getTab("Subsystems")
+        tab.add("Elevator Joint", this)
+
     }
 }
 
 class ElevatorJointSystemIdentificationRoutine(joint: ElevatorJoint) : AngularSysIdRoutine() {
+
+    init {
+        forwardsRunningCondition = { joint.angle < joint.config.maximumAngle }
+        backwardsRunningCondition = { joint.angle > joint.config.minimumAngle }
+    }
+
     override val routine: SysIdRoutine = SysIdRoutine(
         SysIdRoutine.Config(),
         SysIdRoutine.Mechanism(
             joint::setVoltage,
             { log: SysIdRoutineLog ->
-                log.motor("Wrist Motor")
+                log.motor("Joint Motor")
                     .voltage(voltage.mut_replace(RobotController.getBatteryVoltage() * joint.leadMotorController.get(), Volts))
                     .angularPosition(position.mut_replace(joint.motorPosition))
                     .angularVelocity(velocity.mut_replace(joint.motorVelocity))

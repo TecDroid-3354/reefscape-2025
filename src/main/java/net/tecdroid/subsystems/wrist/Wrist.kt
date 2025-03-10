@@ -20,7 +20,7 @@ import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine
 import net.tecdroid.subsystems.util.generic.VoltageControlledSubsystem
 import net.tecdroid.subsystems.util.generic.WithAbsoluteEncoders
 import net.tecdroid.subsystems.util.identification.AngularSysIdRoutine
-import net.tecdroid.util.units.clamp
+import net.tecdroid.util.units.clampAngle
 import net.tecdroid.wrappers.ThroughBoreAbsoluteEncoder
 
 class Wrist(internal val config: WristConfig) : SubsystemBase(), Sendable, VoltageControlledSubsystem, WithAbsoluteEncoders {
@@ -43,7 +43,7 @@ class Wrist(internal val config: WristConfig) : SubsystemBase(), Sendable, Volta
     }
 
     fun setAngle(newAngle: Angle) {
-        val targetAngle = newAngle // clamp(config.minimumAngle, config.maximumAngle, newAngle) as Angle
+        val targetAngle = clampAngle(config.minimumAngle, config.maximumAngle, newAngle) as Angle
         SmartDashboard.putString("Wrist Target Angle", targetAngle.toString())
         val request = MotionMagicVoltage(config.gearRatio.unapply(targetAngle)).withSlot(0)
         motorController.setControl(request)

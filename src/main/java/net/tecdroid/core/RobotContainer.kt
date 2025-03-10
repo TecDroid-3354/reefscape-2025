@@ -25,13 +25,14 @@ class RobotContainer {
     private val controller = CompliantXboxController(driverControllerId)
     private val swerveDrive = SwerveDrive(swerveDriveConfiguration)
     private val swerveDriver = SwerveDriveDriver(swerveDrive.maxLinearVelocity, swerveDrive.maxAngularVelocity, Seconds.of(0.1))
+    private val joint = ElevatorJoint(elevatorJointConfig)
 
     // TODO: Arm integration
     private val wrist = Wrist(wristConfig)
     private val intake = Intake(intakeConfig)
 
-    private val wristSysIdRoutine = WristSystemIdentificationRoutine(wrist)
-    private val wristTests = wristSysIdRoutine.createTests()
+    private val jointSysIdRoutine = ElevatorJointSystemIdentificationRoutine(joint)
+    private val tests = jointSysIdRoutine.createTests()
 
     init {
         publishShuffleboardContents()
@@ -42,9 +43,8 @@ class RobotContainer {
 
     private fun publishShuffleboardContents() {
         swerveDrive.publishToShuffleboard()
-
-        // Arm lectures:
         wrist.publishToShuffleboard()
+        joint.publishToShuffleboard()
     }
 
     private fun configureDrivers() {
@@ -62,9 +62,10 @@ class RobotContainer {
         controller.rightBumper().onTrue(intake.setVoltageCommand(6.0.volts)).onFalse(intake.setVoltageCommand(0.0.volts))
         controller.leftBumper().onTrue(intake.setVoltageCommand((-6.0).volts)).onFalse(intake.setVoltageCommand(0.0.volts))
 
-        controller.y().onTrue(wrist.setAngleCommand(0.3.rotations))
-        controller.b().onTrue(wrist.setAngleCommand(0.15.rotations))
-        controller.a().onTrue(wrist.setAngleCommand(0.0.rotations))
+        controller.a().onTrue(joint.setTargetAngleCommand(0.0.rotations))
+        controller.b().onTrue(joint.setTargetAngleCommand(0.1.rotations))
+        controller.x().onTrue(joint.setTargetAngleCommand(0.2.rotations))
+        controller.y().onTrue(joint.setTargetAngleCommand(0.25.rotations))
     }
 
     val autonomousCommand: Command?
@@ -73,5 +74,6 @@ class RobotContainer {
     fun setup() {
         swerveDrive.matchRelativeEncodersToAbsoluteEncoders()
         wrist.matchRelativeEncodersToAbsoluteEncoders()
+        joint.matchRelativeEncodersToAbsoluteEncoders()
     }
 }
