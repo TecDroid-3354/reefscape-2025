@@ -7,7 +7,7 @@ import net.tecdroid.util.units.volts
 
 interface VoltageControlledSubsystem {
     fun setVoltage(voltage: Voltage)
-    fun setVoltageCommand(voltage: Voltage): Command = Commands.runOnce({setVoltage(voltage) })
+    fun setVoltageCommand(voltage: Voltage): Command = Commands.runOnce({ setVoltage(voltage) })
     fun stop() = setVoltage(0.0.volts)
     fun stopCommand(): Command = Commands.runOnce(::stop)
 }

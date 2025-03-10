@@ -1,5 +1,6 @@
 package net.tecdroid.subsystems.elevatorjoint
 
+import edu.wpi.first.units.Units.Second
 import edu.wpi.first.units.measure.Angle
 import edu.wpi.first.units.measure.Current
 import net.tecdroid.util.units.amps
@@ -7,6 +8,7 @@ import net.tecdroid.util.units.rotations
 import net.tecdroid.util.*
 import net.tecdroid.util.Motors.krakenX60
 import net.tecdroid.util.RotationalDirection.Clockwise
+import net.tecdroid.util.units.seconds
 
 data class ElevatorJointConfig(
     val leadMotorControllerId: NumericId,
@@ -22,7 +24,8 @@ data class ElevatorJointConfig(
     val minimumAngle: Angle,
     val maximumAngle: Angle,
     val controlGains: ControlGains,
-    val motionTargets: MotionTargets
+    val motionTargets: AngularMotionTargets,
+    val absoluteEncoderOffset: Angle
 )
 
 public val elevatorJointConfig = ElevatorJointConfig(
@@ -39,5 +42,6 @@ public val elevatorJointConfig = ElevatorJointConfig(
     minimumAngle = 0.0.rotations,
     maximumAngle = 0.0.rotations,
     controlGains = ControlGains(),
-    motionTargets = MotionTargets()
+    motionTargets = AngularMotionTargets(0.33.rotations.per(Second), 1.0.seconds,1.0.seconds),
+    absoluteEncoderOffset = 0.0.rotations,
 )

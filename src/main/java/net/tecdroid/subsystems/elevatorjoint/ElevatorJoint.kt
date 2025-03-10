@@ -6,8 +6,11 @@ import com.ctre.phoenix6.controls.MotionMagicVoltage
 import com.ctre.phoenix6.controls.VoltageOut
 import com.ctre.phoenix6.hardware.TalonFX
 import com.ctre.phoenix6.signals.NeutralModeValue
+import edu.wpi.first.units.Units.Degrees
 import edu.wpi.first.units.measure.Angle
 import edu.wpi.first.units.measure.Voltage
+import edu.wpi.first.util.sendable.Sendable
+import edu.wpi.first.util.sendable.SendableBuilder
 import edu.wpi.first.wpilibj.shuffleboard.Shuffleboard
 import edu.wpi.first.wpilibj2.command.Command
 import edu.wpi.first.wpilibj2.command.Commands
@@ -17,12 +20,17 @@ import net.tecdroid.subsystems.generic.WithAbsoluteEncoders
 import net.tecdroid.util.units.clamp
 import net.tecdroid.wrappers.ThroughBoreAbsoluteEncoder
 
-class ElevatorJoint(private val config: ElevatorJointConfig) : SubsystemBase(), VoltageControlledSubsystem,
+class ElevatorJoint(private val config: ElevatorJointConfig) : SubsystemBase(), Sendable, VoltageControlledSubsystem,
     WithAbsoluteEncoders {
-    private val leadMotorController = TalonFX(config.leadMotorControllerId.id) // right motor
-    private val followerMotorController = TalonFX(config.followerMotorId.id) // left motor
+    private val leadMotorController = TalonFX(config.leadMotorControllerId.id)
+    private val followerMotorController = TalonFX(config.followerMotorId.id)
+
     private val absoluteEncoder =
-        ThroughBoreAbsoluteEncoder(config.absoluteEncoderPort, config.absoluteEncoderIsInverted)
+        ThroughBoreAbsoluteEncoder(
+            port = config.absoluteEncoderPort,
+            offset = config.absoluteEncoderOffset,
+            inverted = config.absoluteEncoderIsInverted
+        )
 
     init {
         configureMotorsInterface()
@@ -79,9 +87,9 @@ class ElevatorJoint(private val config: ElevatorJointConfig) : SubsystemBase(), 
                 .withKG(config.controlGains.g)
 
             MotionMagic
-                .withMotionMagicCruiseVelocity(config.motionTargets.cruiseVelocity)
-                .withMotionMagicAcceleration(config.motionTargets.acceleration)
-                .withMotionMagicJerk(config.motionTargets.jerk)
+                .withMotionMagicCruiseVelocity(config.gearRatio.unapply(config.motionTargets.cruiseVelocity))
+                .withMotionMagicAcceleration(config.gearRatio.unapply(config.motionTargets.acceleration))
+                .withMotionMagicJerk(config.gearRatio.unapply(config.motionTargets.jerk))
         }
 
 
@@ -92,6 +100,13 @@ class ElevatorJoint(private val config: ElevatorJointConfig) : SubsystemBase(), 
         followerMotorController.configurator.apply(talonConfig)
 
         followerMotorController.setControl(Follower(leadMotorController.deviceID, true))
+    }
+
+    override fun initSendable(builder: SendableBuilder) {
+        with(builder) {
+            addDoubleProperty("Current Angle (Degrees)", { angle.`in`(Degrees) }, {})
+            addDoubleProperty("Current Absolute Angle (Degrees)", { absoluteAngle.`in`(Degrees) }, {})
+        }
     }
 }
 
