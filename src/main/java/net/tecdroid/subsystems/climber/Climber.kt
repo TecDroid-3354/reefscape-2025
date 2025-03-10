@@ -1,114 +1,115 @@
-package net.tecdroid.subsystems.climber;
+package net.tecdroid.subsystems.climber
 
-import static net.tecdroid.subsystems.climber.ClimberConfiguration.climberConfiguration;
-import static edu.wpi.first.units.Units.*;
+import com.ctre.phoenix6.configs.TalonFXConfiguration
+import com.ctre.phoenix6.controls.Follower
+import com.ctre.phoenix6.controls.MotionMagicVoltage
+import com.ctre.phoenix6.controls.VoltageOut
+import com.ctre.phoenix6.hardware.TalonFX
+import com.ctre.phoenix6.signals.NeutralModeValue
+import edu.wpi.first.units.Units.Rotations
+import edu.wpi.first.units.measure.Angle
+import edu.wpi.first.units.measure.AngularVelocity
+import edu.wpi.first.units.measure.Voltage
+import edu.wpi.first.util.sendable.Sendable
+import edu.wpi.first.util.sendable.SendableBuilder
+import edu.wpi.first.wpilibj.shuffleboard.Shuffleboard
+import edu.wpi.first.wpilibj2.command.Command
+import edu.wpi.first.wpilibj2.command.Commands
+import edu.wpi.first.wpilibj2.command.SubsystemBase
+import net.tecdroid.constants.subsystemTabName
+import net.tecdroid.subsystems.util.generic.VoltageControlledSubsystem
+import net.tecdroid.subsystems.util.generic.WithAbsoluteEncoders
+import net.tecdroid.util.units.clamp
+import net.tecdroid.wrappers.ThroughBoreAbsoluteEncoder
 
-import com.ctre.phoenix6.configs.TalonFXConfiguration;
-import com.ctre.phoenix6.controls.Follower;
-import com.ctre.phoenix6.controls.MotionMagicVoltage;
-import com.ctre.phoenix6.hardware.TalonFX;
-import com.ctre.phoenix6.signals.NeutralModeValue;
-import edu.wpi.first.wpilibj.DutyCycleEncoder;
-import edu.wpi.first.units.measure.*;
-import net.tecdroid.util.*;
+class Climber(private val config: ClimberConfig) : SubsystemBase(), Sendable, VoltageControlledSubsystem, WithAbsoluteEncoders
+ {
+    private val leadMotorController = TalonFX(config.leadingMotorId.id)
+    private val followerMotorController = TalonFX(config.followerMotorId.id)
+    private val absoluteEncoder = ThroughBoreAbsoluteEncoder(
+        port = config.absoluteEncoderPort,
+        offset = config.absoluteEncoderOffset,
+        inverted = config.absoluteEncoderInverted
+    )
 
-public class Climber {
-    private final TalonFX leadingClimberMotorController;
-    private final TalonFX followerClimberMotorController;
-    private final DutyCycleEncoder climberEncoder;
-    private final Config climberConfig = climberConfiguration;
-
-
-    public Climber(Config climberConfig) {
-        // Troughbore encoder (roboRIO connected)
-        climberEncoder = new DutyCycleEncoder(climberConfig.Identifiers.encoderPort.getId());
-
-        // Leading motor -> Left motor
-        leadingClimberMotorController = new TalonFX(climberConfig.Identifiers.leftClimberMotorID.getId());
-
-        // Follower motor -> right motor
-        followerClimberMotorController = new TalonFX(climberConfig.Identifiers.rightClimberMotorID.getId());
-
-        // Configure motors
-        MotorsInterface();
+    init {
+        configureMotors()
     }
 
-    public void setClimberPosition(Angle angle) {
-        /* Takes the desired climber angle and unapplies the gear ratio to obtain the motor's desired  rotations*/
-        final MotionMagicVoltage positionRequest = new MotionMagicVoltage(0);
-        if(isAngleWithinRange(angle)) {
-            leadingClimberMotorController.setControl(positionRequest.withPosition(
-                climberConfig.PhysicalDescription.climberGearRatio.unapply(angle)
-            ));
+     override fun setVoltage(voltage: Voltage) {
+         val request = VoltageOut(voltage)
+         leadMotorController.setControl(request)
+     }
+
+     fun setAngle(newAngle: Angle) {
+         val targetAngle = clamp(config.minimumAngle, config.maximumAngle, newAngle)
+         val request = MotionMagicVoltage(config.gearRatio.unapply(targetAngle)).withSlot(0)
+         leadMotorController.setControl(request)
+     }
+
+     fun setAngleCommand(newAngle: Angle): Command = Commands.runOnce({ setAngle(newAngle) })
+
+     internal val motorPosition: Angle
+         get() = leadMotorController.position.value
+
+     internal val motorVelocity: AngularVelocity
+         get() = leadMotorController.velocity.value
+
+     val angle: Angle
+         get() = config.gearRatio.apply(motorPosition)
+
+     val absoluteAngle: Angle
+         get() = absoluteEncoder.position
+
+     override fun matchRelativeEncodersToAbsoluteEncoders() {
+         leadMotorController.setPosition(config.gearRatio.unapply(absoluteAngle))
+     }
+
+    private fun configureMotors() {
+        val talonConfig = TalonFXConfiguration()
+
+        with(talonConfig) {
+            MotorOutput
+                .withNeutralMode(NeutralModeValue.Brake)
+                .withInverted((config.positiveRotationDirection).toInvertedValue())
+
+            CurrentLimits
+                .withSupplyCurrentLimitEnable(true)
+                .withSupplyCurrentLimit(config.currentLimit)
+
+            Slot0
+                .withKP(config.controlGains.p)
+                .withKI(config.controlGains.i)
+                .withKD(config.controlGains.d)
+                .withKS(config.controlGains.s)
+                .withKV(config.controlGains.v)
+                .withKA(config.controlGains.a)
+                .withKG(config.controlGains.g)
+
+            MotionMagic
+                .withMotionMagicCruiseVelocity(config.gearRatio.unapply(config.motionTargets.cruiseVelocity))
+                .withMotionMagicAcceleration(config.gearRatio.unapply(config.motionTargets.acceleration))
+                .withMotionMagicJerk(config.gearRatio.unapply(config.motionTargets.jerk))
         }
+
+        leadMotorController.clearStickyFaults()
+        leadMotorController.configurator.apply(talonConfig)
+
+        followerMotorController.clearStickyFaults()
+        followerMotorController.configurator.apply(talonConfig)
+
+        followerMotorController.setControl(Follower(leadMotorController.deviceID, false))
     }
 
-    public Angle getClimberPosition() {
-        /* Applies the gear ratio to the motor's encoder reading to obtain the climber angle position */
-        return climberConfig.PhysicalDescription.climberGearRatio.apply(getMotorEncoderPosition());
-    }
+     override fun initSendable(builder: SendableBuilder) {
+         with(builder) {
+             addDoubleProperty("Current Angle (Rotations)", { angle.`in`(Rotations) }) {}
+             addDoubleProperty("Absolute Angle (Rotations)", { absoluteAngle.`in`(Rotations) }) {}
+         }
+     }
 
-    private Angle getMotorEncoderPosition() {
-        /* Returns the current angle reading of the motor */
-        return leadingClimberMotorController.getPosition().getValue();
-    }
-
-    private boolean isAngleWithinRange(Angle angle) {
-        /* Checks that the requested angle is within the climber's limits */
-        return angle.gte(climberConfig.Limits.minimumClimberAngle) && angle.lte(climberConfig.Limits.maximumClimberAngle);
-    }
-
-    // ///////////// //
-    // Configuration //
-    // ///////////// //
-
-    private void MotorsInterface() {
-        // Initializes the configuration object
-        TalonFXConfiguration motorsConfig = new TalonFXConfiguration();
-
-        // Sets the neutral mode value and decides whether to invert the motors or not
-        motorsConfig.MotorOutput.withNeutralMode(climberConfig.ControlConstants.motorsNeutralMode)
-            .withInverted(
-                climberConfig.PhysicalDescription.climberGearRatio.transformRotation(
-                    climberConfig.Conventions.climberRotationalPositiveDirection).toInvertedValue());
-
-        // Set the current limit. In case of krakens, 40 Amps
-        motorsConfig.CurrentLimits.withSupplyCurrentLimitEnable(true)
-                .withSupplyCurrentLimit(climberConfig.Limits.climberMotorsCurrentLimit);
-
-        // Apply Motion Magic control constants
-        motorsConfig.MotionMagic
-            .withMotionMagicCruiseVelocity(climberConfig.ControlConstants.climberMotionTargets.getCruiseVelocity())
-            .withMotionMagicAcceleration(climberConfig.ControlConstants.climberMotionTargets.getAcceleration())
-            .withMotionMagicJerk(climberConfig.ControlConstants.climberMotionTargets.getJerk());
-
-        // Motors will take 0.1 seconds to achieve the desired speed
-        motorsConfig.ClosedLoopRamps.withVoltageClosedLoopRampPeriod(climberConfig.ControlConstants.climberRampRate);
-
-        // Clear sticky faults previous to configuration
-        leadingClimberMotorController.clearStickyFaults();
-        followerClimberMotorController.clearStickyFaults();
-
-        // Apply configuration
-        leadingClimberMotorController.getConfigurator().apply(motorsConfig);
-        followerClimberMotorController.getConfigurator().apply(motorsConfig);
-
-        // Set leading motor position to throughbore reading minus the offset to get the desired zero position
-        leadingClimberMotorController.setPosition(
-            Rotations.of(climberEncoder.get() - climberConfig.PhysicalDescription.encoderOffSet.in(Rotations)));
-
-        // Set the following motor to follow the leader motor in the same direction
-        followerClimberMotorController.setControl(new Follower(leadingClimberMotorController.getDeviceID(), false));
-    }
-
-    public record DeviceIdentifiers(NumericId encoderPort, NumericId leftClimberMotorID, NumericId rightClimberMotorID) {}
-    public record DeviceProperties(MotorProperties climberMotorsProperties) {}
-    public record DeviceLimits(
-        Current climberMotorsCurrentLimit, Angle minimumClimberAngle, Angle maximumClimberAngle) {}
-    public record DeviceConventions(RotationalDirection climberRotationalPositiveDirection) {}
-    public record PhysicalDescription(GearRatio climberGearRatio, Angle encoderOffSet) {}
-    public record ControlConstants(MotionTargets climberMotionTargets,
-                                   Time climberRampRate, NeutralModeValue motorsNeutralMode) {}
-    public record Config(DeviceIdentifiers Identifiers, DeviceProperties Properties, DeviceLimits Limits,
-                         DeviceConventions Conventions, PhysicalDescription PhysicalDescription, ControlConstants ControlConstants) {}
+     fun publishToShuffleboard() {
+         val tab = Shuffleboard.getTab(subsystemTabName)
+         tab.add("Climber" , this)
+     }
 }

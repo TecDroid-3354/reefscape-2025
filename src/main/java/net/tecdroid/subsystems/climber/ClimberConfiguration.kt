@@ -1,88 +1,48 @@
-package net.tecdroid.subsystems.climber;
+package net.tecdroid.subsystems.climber
 
-import edu.wpi.first.units.measure.*;
-import net.tecdroid.util.*;
-import edu.wpi.first.units.measure.Time;
-import static edu.wpi.first.units.Units.*;
-import com.ctre.phoenix6.signals.NeutralModeValue;
-import net.tecdroid.util.RotationalDirection;
+import edu.wpi.first.units.Units.Second
+import edu.wpi.first.units.measure.Angle
+import edu.wpi.first.units.measure.Current
+import net.tecdroid.util.*
+import net.tecdroid.util.RotationalDirection.Counterclockwise
+import net.tecdroid.util.units.amps
+import net.tecdroid.util.units.rotations
+import net.tecdroid.util.units.seconds
 
-public class ClimberConfiguration {
-    public static class ClimberIdentifiers {
-        private static final DigitId digitModule = new DigitId(5);
+data class ClimberConfig(
+    val leadingMotorId: NumericId,
+    val followerMotorId: NumericId,
+    val absoluteEncoderPort: NumericId,
+    val absoluteEncoderOffset: Angle,
+    val absoluteEncoderInverted: Boolean,
+    val currentLimit: Current,
+    val positiveRotationDirection: RotationalDirection,
+    val absoluteMaximumAngle: Angle,
+    val absoluteMinimumAngle: Angle,
+    val maximumAngle: Angle,
+    val minimumAngle: Angle,
+    val gearRatio: Reduction,
+    val controlGains: ControlGains,
+    val motionTargets: AngularMotionTargets
+)
 
-        // leading climber motor --> left motor
-        private final DigitId leadingClimberMotorID = new DigitId(5);
-
-        // follower climber motor --> right  motor
-        private final DigitId followerClimberMotorID = new DigitId(6);
-
-        // TODO: CHECK THE THROUGHBORE'S ACTUAL ID
-        private final DigitId throughboreClimberPort = new DigitId(7); // TODO: CHECK THE THROUGHBORE'S ACTUAL ID
-
-        final Climber.DeviceIdentifiers deviceIdentifiers = new Climber.DeviceIdentifiers(
-                throughboreClimberPort,
-                IdentifiersKt.joinDigits(digitModule, leadingClimberMotorID),
-                IdentifiersKt.joinDigits(digitModule, followerClimberMotorID)
-                );
-    }
-
-    private static class DeviceProperties {
-        private final MotorProperties climberMotorProperties = Motors.INSTANCE.getKrakenX60();
-
-        final Climber.DeviceProperties climberDevicesProperties =
-                new Climber.DeviceProperties(
-                        climberMotorProperties);
-    }
-
-    private static class Limits {
-        private final Current climberMotorsCurrentLimit = Amps.of(40.0);
-
-        // TODO: CHECK AND SET MINIMUM/MAXIMUM CLIMBER ANGLE DIRECTIONS
-        // TODO: THESE ARE ONLY ARBITRARY VALUES
-        private final Angle minimumClimberAngle = Degrees.of(0.0);
-        private final Angle maximumClimberAngle = Degrees.of(90.0);
-
-        final Climber.DeviceLimits climberDeviceLimits =
-                new Climber.DeviceLimits(
-                        climberMotorsCurrentLimit,
-                        minimumClimberAngle,
-                        maximumClimberAngle);
-    }
-
-    private static class Conventions {
-        private final RotationalDirection climberRotationalPositiveDirection = RotationalDirection.Clockwise;
-
-        final Climber.DeviceConventions climberDeviceConventions =
-                new Climber.DeviceConventions (climberRotationalPositiveDirection);
-    }
-
-    private static class Structure {
-        // Setting a common physical gear ratio for both motors
-        private final GearRatio climberMotorsGR = new GearRatio(288, 1, 0);
-        private final Angle encoderOffset = Degrees.of(45.0); // TODO: GET REAL VALUE | 45 IS AN ARBITRARY VALUE
-
-        final Climber.PhysicalDescription climberPhysicalDescription =
-                new Climber.PhysicalDescription(
-                        climberMotorsGR, encoderOffset);
-    }
-    //hay que revisar los MetersPerSecond
-    private static class Control {
-        private final MotionTargets climberMotionTargets = new MotionTargets(0.0, 0.0, 0.0);
-        private final Time climberRampRate = Seconds.of(0.1);
-        private final NeutralModeValue climberNeutralModeValue = NeutralModeValue.Brake;
-
-        final Climber.ControlConstants climberControlConstants = new Climber.ControlConstants(
-                climberMotionTargets, climberRampRate, climberNeutralModeValue);
-    }
-
-    static final Climber.Config climberConfiguration = new Climber.Config(
-            new ClimberIdentifiers().deviceIdentifiers,
-            new DeviceProperties().climberDevicesProperties,
-            new Limits().climberDeviceLimits,
-            new Conventions().climberDeviceConventions,
-            new Structure().climberPhysicalDescription,
-            new Control().climberControlConstants
-    );
-}
-
+val climberConfig = ClimberConfig(
+    leadingMotorId = NumericId(55),
+    followerMotorId = NumericId(56),
+    absoluteEncoderPort = NumericId(2),
+    absoluteEncoderOffset = 0.0.rotations,
+    absoluteEncoderInverted = false,
+    currentLimit = 40.0.amps,
+    positiveRotationDirection = Counterclockwise,
+    absoluteMaximumAngle = 0.0.rotations,
+    absoluteMinimumAngle = 0.0.rotations,
+    maximumAngle = 0.0.rotations,
+    minimumAngle = 0.0.rotations,
+    gearRatio = Reduction(288.0),
+    controlGains = ControlGains(),
+    motionTargets = AngularMotionTargets(
+        cruiseVelocity = 0.1.rotations.per(Second),
+        accelerationTimePeriod =  1.0.seconds,
+        jerkTimePeriod = 0.1.seconds
+    )
+)

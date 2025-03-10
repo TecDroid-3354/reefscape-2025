@@ -3,13 +3,12 @@ package net.tecdroid.subsystems.wrist
 import edu.wpi.first.units.Units.Second
 import edu.wpi.first.units.measure.Angle
 import edu.wpi.first.units.measure.Current
+import net.tecdroid.util.*
+import net.tecdroid.util.RotationalDirection.Clockwise
 import net.tecdroid.util.units.amps
 import net.tecdroid.util.units.degrees
 import net.tecdroid.util.units.rotations
 import net.tecdroid.util.units.seconds
-import net.tecdroid.util.*
-import net.tecdroid.util.RotationalDirection.Clockwise
-import net.tecdroid.util.RotationalDirection.Counterclockwise
 
 data class WristConfig(
     val motorProperties: MotorProperties,
@@ -22,13 +21,13 @@ data class WristConfig(
     val minimumAngle: Angle,
     val maximumAngle: Angle,
     val positiveDirection: RotationalDirection,
-    val gearRatio: GearRatio,
+    val gearRatio: Reduction,
     val absoluteEncoderOffset: Angle,
     val controlGains: ControlGains,
     val motionTargets: AngularMotionTargets
 )
 
-public val wristConfig = WristConfig(
+val wristConfig = WristConfig(
     motorProperties = Motors.krakenX60,
     absoluteEncoderIsInverted = false,
     motorControllerId = NumericId(61),
@@ -39,7 +38,7 @@ public val wristConfig = WristConfig(
     minimumAngle = 0.0271.rotations,
     maximumAngle = 0.33.rotations,
     positiveDirection = Clockwise,
-    gearRatio = GearRatio(214.285714, 1.0, 0),
+    gearRatio = Reduction(214.285714),
     absoluteEncoderOffset = (0.32761).rotations,
     controlGains = ControlGains(
         p = 0.1,

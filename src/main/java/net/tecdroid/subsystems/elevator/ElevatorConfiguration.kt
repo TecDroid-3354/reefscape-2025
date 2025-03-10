@@ -1,88 +1,48 @@
-package net.tecdroid.subsystems.elevator;
-import com.ctre.phoenix6.signals.InvertedValue;
-import edu.wpi.first.units.measure.Current;
-import edu.wpi.first.units.measure.Distance;
-import net.tecdroid.subsystems.elevator.Elevator.*;
-import net.tecdroid.util.*;
+package net.tecdroid.subsystems.elevator
 
-import static edu.wpi.first.units.Units.*;
+import edu.wpi.first.units.Units.Inches
+import edu.wpi.first.units.Units.Second
+import edu.wpi.first.units.measure.Current
+import edu.wpi.first.units.measure.Distance
+import net.tecdroid.util.*
+import net.tecdroid.util.RotationalDirection.Clockwise
+import net.tecdroid.util.geometry.Sprocket
+import net.tecdroid.util.units.amps
+import net.tecdroid.util.units.meters
+import net.tecdroid.util.units.seconds
 
-public final class ElevatorConfiguration {
-    private static class ElevatorIdentifiers {
-        // Ids
-        private static final DigitId DIGIT_MODULE = new DigitId(5);
-        private static final DigitId LEFT_MOTOR_ID = new DigitId(3);
-        private static final DigitId RIGHT_MOTOR_ID = new DigitId(4);
+data class ElevatorConfig(
+    val leadMotorControllerId: NumericId,
+    val followerMotorId: NumericId,
+    val positiveDirection: RotationalDirection,
+    val currentLimit: Current,
+    val gearRatio: Reduction,
+    val sprocket: Sprocket,
+    val absoluteMinimumDisplacement: Distance,
+    val absoluteMaximumDisplacement: Distance,
+    val minimumDisplacement: Distance,
+    val maximumDisplacement: Distance,
+    val controlGains: ControlGains,
+    val motionTargets: LinearMotionTargets,
+)
 
-        // Channel
-        public static final DigitId LIMIT_SWITCH_CHANNEL = new DigitId(2);
-
-        private final DeviceIdentifier deviceIdentifier = new DeviceIdentifier(
-                IdentifiersKt.joinDigits(DIGIT_MODULE, LEFT_MOTOR_ID),
-                IdentifiersKt.joinDigits(DIGIT_MODULE, RIGHT_MOTOR_ID),
-                LIMIT_SWITCH_CHANNEL);
-
-    }
-
-    private static class ElevatorMotorProperties {
-
-        // Limits
-        private static final Current AMP_LIMITS = Amps.of(40.0);
-
-        // Set inverted
-        private static final InvertedValue LEADER_MOTOR_INVERTED_TYPE = InvertedValue.CounterClockwise_Positive;
-        private static final boolean FOLLOWER_MOTOR_INVERTED = true;
-
-        private final Elevator.MotorProperties motorProperties = new Elevator.MotorProperties(AMP_LIMITS, LEADER_MOTOR_INVERTED_TYPE, FOLLOWER_MOTOR_INVERTED);
-
-    }
-
-    private static class ElevatorReductions {
-        // Gear Ratio
-        public static final double ELEVATOR_GEAR_RATIO = 8.9285;
-        public static final Distance ELEVATOR_INCHES_PER_REV = Distance.ofBaseUnits(2.246, Inches);
-
-        private final GearRatio motorGearRatio = new GearRatio(ELEVATOR_GEAR_RATIO, 1, 0);
-
-        private final ElevatorGearRatio elevatorGearRatio = new ElevatorGearRatio(motorGearRatio, ELEVATOR_INCHES_PER_REV);
-
-    }
-
-    private static class ElevatorLimits {
-        public static final Distance upLimitDistance = Distance.ofBaseUnits(20.0, Inches);
-        public static final Distance downLimitDistance = Distance.ofBaseUnits(0.0, Inches);
-
-        private final ElevatorDistanceLimits elevatorDistanceLimits = new ElevatorDistanceLimits(upLimitDistance, downLimitDistance);
-    }
-
-    private static class ElevatorCoefficients {
-        public static final double G = 0.0;
-        public static final double S = 0.25; // Add 0.25 V output to overcome static friction
-        public static final double V = 0.12; // A velocity target of 1 rps results in 0.12 V output
-        public static final double A = 0.01; // An acceleration of 1 rps/s requires 0.01 V output
-        public static final double P = 4.8; // A position error of 2.5 rotations results in 12 V output
-        public static final double I = 0.0; // no output for integrated error
-        public static final double D = 0.1; // A velocity error of 1 rps results in 0.1 V output
-        public static final double F = 0.0;
-
-        private final Coefficients coefficients = new Coefficients(
-                new PidfCoefficients(P, I, D, F), new SvagGains(S, V, A, G));
-    }
-
-    private static class ElevatorMotionMagicSettings {
-        public static final double MOTION_MAGIC_CRUISE_VELOCITY = 80.0; // Target cruise velocity of 80 rps
-        public static final double MOTION_MAGIC_ACCELERATION = 160.0; // Target acceleration of 160 rps/s (0.5 seconds)
-        public static final double MOTION_MAGIC_JERK = 1600; // Target jerk of 1600 rps/s/s (0.1 seconds)
-
-        final MotionMagicProperties motionMagicProperties = new MotionMagicProperties(
-                new MotionMagicSettings(MOTION_MAGIC_CRUISE_VELOCITY, MOTION_MAGIC_ACCELERATION, MOTION_MAGIC_JERK)
-        );
-    }
-
-    public static final Elevator.ElevatorConfig elevatorConfig = new Elevator.ElevatorConfig(
-            new ElevatorIdentifiers().deviceIdentifier, new ElevatorMotorProperties().motorProperties,
-            new ElevatorReductions().elevatorGearRatio, new ElevatorLimits().elevatorDistanceLimits,new ElevatorCoefficients().coefficients,
-            new ElevatorMotionMagicSettings().motionMagicProperties
-    );
-
-}
+val elevatorConfig = ElevatorConfig(
+    leadMotorControllerId = NumericId(53),
+    followerMotorId = NumericId(54),
+    positiveDirection = Clockwise,
+    currentLimit = 40.0.amps,
+    gearRatio = Reduction(8.9285),
+    sprocket = Sprocket.fromRadius(Inches.of(1 + 1.0 / 8.0)),
+    absoluteMinimumDisplacement = 0.0.meters,
+    absoluteMaximumDisplacement = 1.02123.meters,
+    minimumDisplacement = 0.06.meters,
+    maximumDisplacement = 0.94.meters,
+    controlGains = ControlGains(
+        p = 0.2,
+        s = 0.056261,
+        v = 0.11846,
+        a = 0.0023818,
+        g = 0.24064
+    ),
+    motionTargets = LinearMotionTargets(0.8.meters.per(Second), 0.5.seconds, 0.1.seconds),
+)

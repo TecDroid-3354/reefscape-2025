@@ -18,8 +18,8 @@ import net.tecdroid.util.units.toRotation2d
 class SwerveDriveDriver(
     private val maxLinearVelocity: LinearVelocity,
     private val maxAngularVelocity: AngularVelocity,
-    private val accelerationPeriod: Time,
-    private val decelerationPeriod: Time = accelerationPeriod
+    private accelerationPeriod: Time,
+    private decelerationPeriod: Time = accelerationPeriod
 ): Sendable {
     var longitudinalVelocityFactorSource = { 0.0 }
     var transversalVelocityFactorSource = { 0.0 }
@@ -35,7 +35,7 @@ class SwerveDriveDriver(
     private var orientation = DriveOrientation.FieldOriented
 
     private val isFieldOriented: Boolean
-        get() = orientation == DriveOrientation.FieldOriented
+        get() = orientation == DriveOrientation.RobotOriented
 
     fun obtainTargetSpeeds(currentAngle: Angle): ChassisSpeeds {
         val xf = longitudinalVelocityFactorSource()
@@ -73,14 +73,6 @@ class SwerveDriveDriver(
         swerveDrive.defaultCommand = Commands.run({
             swerveDrive.drive(obtainTargetSpeeds(heading))
         }, swerveDrive)
-    }
-
-    fun getMaxAngularVelocity() : AngularVelocity {
-        return maxAngularVelocity;
-    }
-
-    fun getMaxLinearVelocity() : LinearVelocity {
-        return maxLinearVelocity;
     }
 
     override fun initSendable(builder: SendableBuilder) {

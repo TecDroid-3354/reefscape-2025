@@ -5,26 +5,23 @@ import com.ctre.phoenix6.controls.MotionMagicVoltage
 import com.ctre.phoenix6.controls.VoltageOut
 import com.ctre.phoenix6.hardware.TalonFX
 import com.ctre.phoenix6.signals.NeutralModeValue
-import edu.wpi.first.units.Units.*
-import edu.wpi.first.units.measure.*
+import edu.wpi.first.units.Units.Rotations
+import edu.wpi.first.units.measure.Angle
+import edu.wpi.first.units.measure.AngularVelocity
+import edu.wpi.first.units.measure.Voltage
 import edu.wpi.first.util.sendable.Sendable
 import edu.wpi.first.util.sendable.SendableBuilder
-import edu.wpi.first.wpilibj.RobotController
 import edu.wpi.first.wpilibj.shuffleboard.Shuffleboard
-import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard
-import edu.wpi.first.wpilibj.sysid.SysIdRoutineLog
 import edu.wpi.first.wpilibj2.command.Command
 import edu.wpi.first.wpilibj2.command.Commands
-import edu.wpi.first.wpilibj2.command.SubsystemBase
-import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine
 import net.tecdroid.constants.subsystemTabName
-import net.tecdroid.subsystems.util.generic.VoltageControlledSubsystem
+import net.tecdroid.subsystems.util.generic.IdentifiableSubsystem
 import net.tecdroid.subsystems.util.generic.WithAbsoluteEncoders
-import net.tecdroid.subsystems.util.identification.AngularSysIdRoutine
-import net.tecdroid.util.units.clampAngle
+import net.tecdroid.subsystems.util.identification.GenericSysIdRoutine
+import net.tecdroid.util.units.clamp
 import net.tecdroid.wrappers.ThroughBoreAbsoluteEncoder
 
-class Wrist(internal val config: WristConfig) : SubsystemBase(), Sendable, VoltageControlledSubsystem, WithAbsoluteEncoders {
+class Wrist(internal val config: WristConfig) : IdentifiableSubsystem(), Sendable, WithAbsoluteEncoders {
     internal val motorController = TalonFX(config.motorControllerId.id)
 
     private val absoluteEncoder =
@@ -44,27 +41,25 @@ class Wrist(internal val config: WristConfig) : SubsystemBase(), Sendable, Volta
     }
 
     fun setAngle(newAngle: Angle) {
-        val targetAngle = clampAngle(config.minimumAngle, config.maximumAngle, newAngle) as Angle
-        SmartDashboard.putString("Wrist Target Angle", targetAngle.toString())
+        val targetAngle = clamp(config.minimumAngle, config.maximumAngle, newAngle)
         val request = MotionMagicVoltage(config.gearRatio.unapply(targetAngle)).withSlot(0)
         motorController.setControl(request)
     }
 
     fun setAngleCommand(newAngle: Angle): Command = Commands.runOnce({ setAngle(newAngle) }, this)
 
-    internal val motorPosition: Angle
+    override val power: Double
+        get() = motorController.get()
+
+    override val motorPosition: Angle
         get() = motorController.position.value
 
-    internal val motorVelocity: AngularVelocity
+    override val motorVelocity: AngularVelocity
         get() = motorController.velocity.value
 
     val angle: Angle
         get() =
             config.gearRatio.apply(motorPosition)
-
-    val angularVelocity: AngularVelocity
-        get() =
-            config.gearRatio.apply(motorVelocity)
 
     private val absoluteAngle: Angle
         get() = absoluteEncoder.position
@@ -83,7 +78,7 @@ class Wrist(internal val config: WristConfig) : SubsystemBase(), Sendable, Volta
         with(talonConfig) {
             MotorOutput
                 .withNeutralMode(NeutralModeValue.Brake)
-                .withInverted(config.gearRatio.transformRotation(config.positiveDirection).toInvertedValue())
+                .withInverted(config.positiveDirection.toInvertedValue())
 
             CurrentLimits
                 .withSupplyCurrentLimitEnable(true)
@@ -120,27 +115,12 @@ class Wrist(internal val config: WristConfig) : SubsystemBase(), Sendable, Volta
         val tab = Shuffleboard.getTab(subsystemTabName)
         tab.add("Wrist" , this)
     }
-}
 
-class WristSystemIdentificationRoutine(wrist: Wrist) : AngularSysIdRoutine() {
-
-    init {
-        forwardsRunningCondition = { wrist.angle < wrist.config.maximumAngle }
-        backwardsRunningCondition = { wrist.angle > wrist.config.minimumAngle }
-    }
-
-    override val routine: SysIdRoutine = SysIdRoutine(
-        SysIdRoutine.Config(),
-        SysIdRoutine.Mechanism(
-            wrist::setVoltage,
-            { log: SysIdRoutineLog ->
-                log.motor("Wrist Motor")
-                   .voltage(voltage.mut_replace(RobotController.getBatteryVoltage() * wrist.motorController.get(), Volts))
-                   .angularPosition(position.mut_replace(wrist.motorPosition))
-                   .angularVelocity(velocity.mut_replace(wrist.motorVelocity))
-            },
-            wrist
-        )
+    @SuppressWarnings("unusued")
+    fun createIdentificationRoutine() = GenericSysIdRoutine(
+        name = "Wrist",
+        subsystem = this,
+        forwardsRunningCondition = { angle < config.maximumAngle },
+        backwardsRunningCondition = { angle > config.minimumAngle }
     )
 }
-

@@ -1,9 +1,14 @@
 package net.tecdroid.subsystems.util.identification
 
 import edu.wpi.first.units.Units.*
-import edu.wpi.first.units.measure.*
+import edu.wpi.first.units.measure.MutAngle
+import edu.wpi.first.units.measure.MutAngularVelocity
+import edu.wpi.first.units.measure.MutVoltage
+import edu.wpi.first.wpilibj.RobotController
+import edu.wpi.first.wpilibj.sysid.SysIdRoutineLog
 import edu.wpi.first.wpilibj2.command.Command
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine
+import net.tecdroid.subsystems.util.generic.IdentifiableSubsystem
 
 class SysIdRoutines(
     val quasistaticForward: Command,
@@ -12,11 +17,28 @@ class SysIdRoutines(
     val dynamicBackward: Command
 ) {}
 
-abstract class GenericSysIdRoutine {
-    abstract val routine: SysIdRoutine
-    protected val voltage: MutVoltage = Volts.mutable(0.0)
-    protected var forwardsRunningCondition : () -> Boolean = { true }
-    protected var backwardsRunningCondition : () -> Boolean = { true }
+class GenericSysIdRoutine(val name: String,
+                          val subsystem: IdentifiableSubsystem,
+                          var forwardsRunningCondition : () -> Boolean = { true },
+                          var backwardsRunningCondition : () -> Boolean = { true }
+    ) {
+    private val position: MutAngle = Radians.mutable(0.0)
+    private val velocity: MutAngularVelocity = RadiansPerSecond.mutable(0.0)
+    private val voltage: MutVoltage = Volts.mutable(0.0)
+
+    private val routine: SysIdRoutine = SysIdRoutine(
+        SysIdRoutine.Config(),
+        SysIdRoutine.Mechanism(
+            subsystem::setVoltage,
+            { log: SysIdRoutineLog ->
+                log.motor(name)
+                    .voltage(voltage.mut_replace(RobotController.getBatteryVoltage() * subsystem.power, Volts))
+                    .angularPosition(position.mut_replace(subsystem.motorPosition))
+                    .angularVelocity(velocity.mut_replace(subsystem.motorVelocity))
+            },
+            subsystem
+        )
+    )
 
     private fun createQuasistaticTest(direction: SysIdRoutine.Direction) = routine.quasistatic(direction)
     private fun createDynamicTest(direction: SysIdRoutine.Direction) = routine.dynamic(direction)
@@ -27,14 +49,4 @@ abstract class GenericSysIdRoutine {
         dynamicForward = createDynamicTest(SysIdRoutine.Direction.kForward).onlyWhile(forwardsRunningCondition),
         dynamicBackward = createDynamicTest(SysIdRoutine.Direction.kReverse).onlyWhile(backwardsRunningCondition),
     )
-}
-
-abstract class LinearSysIdRoutine: GenericSysIdRoutine() {
-    protected val position: MutDistance = Meters.mutable(0.0)
-    protected val velocity: MutLinearVelocity = MetersPerSecond.mutable(0.0)
-}
-
-abstract class AngularSysIdRoutine: GenericSysIdRoutine() {
-    protected val position: MutAngle = Radians.mutable(0.0)
-    protected val velocity: MutAngularVelocity = RadiansPerSecond.mutable(0.0)
 }

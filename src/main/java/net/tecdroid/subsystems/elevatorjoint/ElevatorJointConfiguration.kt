@@ -18,7 +18,7 @@ data class ElevatorJointConfig(
     val motorProperties: MotorProperties,
     val positiveDirection: RotationalDirection,
     val currentLimit: Current,
-    val gearRatio: GearRatio,
+    val gearRatio: Reduction,
     val absoluteMinimumAngle: Angle,
     val absoluteMaximumAngle: Angle,
     val minimumAngle: Angle,
@@ -28,7 +28,7 @@ data class ElevatorJointConfig(
     val absoluteEncoderOffset: Angle
 )
 
-public val elevatorJointConfig = ElevatorJointConfig(
+val elevatorJointConfig = ElevatorJointConfig(
     leadMotorControllerId = NumericId(51),
     followerMotorId = NumericId(52),
     absoluteEncoderPort = NumericId(0),
@@ -36,7 +36,7 @@ public val elevatorJointConfig = ElevatorJointConfig(
     motorProperties = krakenX60,
     positiveDirection = Counterclockwise,
     currentLimit = 40.0.amps,
-    gearRatio = GearRatio(360.0, 1.0, 0),
+    gearRatio = Reduction(360.0),
     absoluteMinimumAngle = 0.0.rotations,
     absoluteMaximumAngle = 0.26.rotations,
     minimumAngle = 0.014.rotations,

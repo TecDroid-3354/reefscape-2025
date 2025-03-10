@@ -1,14 +1,9 @@
 package net.tecdroid.systems.arm;
 
-import static net.tecdroid.subsystems.elevatorjoint.ElevatorJointConfigurationKt.getElevatorJointConfig;
-import static net.tecdroid.subsystems.wrist.WristConfigurationKt.getWristConfig;
-
 import static edu.wpi.first.units.Units.*;
 
-import edu.wpi.first.units.measure.Angle;
-import net.tecdroid.systems.arm.ArmPose;
-import net.tecdroid.subsystems.wrist.Wrist;
 import net.tecdroid.subsystems.elevator.Elevator;
+import net.tecdroid.subsystems.wrist.Wrist;
 import net.tecdroid.subsystems.elevatorjoint.ElevatorJoint;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
@@ -16,13 +11,17 @@ import edu.wpi.first.wpilibj2.command.Commands;
 import java.util.function.Supplier;
 
 public class ArmController {
-    private final Wrist wristSubsystem = new Wrist(getWristConfig());
-    private final Elevator elevatorSubsystem = new Elevator();
-    private final ElevatorJoint elevatorJointSubsystem = new ElevatorJoint(getElevatorJointConfig());
+    private final Wrist wristSubsystem;
+    private final Elevator elevatorSubsystem;
+    private final ElevatorJoint elevatorJointSubsystem;
 
     private final Supplier<Boolean> elevatorAllowedToMove, wristAllowedToMove;
 
-    public ArmController() {
+    public ArmController(Wrist wristSubsystem, Elevator elevatorSubsystem, ElevatorJoint elevatorJointSubsystem) {
+        this.wristSubsystem = wristSubsystem;
+        this.elevatorSubsystem = elevatorSubsystem;
+        this.elevatorJointSubsystem = elevatorJointSubsystem;
+
         elevatorAllowedToMove = () -> elevatorJointSubsystem.getAngle().gte(Degrees.of(60.0));
         wristAllowedToMove = () -> elevatorJointSubsystem.getAngle().gte(Degrees.of(20.0));
     }
@@ -36,7 +35,7 @@ public class ArmController {
                     ,
 
                     Commands.waitUntil(elevatorAllowedToMove::get).andThen(
-                        elevatorSubsystem.goToPositionCMD(armPose.elevatorExtension())
+                        elevatorSubsystem.setTargetDisplacementCommand(armPose.elevatorExtension())
                     )
         ));
     }
