@@ -32,16 +32,17 @@ val elevatorConfig = ElevatorConfig(
     sprocket = Sprocket.fromRadius(Inches.of(1 + 1.0 / 8.0)),
     limits = SubsystemLimits(
         absoluteMinimum = 0.0.meters,
-        relativeMinimum = 0.01.meters,
-        relativeMaximum = 1.05.meters,
-        absoluteMaximum = 1.07123.meters,
+        relativeMinimum = 0.02.meters,
+        relativeMaximum = 1.009.meters,
+        absoluteMaximum = 1.0389.meters,
     ),
     controlGains = ControlGains(
         p = 0.2,
-        s = 0.056261,
-        v = 0.11846,
-        a = 0.0023818,
-        g = 0.24064
+        s = 0.12362, // 0.056261,
+        v = 0.11253, // 0.11846,
+        a = 0.0021073, // 0.0023818,
+        g = 0.1135, // 0.24064
     ),
-    motionTargets = LinearMotionTargets(1.45.meters.per(Second), 0.5.seconds, 0.1.seconds),
+    motionTargets = LinearMotionTargets(1.2.meters.per(Second), 0.5.seconds, 0.1.seconds),
+//    motionTargets = LinearMotionTargets(1.45.meters.per(Second), 0.5.seconds, 0.1.seconds),
 )
