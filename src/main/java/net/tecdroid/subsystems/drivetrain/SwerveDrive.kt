@@ -3,6 +3,7 @@ package net.tecdroid.subsystems.drivetrain
 import com.ctre.phoenix6.configs.Pigeon2Configuration
 import com.ctre.phoenix6.hardware.Pigeon2
 import edu.wpi.first.math.geometry.Pose2d
+import edu.wpi.first.math.geometry.Rotation2d
 import edu.wpi.first.math.kinematics.*
 import edu.wpi.first.units.Units.*
 import edu.wpi.first.units.measure.Angle
@@ -68,6 +69,10 @@ class SwerveDrive(private val config: SwerveDriveConfig) : SubsystemBase(), Send
 
     private fun updateOdometry() {
         odometry.update(heading.toRotation2d(), modulePositions.toTypedArray())
+    }
+
+    public fun resetOdometry(pose: Pose2d) {
+        odometry.resetPosition(heading.toRotation2d(), modulePositions.toTypedArray(), pose)
     }
 
     var pose: Pose2d
