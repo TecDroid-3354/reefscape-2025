@@ -158,7 +158,7 @@ public class AutoRoutines {
         return runTwoMeters().cmd();
     }
 
-    private AutoRoutine leftAutoFirstCycle() {
+    public AutoRoutine leftAutoFirstCycle() {
         AutoRoutine routine = follower.factory.newRoutine("First cycle");
         AutoTrajectory firstCycle = routine.trajectory("LeftAuto-Coral1-Barge-to-Reef");
 

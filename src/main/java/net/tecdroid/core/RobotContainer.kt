@@ -1,8 +1,11 @@
 package net.tecdroid.core
 
+import choreo.auto.AutoChooser
 import edu.wpi.first.units.Units.Seconds
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard
 import edu.wpi.first.wpilibj2.command.Command
 import edu.wpi.first.wpilibj2.command.Commands
+import edu.wpi.first.wpilibj2.command.button.RobotModeTriggers
 import net.tecdroid.auto.AutoRoutines
 import net.tecdroid.constants.GenericConstants.driverControllerId
 import net.tecdroid.input.CompliantXboxController
@@ -30,29 +33,31 @@ class RobotContainer {
     private val swerveDriver = SwerveDriveDriver(swerveDrive.maxLinearVelocity, swerveDrive.maxAngularVelocity, Seconds.of(0.1))
 
     private val auto = AutoRoutines()
+    private val autoChooser = AutoChooser()
 
-    /*private val joint = ElevatorJoint(elevatorJointConfig)
+    private val joint = ElevatorJoint(elevatorJointConfig)
     private val elevator = Elevator(elevatorConfig)
     private val wrist = Wrist(wristConfig)
     private val intake = Intake(intakeConfig)
     private val climber = Climber(climberConfig)
 
     private val armIntegration = ArmController()
-    private val armPositions = ArmPositions()*/
+    private val armPositions = ArmPositions()
 
     init {
         publishShuffleboardContents()
         configureDrivers()
         configureCommands()
         configureBindings()
+        configureAuto()
     }
 
     private fun publishShuffleboardContents() {
         swerveDrive.publishToShuffleboard()
-        /*wrist.publishToShuffleboard()
+        wrist.publishToShuffleboard()
         joint.publishToShuffleboard()
         elevator.publishToShuffleboard()
-        climber.publishToShuffleboard()*/
+        climber.publishToShuffleboard()
     }
 
     private fun configureDrivers() {
@@ -75,19 +80,30 @@ class RobotContainer {
         /*controller.a().onTrue(armIntegration.setArmPoseCMD(armPositions.reefL2));
         controller.x().onTrue(armIntegration.setArmPoseCMD(armPositions.reefL3));
         controller.y().onTrue(armIntegration.setArmPoseCMD(armPositions.reefL4  ));*/
+    }
 
-        controller.leftBumper().onTrue(
-            auto.runTwoMetersCMD()
-        )
+    private fun configureAuto() {
+        // Adding "two meters forward" routine and cmd
+        autoChooser.addRoutine("Two meters forward routine", auto::runTwoMeters)
+        autoChooser.addCmd("Two meters forward cmd", auto::runTwoMetersCMD)
+
+        // Adding "first cycle" routine and cmd
+        autoChooser.addRoutine("First cycle routine", auto::leftAutoFirstCycle)
+        autoChooser.addCmd("First cycle cmd", auto::leftAutoFirstCycleCMD)
+
+        // Schedule the selected auto during the autonomous period
+        SmartDashboard.putData(autoChooser);
+        RobotModeTriggers.autonomous().whileTrue(autoChooser.selectedCommandScheduler());
     }
 
     val autonomousCommand: Command?
-        get() = null
+        //get() = null
+        get() = autoChooser.selectedCommand()
 
     fun setup() {
         swerveDrive.matchRelativeEncodersToAbsoluteEncoders()
-        /*wrist.matchRelativeEncodersToAbsoluteEncoders()
+        wrist.matchRelativeEncodersToAbsoluteEncoders()
         joint.matchRelativeEncodersToAbsoluteEncoders()
-        climber.matchRelativeEncodersToAbsoluteEncoders()*/
+        climber.matchRelativeEncodersToAbsoluteEncoders()
     }
 }
