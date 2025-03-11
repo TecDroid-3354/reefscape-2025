@@ -60,6 +60,7 @@ public class LimeLightsController {
         }
     }
 
+    // Tx = limelight's horizontal offset
     public Angle getLeftLimeLightTx() {
         return leftLimeLight.getTx();
     }
