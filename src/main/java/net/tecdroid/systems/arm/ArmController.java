@@ -1,5 +1,6 @@
 package net.tecdroid.systems.arm;
 
+import static net.tecdroid.subsystems.elevator.ElevatorConfigurationKt.getElevatorConfig;
 import static net.tecdroid.subsystems.elevatorjoint.ElevatorJointConfigurationKt.getElevatorJointConfig;
 import static net.tecdroid.subsystems.wrist.WristConfigurationKt.getWristConfig;
 
@@ -17,17 +18,17 @@ import java.util.function.Supplier;
 
 public class ArmController {
     private final Wrist wristSubsystem = new Wrist(getWristConfig());
-    private final Elevator elevatorSubsystem = new Elevator();
+    private final Elevator elevatorSubsystem = new Elevator(getElevatorConfig());
     private final ElevatorJoint elevatorJointSubsystem = new ElevatorJoint(getElevatorJointConfig());
 
-    private final Supplier<Boolean> elevatorAllowedToMove, wristAllowedToMove;
+    //private final Supplier<Boolean> elevatorAllowedToMove wristAllowedToMove;
 
     public ArmController() {
-        elevatorAllowedToMove = () -> elevatorJointSubsystem.getAngle().gte(Degrees.of(60.0));
-        wristAllowedToMove = () -> elevatorJointSubsystem.getAngle().gte(Degrees.of(20.0));
+        // elevatorAllowedToMove = () -> elevatorJointSubsystem.getAngle().gte(Degrees.of(60.0));
+        // wristAllowedToMove = () -> elevatorJointSubsystem.getAngle().gte(Degrees.of(20.0));
     }
 
-    public Command setArmPoseCMD(ArmPose armPose) {
+    /*public Command setArmPoseCMD(ArmPose armPose) {
         return Commands.parallel(
                     Commands.run(() -> elevatorJointSubsystem.setTargetAngle(armPose.jointAngle())),
 
@@ -36,8 +37,18 @@ public class ArmController {
                     ),
 
                     Commands.waitUntil(elevatorAllowedToMove::get).andThen(
-                        Commands.run(() -> elevatorSubsystem.goToPositionCMD(armPose.elevatorExtension()))
+                        Commands.run(() -> elevatorSubsystem.setTargetDisplacementCommand(armPose.elevatorExtension()))
                     )
         ));
+    }*/
+
+    public Command setArmPoseCMD(ArmPose armPose) {
+        return Commands.sequence(
+                Commands.run(() -> elevatorJointSubsystem.setTargetAngle(armPose.jointAngle())),
+
+                Commands.run(() -> wristSubsystem.setAngleCommand(armPose.wristAngle())),
+
+                Commands.run(() -> elevatorSubsystem.setTargetDisplacementCommand(armPose.elevatorExtension()))
+        );
     }
 }

@@ -1,15 +1,13 @@
 package net.tecdroid.util.units
 
 import edu.wpi.first.math.geometry.Rotation2d
-import edu.wpi.first.units.Measure
 import edu.wpi.first.units.Units.*
-import edu.wpi.first.units.Unit
-import edu.wpi.first.units.measure.Angle
-import edu.wpi.first.units.measure.Current
-import edu.wpi.first.units.measure.Time
-import edu.wpi.first.units.measure.Voltage
+import edu.wpi.first.units.measure.*
 
 fun Angle.toRotation2d() = Rotation2d(this)
+
+val Double.meters: Distance
+    get() = Meters.of(this)
 
 val Double.rotations: Angle
     get() = Rotations.of(this)

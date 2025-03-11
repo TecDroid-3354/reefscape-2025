@@ -23,7 +23,7 @@ import edu.wpi.first.units.measure.LinearVelocity
 import edu.wpi.first.util.sendable.Sendable
 import edu.wpi.first.util.sendable.SendableBuilder
 import net.tecdroid.constants.UnitConstants.halfRotation
-import net.tecdroid.subsystems.generic.WithAbsoluteEncoders
+import net.tecdroid.subsystems.util.generic.WithAbsoluteEncoders
 import net.tecdroid.util.units.toRotation2d
 
 /**
@@ -35,6 +35,8 @@ class SwerveModule(private val config: SwerveModuleConfig) : Sendable, WithAbsol
     private val driveInterface = TalonFX(config.driveControllerId.id)
     private val steerController = SparkMax(config.steerControllerId.id, SparkLowLevel.MotorType.kBrushless)
     private val absoluteEncoder = CANcoder(config.absoluteEncoderId.id)
+
+    private var tst = SwerveModuleState()
 
     private val steerEncoder = steerController.encoder
     private val steerClosedLoopController = steerController.closedLoopController
@@ -71,6 +73,7 @@ class SwerveModule(private val config: SwerveModuleConfig) : Sendable, WithAbsol
      * @param targetState The state
      */
     fun setTargetState(targetState: SwerveModuleState) {
+        tst = targetState
         optimizeState(targetState)
         setTargetAngle(targetState.angle.measure)
         setTargetVelocity(MetersPerSecond.of(targetState.speedMetersPerSecond))
@@ -159,18 +162,6 @@ class SwerveModule(private val config: SwerveModuleConfig) : Sendable, WithAbsol
     val wheelAzimuth: Angle
         get() = config.steerGearRatio.apply(steerShaftAzimuth)
 
-    /**
-     * The state of the module as a [SwerveModuleState]
-     */
-    val state: SwerveModuleState
-        get() = SwerveModuleState(wheelLinearVelocity, steerShaftAzimuth.toRotation2d())
-
-    /**
-     * The position of the module as a [SwerveModulePosition]
-     */
-    val position: SwerveModulePosition
-        get() = SwerveModulePosition(wheelLinearDisplacement, steerShaftAzimuth.toRotation2d())
-
     // /////////// //
     // Conversions //
     // /////////// //
@@ -208,6 +199,10 @@ class SwerveModule(private val config: SwerveModuleConfig) : Sendable, WithAbsol
         sendableBuilder.addDoubleProperty(
             "Rel Azimuth (deg)",
             { wheelAzimuth.`in`(Degrees) },
+            { })
+        sendableBuilder.addDoubleProperty(
+            "Target Azimuth (deg)",
+            { tst.angle.degrees },
             { })
     }
 
@@ -247,7 +242,7 @@ class SwerveModule(private val config: SwerveModuleConfig) : Sendable, WithAbsol
                 .withKA( config.driveControlGains.a)
 
             MotorOutput.withNeutralMode(NeutralModeValue.Brake).withInverted(
-                config.driveGearRatio.transformRotation(config.drivePositiveDirection)
+                config.drivePositiveDirection
                     .toInvertedValue()
             )
         }
@@ -266,10 +261,7 @@ class SwerveModule(private val config: SwerveModuleConfig) : Sendable, WithAbsol
         with(steerConfig) {
 
             idleMode(IdleMode.kBrake).inverted(
-                config.steerGearRatio.transformRotation(config.steerPositiveDirection)
-                    .differs(
-                        config.steerMotorProperties.positiveDirection
-                    )
+                config.steerPositiveDirection.opposite() == config.steerMotorProperties.positiveDirection
             ).smartCurrentLimit(config.steerCurrentLimit.`in`(Amps).toInt())
 
             encoder.positionConversionFactor(1.0).velocityConversionFactor(1.0)
@@ -300,7 +292,7 @@ class SwerveModule(private val config: SwerveModuleConfig) : Sendable, WithAbsol
         val absoluteEncoderConfig = CANcoderConfiguration()
 
         with(absoluteEncoderConfig) {
-            MagnetSensor.withSensorDirection(config.steerPositiveDirection.toSensorDirectionValue())
+            MagnetSensor.withSensorDirection(config.steerPositiveDirection.opposite().toSensorDirectionValue())
                 .withMagnetOffset(config.absoluteEncoderMagnetOffset)
         }
 

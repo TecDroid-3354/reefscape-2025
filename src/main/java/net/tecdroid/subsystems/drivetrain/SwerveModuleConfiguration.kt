@@ -6,7 +6,7 @@ import edu.wpi.first.units.measure.Angle
 import edu.wpi.first.units.measure.Current
 import net.tecdroid.util.units.rotations
 import net.tecdroid.util.*
-import net.tecdroid.util.RotationalDirection.Counterclockwise
+import net.tecdroid.util.RotationalDirection.*
 import net.tecdroid.util.geometry.Wheel
 
 data class SwerveModuleConfig(
@@ -15,8 +15,8 @@ data class SwerveModuleConfig(
     val driveControllerId: NumericId,
     val steerControllerId: NumericId,
     val absoluteEncoderId: NumericId,
-    val driveGearRatio: GearRatio,
-    val steerGearRatio: GearRatio,
+    val driveGearRatio: Reduction,
+    val steerGearRatio: Reduction,
     val wheel: Wheel,
     val drivePositiveDirection: RotationalDirection,
     val steerPositiveDirection: RotationalDirection,
@@ -33,11 +33,11 @@ fun makeConfig(moduleNumber: DigitId, magnetOffset: Angle) = SwerveModuleConfig(
     driveControllerId = joinDigits(moduleNumber, DigitId(1)),
     steerControllerId = joinDigits(moduleNumber, DigitId(2)),
     absoluteEncoderId = joinDigits(moduleNumber, DigitId(3)),
-    driveGearRatio =  GearRatio(6.12, 1.0, 4),
-    steerGearRatio = GearRatio(150.0, 7.0, 2),
+    driveGearRatio =  Reduction(6.12),
+    steerGearRatio = Reduction(150.0 / 7.0),
     wheel =  Wheel.fromRadius(Inches.of(2.0)),
-    drivePositiveDirection = Counterclockwise,
-    steerPositiveDirection =   Counterclockwise,
+    drivePositiveDirection = Clockwise,
+    steerPositiveDirection = Clockwise,
     absoluteEncoderMagnetOffset = magnetOffset,
     driveCurrentLimit = Amps.of(40.0),
     steerCurrentLimit = Amps.of(30.0),

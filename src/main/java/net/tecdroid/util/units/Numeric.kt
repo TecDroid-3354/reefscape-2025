@@ -1,8 +1,12 @@
 package net.tecdroid.util.units
 
-import edu.wpi.first.units.Measure
-import edu.wpi.first.units.Unit
+import edu.wpi.first.units.measure.Angle
+import edu.wpi.first.units.measure.Distance
 
-fun <U: Unit> clamp(min: Measure<U>, max: Measure<U>, value: Measure<U>) : Measure<U> {
-    return if (value > max) max else if(value < max) min else value
+fun clamp(min: Angle, max: Angle, value: Angle) : Angle {
+    return if (value > max) max else if (value < min) min else value
+}
+
+fun clamp(min: Distance, max: Distance, value: Distance) : Distance {
+    return if (value > max) max else if (value < min) min else value
 }

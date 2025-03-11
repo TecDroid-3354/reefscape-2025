@@ -7,7 +7,7 @@ import edu.wpi.first.units.measure.Distance
 import edu.wpi.first.units.measure.LinearVelocity
 import java.lang.Math.PI
 
-class Wheel private constructor(val radius: Distance) {
+class Wheel private constructor(radius: Distance) {
 
     val diameter = radius.times(2.0)
     val circumference = diameter.times(PI)
@@ -20,6 +20,7 @@ class Wheel private constructor(val radius: Distance) {
 
     companion object {
         fun fromRadius(radius: Distance) = Wheel(radius)
-        fun fromDiameter(diameter: Distance) = Wheel(diameter.div(2.0))
     }
 }
+
+typealias Sprocket = Wheel

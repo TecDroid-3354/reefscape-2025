@@ -1,4 +1,4 @@
-package net.tecdroid.subsystems.elevatorjoint
+package net.tecdroid.subsystems.elevator
 
 import com.ctre.phoenix6.configs.TalonFXConfiguration
 import com.ctre.phoenix6.controls.Follower
@@ -6,35 +6,25 @@ import com.ctre.phoenix6.controls.MotionMagicVoltage
 import com.ctre.phoenix6.controls.VoltageOut
 import com.ctre.phoenix6.hardware.TalonFX
 import com.ctre.phoenix6.signals.NeutralModeValue
+import edu.wpi.first.units.Units.Meters
 import edu.wpi.first.units.Units.Rotations
-import edu.wpi.first.units.measure.Angle
-import edu.wpi.first.units.measure.AngularVelocity
-import edu.wpi.first.units.measure.Voltage
+import edu.wpi.first.units.measure.*
 import edu.wpi.first.util.sendable.Sendable
 import edu.wpi.first.util.sendable.SendableBuilder
 import edu.wpi.first.wpilibj.shuffleboard.Shuffleboard
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard
 import edu.wpi.first.wpilibj2.command.Command
 import edu.wpi.first.wpilibj2.command.Commands
 import net.tecdroid.constants.subsystemTabName
 import net.tecdroid.subsystems.util.generic.IdentifiableSubsystem
 import net.tecdroid.subsystems.util.generic.VoltageControlledSubsystem
-import net.tecdroid.subsystems.util.generic.WithAbsoluteEncoders
 import net.tecdroid.subsystems.util.identification.GenericSysIdRoutine
 import net.tecdroid.util.units.clamp
-import net.tecdroid.wrappers.ThroughBoreAbsoluteEncoder
+import net.tecdroid.util.units.radians
 
-class ElevatorJoint(private val config: ElevatorJointConfig) : IdentifiableSubsystem(), Sendable, VoltageControlledSubsystem,
-
-    WithAbsoluteEncoders {
+class Elevator(private val config: ElevatorConfig) : IdentifiableSubsystem(), Sendable, VoltageControlledSubsystem {
     private val leadMotorController = TalonFX(config.leadMotorControllerId.id)
     private val followerMotorController = TalonFX(config.followerMotorId.id)
-
-    private val absoluteEncoder =
-        ThroughBoreAbsoluteEncoder(
-            port = config.absoluteEncoderPort,
-            offset = config.absoluteEncoderOffset,
-            inverted = config.absoluteEncoderIsInverted
-        )
 
     init {
         configureMotorsInterface()
@@ -45,13 +35,15 @@ class ElevatorJoint(private val config: ElevatorJointConfig) : IdentifiableSubsy
         leadMotorController.setControl(request)
     }
 
-    fun setTargetAngle(angle: Angle) {
-        val targetAngle = clamp(config.minimumAngle, config.maximumAngle, angle)
-        val request = MotionMagicVoltage(config.gearRatio.unapply(targetAngle))
+    fun setTargetDisplacement(displacement: Distance) {
+        val targetDisplacement = clamp(config.minimumDisplacement, config.maximumDisplacement, displacement)
+        val targetAngle = config.sprocket.linearDisplacementToAngularDisplacement(config.gearRatio.unapply(targetDisplacement))
+        SmartDashboard.putNumber("Invop (Rotations)", targetAngle.`in`(Rotations))
+        val request = MotionMagicVoltage(targetAngle)
         leadMotorController.setControl(request)
     }
 
-    fun setAngleCommand(angle: Angle): Command = Commands.runOnce({ setTargetAngle(angle) })
+    fun setTargetDisplacementCommand(displacement: Distance): Command = Commands.runOnce({ setTargetDisplacement(displacement) })
 
     override val power: Double
         get() = leadMotorController.get()
@@ -62,22 +54,15 @@ class ElevatorJoint(private val config: ElevatorJointConfig) : IdentifiableSubsy
     override val motorVelocity: AngularVelocity
         get() = leadMotorController.velocity.value
 
-    val angle: Angle
-        get() = config.gearRatio.apply(motorPosition)
-
-    private val absoluteAngle: Angle
-        get() = absoluteEncoder.position
-
-    override fun matchRelativeEncodersToAbsoluteEncoders() {
-        leadMotorController.setPosition(config.gearRatio.unapply(absoluteAngle))
-    }
+    val displacement: Distance
+        get() = config.sprocket.angularDisplacementToLinearDisplacement(config.gearRatio.apply(motorPosition))
 
     private fun configureMotorsInterface() {
         val talonConfig = TalonFXConfiguration()
 
         with(talonConfig) {
             MotorOutput
-                .withNeutralMode(NeutralModeValue.Coast)
+                .withNeutralMode(NeutralModeValue.Brake)
                 .withInverted(config.positiveDirection.toInvertedValue())
 
             CurrentLimits
@@ -94,9 +79,9 @@ class ElevatorJoint(private val config: ElevatorJointConfig) : IdentifiableSubsy
                 .withKG(config.controlGains.g)
 
             MotionMagic
-                .withMotionMagicCruiseVelocity(config.gearRatio.unapply(config.motionTargets.cruiseVelocity))
-                .withMotionMagicAcceleration(config.gearRatio.unapply(config.motionTargets.acceleration))
-                .withMotionMagicJerk(config.gearRatio.unapply(config.motionTargets.jerk))
+                .withMotionMagicCruiseVelocity(config.gearRatio.unapply(config.motionTargets.angularVelocity(config.sprocket)))
+                .withMotionMagicAcceleration(config.gearRatio.unapply(config.motionTargets.angularAcceleration(config.sprocket)))
+                .withMotionMagicJerk(config.gearRatio.unapply(config.motionTargets.angularJerk(config.sprocket)))
         }
 
 
@@ -111,21 +96,21 @@ class ElevatorJoint(private val config: ElevatorJointConfig) : IdentifiableSubsy
 
     override fun initSendable(builder: SendableBuilder) {
         with(builder) {
-            addDoubleProperty("Current Angle (Rotations)", { angle.`in`(Rotations) }, {})
-            addDoubleProperty("Current Absolute Angle (Rotations)", { absoluteAngle.`in`(Rotations) }, {})
+            addDoubleProperty("Current Displacement (Meters)", { displacement.`in`(Meters) }, {})
+            addDoubleProperty("Inverse Operation (Rotations)", { motorPosition.`in`(Rotations) }, {})
         }
     }
 
     fun publishToShuffleboard() {
         val tab = Shuffleboard.getTab(subsystemTabName)
-        tab.add("Elevator Joint", this)
-    }
+        tab.add("Elevator", this)
 
-    @SuppressWarnings("unused")
+    }
     fun createIdentificationRoutine() = GenericSysIdRoutine(
-        name = "Elevator Joint",
+        name = "Elevator",
         subsystem = this,
-        forwardsRunningCondition = { angle < config.maximumAngle },
-        backwardsRunningCondition = { angle > config.minimumAngle }
+        forwardsRunningCondition = { displacement < config.maximumDisplacement },
+        backwardsRunningCondition = { displacement> config.minimumDisplacement }
     )
 }
+

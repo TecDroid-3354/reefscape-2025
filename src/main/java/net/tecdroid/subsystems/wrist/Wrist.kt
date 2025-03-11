@@ -5,23 +5,24 @@ import com.ctre.phoenix6.controls.MotionMagicVoltage
 import com.ctre.phoenix6.controls.VoltageOut
 import com.ctre.phoenix6.hardware.TalonFX
 import com.ctre.phoenix6.signals.NeutralModeValue
-import edu.wpi.first.units.Units
-import edu.wpi.first.units.Units.Degrees
+import edu.wpi.first.units.Units.Rotations
 import edu.wpi.first.units.measure.Angle
+import edu.wpi.first.units.measure.AngularVelocity
 import edu.wpi.first.units.measure.Voltage
 import edu.wpi.first.util.sendable.Sendable
 import edu.wpi.first.util.sendable.SendableBuilder
 import edu.wpi.first.wpilibj.shuffleboard.Shuffleboard
 import edu.wpi.first.wpilibj2.command.Command
 import edu.wpi.first.wpilibj2.command.Commands
-import edu.wpi.first.wpilibj2.command.SubsystemBase
-import net.tecdroid.subsystems.generic.VoltageControlledSubsystem
-import net.tecdroid.subsystems.generic.WithAbsoluteEncoders
+import net.tecdroid.constants.subsystemTabName
+import net.tecdroid.subsystems.util.generic.IdentifiableSubsystem
+import net.tecdroid.subsystems.util.generic.WithAbsoluteEncoders
+import net.tecdroid.subsystems.util.identification.GenericSysIdRoutine
 import net.tecdroid.util.units.clamp
 import net.tecdroid.wrappers.ThroughBoreAbsoluteEncoder
 
-class Wrist(private val config: WristConfig) : SubsystemBase(), Sendable, VoltageControlledSubsystem, WithAbsoluteEncoders {
-    private val motorController = TalonFX(config.motorControllerId.id)
+class Wrist(internal val config: WristConfig) : IdentifiableSubsystem(), Sendable, WithAbsoluteEncoders {
+    internal val motorController = TalonFX(config.motorControllerId.id)
 
     private val absoluteEncoder =
         ThroughBoreAbsoluteEncoder(
@@ -39,28 +40,32 @@ class Wrist(private val config: WristConfig) : SubsystemBase(), Sendable, Voltag
         motorController.setControl(request)
     }
 
-    fun setAngle(angle: Angle) {
-        val targetAngle = clamp(angle, config.minimumAngle, config.maximumAngle) as Angle
+    fun setAngle(newAngle: Angle) {
+        val targetAngle = clamp(config.minimumAngle, config.maximumAngle, newAngle)
         val request = MotionMagicVoltage(config.gearRatio.unapply(targetAngle)).withSlot(0)
         motorController.setControl(request)
     }
 
-    fun setAngleCommand(angle: Angle): Command = Commands.runOnce({ setAngle(angle) }, this)
+    fun setAngleCommand(newAngle: Angle): Command = Commands.runOnce({ setAngle(newAngle) }, this)
+
+    override val power: Double
+        get() = motorController.get()
+
+    override val motorPosition: Angle
+        get() = motorController.position.value
+
+    override val motorVelocity: AngularVelocity
+        get() = motorController.velocity.value
 
     val angle: Angle
         get() =
-            config.gearRatio.apply(motorController.position.value)
+            config.gearRatio.apply(motorPosition)
 
     private val absoluteAngle: Angle
-        get() = config.gearRatio.apply(absoluteEncoder.position)
+        get() = absoluteEncoder.position
 
     override fun matchRelativeEncodersToAbsoluteEncoders() {
-        motorController.setPosition(absoluteAngle)
-    }
-
-    fun publishToShuffleboard() {
-        val tab = Shuffleboard.getTab("Wrist")
-        tab.addDouble("Current Angle (deg)") { angle.`in`(Degrees) }
+        motorController.setPosition(config.gearRatio.unapply(absoluteAngle))
     }
 
     // ///////////// //
@@ -73,7 +78,7 @@ class Wrist(private val config: WristConfig) : SubsystemBase(), Sendable, Voltag
         with(talonConfig) {
             MotorOutput
                 .withNeutralMode(NeutralModeValue.Brake)
-                .withInverted(config.gearRatio.transformRotation(config.positiveDirection).toInvertedValue())
+                .withInverted(config.positiveDirection.toInvertedValue())
 
             CurrentLimits
                 .withSupplyCurrentLimitEnable(true)
@@ -101,11 +106,21 @@ class Wrist(private val config: WristConfig) : SubsystemBase(), Sendable, Voltag
 
     override fun initSendable(builder: SendableBuilder) {
         with(builder) {
-            addDoubleProperty("Current Angle (Degrees)", { angle.`in`(Degrees) }, {})
-            addDoubleProperty("Current Absolute Angle (Degrees)", { absoluteAngle.`in`(Degrees) }, {})
+            addDoubleProperty("Current Angle (Rotations)", { angle.`in`(Rotations) }, {})
+            addDoubleProperty("Current Absolute Angle (Rotations)", { absoluteAngle.`in`(Rotations) }, {})
         }
     }
+
+    fun publishToShuffleboard() {
+        val tab = Shuffleboard.getTab(subsystemTabName)
+        tab.add("Wrist" , this)
+    }
+
+    @SuppressWarnings("unusued")
+    fun createIdentificationRoutine() = GenericSysIdRoutine(
+        name = "Wrist",
+        subsystem = this,
+        forwardsRunningCondition = { angle < config.maximumAngle },
+        backwardsRunningCondition = { angle > config.minimumAngle }
+    )
 }
-
-
-
