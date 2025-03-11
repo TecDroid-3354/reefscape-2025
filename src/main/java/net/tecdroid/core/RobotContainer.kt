@@ -32,7 +32,7 @@ class RobotContainer {
     private val wrist = Wrist(wristConfig)
     private val intake = Intake(intakeConfig)
     private val climber = Climber(climberConfig)
-    
+
     private val armIntegration = ArmController()
     private val armPositions = ArmPositions()
 
@@ -67,10 +67,10 @@ class RobotContainer {
         controller.x().onTrue(joint.setAngleCommand(0.25.rotations))
         controller.b().onTrue(joint.setAngleCommand(0.15.rotations))
         controller.a().onTrue(joint.setAngleCommand(0.05.rotations))*/
-        
+
         controller.a().onTrue(armIntegration.setArmPoseCMD(armPositions.reefL2));
         controller.x().onTrue(armIntegration.setArmPoseCMD(armPositions.reefL3));
-        controller.y().onTrue(armIntegration.setArmPoseCMD(armPositions.reefL4));
+        controller.y().onTrue(armIntegration.setArmPoseCMD(armPositions.reefL4  ));
     }
 
     val autonomousCommand: Command?
