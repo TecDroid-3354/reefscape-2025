@@ -36,8 +36,8 @@ public class AutoRoutines {
     private final ArmPositions armPositions = new ArmPositions();
 
 
-    public AutoRoutines(SwerveDrive swerveDrive) {
-        follower = new AutonomousFollower(swerveDrive);
+    public AutoRoutines() {
+        follower = new AutonomousFollower(this.swerveDriveSubsystem);
     }
 
     /*public AutoRoutine runTwoMeters() {
@@ -138,6 +138,49 @@ public class AutoRoutines {
 
 
 
+    // Individual segments
+
+    public AutoRoutine runTwoMeters() {
+        AutoRoutine routine = follower.factory.newRoutine("runTwoMeters");
+        AutoTrajectory twoMeters = routine.trajectory("TwoMeters");
+
+        routine.active().onTrue(
+                Commands.sequence(
+                        twoMeters.resetOdometry(),
+                        twoMeters.cmd()
+                )
+        );
+
+        return routine;
+    }
+
+    public Command runTwoMetersCMD() {
+        return runTwoMeters().cmd();
+    }
+
+    private AutoRoutine leftAutoFirstCycle() {
+        AutoRoutine routine = follower.factory.newRoutine("First cycle");
+        AutoTrajectory firstCycle = routine.trajectory("LeftAuto-Coral1-Barge-to-Reef");
+
+        routine.active().onTrue(
+                Commands.sequence(
+                        firstCycle.resetOdometry(),
+                        firstCycle.cmd()
+                )
+        );
+
+        return routine;
+    }
+
+    public Command leftAutoFirstCycleCMD() {
+        return leftAutoFirstCycle().cmd();
+    }
+
+
+
+
+
+
     // Complete auto
 
 
@@ -189,13 +232,13 @@ public class AutoRoutines {
 
         // ! Cycle #2 : Second coral
 
-        firstCycleBargeToReef.done().onTrue(intake.setVoltageCommand(Volts.of(-10.0))); // ✅
+        firstCycleBargeToReef.done().onTrue(intake.setVoltageCommand(Volts.of(10.0))); // ✅
 
-        firstCycleBargeToReef.done().and(intake::doesntHaveCoral).onTrue(secondCycleReefToCoralStation.cmd()); // ✅
+        firstCycleBargeToReef.done().and(() -> !intake.hasCoral()).onTrue(secondCycleReefToCoralStation.cmd()); // ✅
 
         secondCycleReefToCoralStation.done().and(intake::hasCoral).onTrue(secondCycleCoralStationToReef.cmd()); // ✅
 
-        secondCycleCoralStationToReef.done().and(intake::hasCoral).onTrue(intake.setVoltageCommand(Volts.of(-10.0))); // ✅
+        secondCycleCoralStationToReef.done().and(intake::hasCoral).onTrue(intake.setVoltageCommand(Volts.of(10.0))); // ✅
 
         // TODO: ALIGN WITH LIMELIGHT
 

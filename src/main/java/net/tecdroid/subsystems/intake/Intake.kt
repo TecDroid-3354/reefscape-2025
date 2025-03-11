@@ -30,10 +30,6 @@ class Intake(private val config: IntakeConfig) : SubsystemBase(), VoltageControl
         return !intakeSensor.get()
     }
 
-    fun doesntHaveCoral(): Boolean {
-        return intakeSensor.get()
-    }
-
     // ///////////// //
     // Configuration //
     // ///////////// //
