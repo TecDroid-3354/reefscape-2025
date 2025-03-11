@@ -2,8 +2,10 @@ package net.tecdroid.auto;
 
 import choreo.auto.AutoRoutine;
 import choreo.auto.AutoTrajectory;
+import edu.wpi.first.wpilibj.DigitalInput;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
+import edu.wpi.first.wpilibj2.command.button.Trigger;
 import net.tecdroid.subsystems.intake.*;
 import net.tecdroid.subsystems.limeLight.LimeLightsController;
 import net.tecdroid.subsystems.drivetrain.SwerveDrive;
@@ -19,6 +21,7 @@ import static net.tecdroid.subsystems.intake.IntakeConfigurationKt.getIntakeConf
 public class AutoRoutines {
     private final AutonomousFollower follower;
     private final Intake intake = new Intake(getIntakeConfig());
+    private final DigitalInput intakeSensor = new DigitalInput(4); // digital input --> invertir la señal (cuando detecta algo, retorna false)
     private final LimeLightsController limelights = new LimeLightsController();
     private final SwerveDrive swerveDriveSubsystem = new SwerveDrive(getSwerveDriveConfiguration());
     private final SwerveDriveDriver swerveDriver = new SwerveDriveDriver(
@@ -158,56 +161,43 @@ public class AutoRoutines {
                         arm.setArmPoseCMD(armPositions.reefL4),
 
                         // ✅ TODO: Intake logic — outtake
-                        intake.setVoltageCommand(Volts.of(-10.0))
+                        intake.setVoltageCommand(Volts.of(10.0))
                 )
         );
 
 
+        // ####################
+        // # GENERAL COMMANDS #
+        // ####################
+
+        // All reef -> coralStation cycles will automatically set arm to have coral station intake position
+        routine.anyActive(secondCycleReefToCoralStation, thirdCycleReefToCoralStation)
+                .whileTrue(arm.setArmPoseCMD(armPositions.coralStationIntake));
+                // is equal to:
+                // secondCycleReefToCoralStation.active().onTrue(arm.setArmPoseCMD(armPositions.coralStationIntake));
+                // thirdCycleReefToCoralStation.active().onTrue(arm.setArmPoseCMD(armPositions.coralStationIntake));
+
+        // All coralStation -> reef cycles will automatically set arm to have reef L4 position
+        routine.anyActive(secondCycleCoralStationToReef, thirdCycleCoralStationToReef)
+                .whileTrue(arm.setArmPoseCMD(armPositions.reefL4));
+                // is equal to:
+                // secondCycleCoralStationToReef.active().onTrue(arm.setArmPoseCMD(armPositions.reefL4));
+                // thirdCycleCoralStationToReef.active().onTrue(arm.setArmPoseCMD(armPositions.reefL4));
 
 
 
 
+        // ! Cycle #2 : Second coral
 
+        firstCycleBargeToReef.done().onTrue(intake.setVoltageCommand(Volts.of(-10.0))); // ✅
 
+        firstCycleBargeToReef.done().and(intake::doesntHaveCoral).onTrue(secondCycleReefToCoralStation.cmd()); // ✅
 
+        secondCycleReefToCoralStation.done().and(intake::hasCoral).onTrue(secondCycleCoralStationToReef.cmd()); // ✅
 
-
-
-        firstCycleBargeToReef.done().onTrue(secondCycleReefToCoralStation.cmd());
-        arm.setArmPoseCMD(armPositions.coralStationIntake);
-
-        // falta que el primer comando antes de .done() sea reemplazado por el done de
-        // recibir desde el human player
-        secondCycleCoralStationToReef.done().onTrue(secondCycleCoralStationToReef.cmd());
-
-        // TODO: ALIGN WITH LIMELIGHT
-
-        // TODO: ARM LOGIC — PLACE THE CORAL AT TOP LEVEL
-        secondCycleCoralStationToReef.done().onTrue(arm.setArmPoseCMD(armPositions.reefL4));
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-        // este también tiene que ser reemplazado por el comando después de dejar la pieza
-        secondCycleCoralStationToReef.done().onTrue(thirdCycleReefToCoralStation.cmd());
-
-        // falta que el primer comando antes de .done() sea reemplazado por el done de
-        // recibir desde el human player
-        thirdCycleReefToCoralStation.done().onTrue(thirdCycleCoralStationToReef.cmd());
+        secondCycleCoralStationToReef.done().and(intake::hasCoral).onTrue(intake.setVoltageCommand(Volts.of(-10.0))); // ✅
 
         // TODO: ALIGN WITH LIMELIGHT
-
-        // TODO: ARM LOGIC — PLACE THE CORAL AT TOP LEVEL
 
 
 

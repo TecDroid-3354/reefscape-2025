@@ -10,6 +10,7 @@ import net.tecdroid.subsystems.util.generic.VoltageControlledSubsystem
 
 class Intake(private val config: IntakeConfig) : SubsystemBase(), VoltageControlledSubsystem {
     private val motorController = TalonFX(config.motorControllerId.id)
+    private val intakeSensor = DigitalInput(0)
 
     init {
         configureMotorInterface()
@@ -22,6 +23,14 @@ class Intake(private val config: IntakeConfig) : SubsystemBase(), VoltageControl
     override fun setVoltage(voltage: Voltage) {
         val request = VoltageOut(voltage)
         motorController.setControl(request)
+    }
+
+    fun hasCoral(): Boolean {
+        return !intakeSensor.get()
+    }
+
+    fun doesntHaveCoral(): Boolean {
+        return intakeSensor.get()
     }
 
     // ///////////// //
