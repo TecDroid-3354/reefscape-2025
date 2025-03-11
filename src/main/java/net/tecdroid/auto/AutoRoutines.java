@@ -183,6 +183,7 @@ public class AutoRoutines {
         // TODO: ALIGN WITH LIMELIGHT
 
         // TODO: ARM LOGIC — PLACE THE CORAL AT TOP LEVEL
+        secondCycleCoralStationToReef.done().onTrue(arm.setArmPoseCMD(armPositions.reefL4));
 
 
 
