@@ -13,7 +13,6 @@ import com.revrobotics.spark.SparkLowLevel
 import com.revrobotics.spark.SparkMax
 import com.revrobotics.spark.config.SparkBaseConfig.IdleMode
 import com.revrobotics.spark.config.SparkMaxConfig
-import edu.wpi.first.math.kinematics.SwerveModulePosition
 import edu.wpi.first.math.kinematics.SwerveModuleState
 import edu.wpi.first.units.Units.*
 import edu.wpi.first.units.measure.Angle
@@ -23,7 +22,7 @@ import edu.wpi.first.units.measure.LinearVelocity
 import edu.wpi.first.util.sendable.Sendable
 import edu.wpi.first.util.sendable.SendableBuilder
 import net.tecdroid.constants.UnitConstants.halfRotation
-import net.tecdroid.subsystems.util.generic.WithAbsoluteEncoders
+import net.tecdroid.subsystems.util.generic.WithThroughBoreAbsoluteEncoder
 import net.tecdroid.util.units.toRotation2d
 
 /**
@@ -31,7 +30,7 @@ import net.tecdroid.util.units.toRotation2d
  *
  * @param config The configuration for this module
  */
-class SwerveModule(private val config: SwerveModuleConfig) : Sendable, WithAbsoluteEncoders {
+class SwerveModule(private val config: SwerveModuleConfig) : Sendable {
     private val driveInterface = TalonFX(config.driveControllerId.id)
     private val steerController = SparkMax(config.steerControllerId.id, SparkLowLevel.MotorType.kBrushless)
     private val absoluteEncoder = CANcoder(config.absoluteEncoderId.id)
@@ -79,7 +78,7 @@ class SwerveModule(private val config: SwerveModuleConfig) : Sendable, WithAbsol
         setTargetVelocity(MetersPerSecond.of(targetState.speedMetersPerSecond))
     }
 
-    override fun matchRelativeEncodersToAbsoluteEncoders() {
+    fun matchRelativeEncodersToAbsoluteEncoders() {
         steerEncoder.setPosition(absoluteSteerShaftAzimuth.`in`(Rotations))
     }
 

@@ -1,5 +1,6 @@
 package net.tecdroid.subsystems.climber
 
+import edu.wpi.first.units.AngleUnit
 import edu.wpi.first.units.Units.Second
 import edu.wpi.first.units.measure.Angle
 import edu.wpi.first.units.measure.Current
@@ -18,10 +19,7 @@ data class ClimberConfig(
     val absoluteEncoderInverted: Boolean,
     val currentLimit: Current,
     val positiveRotationDirection: RotationalDirection,
-    val absoluteMaximumAngle: Angle,
-    val absoluteMinimumAngle: Angle,
-    val maximumAngle: Angle,
-    val minimumAngle: Angle,
+    val limits: SubsystemLimits<AngleUnit>,
     val gearRatio: Reduction,
     val controlGains: ControlGains,
     val motionTargets: AngularMotionTargets
@@ -35,10 +33,12 @@ val climberConfig = ClimberConfig(
     absoluteEncoderInverted = false,
     currentLimit = 40.0.amps,
     positiveRotationDirection = Clockwise,
-    absoluteMaximumAngle = 0.37.rotations,
-    absoluteMinimumAngle = 0.0.rotations,
-    maximumAngle = 0.335.rotations,
-    minimumAngle = 0.031.rotations,
+    limits = SubsystemLimits(
+        absoluteMinimum = 0.0.rotations,
+        relativeMaximum = 0.335.rotations,
+        relativeMinimum = 0.031.rotations,
+        absoluteMaximum = 0.37.rotations,
+    ),
     gearRatio = Reduction(288.0),
     controlGains = ControlGains(
         p = 0.2,

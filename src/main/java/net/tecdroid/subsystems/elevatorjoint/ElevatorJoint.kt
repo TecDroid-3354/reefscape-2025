@@ -10,34 +10,35 @@ import edu.wpi.first.units.Units.Rotations
 import edu.wpi.first.units.measure.Angle
 import edu.wpi.first.units.measure.AngularVelocity
 import edu.wpi.first.units.measure.Voltage
-import edu.wpi.first.util.sendable.Sendable
 import edu.wpi.first.util.sendable.SendableBuilder
-import edu.wpi.first.wpilibj.shuffleboard.Shuffleboard
-import edu.wpi.first.wpilibj2.command.Command
-import edu.wpi.first.wpilibj2.command.Commands
-import net.tecdroid.constants.subsystemTabName
-import net.tecdroid.subsystems.util.generic.IdentifiableSubsystem
-import net.tecdroid.subsystems.util.generic.VoltageControlledSubsystem
-import net.tecdroid.subsystems.util.generic.WithAbsoluteEncoders
-import net.tecdroid.subsystems.util.identification.GenericSysIdRoutine
-import net.tecdroid.util.units.clamp
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard
+import net.tecdroid.subsystems.util.generic.*
 import net.tecdroid.wrappers.ThroughBoreAbsoluteEncoder
 
-class ElevatorJoint(private val config: ElevatorJointConfig) : IdentifiableSubsystem(), Sendable, VoltageControlledSubsystem,
-
-    WithAbsoluteEncoders {
+class ElevatorJoint(private val config: ElevatorJointConfig) :
+    TdSubsystem("Elevator Joint"),
+    MeasurableSubsystem,
+    AngularSubsystem,
+    LoggableSubsystem,
+    VoltageControlledSubsystem,
+    WithThroughBoreAbsoluteEncoder {
     private val leadMotorController = TalonFX(config.leadMotorControllerId.id)
     private val followerMotorController = TalonFX(config.followerMotorId.id)
 
-    private val absoluteEncoder =
+    override val absoluteEncoder =
         ThroughBoreAbsoluteEncoder(
             port = config.absoluteEncoderPort,
             offset = config.absoluteEncoderOffset,
             inverted = config.absoluteEncoderIsInverted
         )
 
+    override val forwardsRunningCondition  = { angle < config.limits.relativeMaximum }
+    override val backwardsRunningCondition = { angle > config.limits.relativeMinimum }
+
     init {
         configureMotorsInterface()
+        matchRelativeEncodersToAbsoluteEncoders()
+        publishToShuffleboard()
     }
 
     override fun setVoltage(voltage: Voltage) {
@@ -45,13 +46,13 @@ class ElevatorJoint(private val config: ElevatorJointConfig) : IdentifiableSubsy
         leadMotorController.setControl(request)
     }
 
-    fun setTargetAngle(angle: Angle) {
-        val targetAngle = clamp(config.minimumAngle, config.maximumAngle, angle)
-        val request = MotionMagicVoltage(config.gearRatio.unapply(targetAngle))
+    override fun setAngle(targetAngle: Angle) {
+        val clampedAngle = config.limits.coerceIn(targetAngle) as Angle
+        val transformedAngle = config.reduction.unapply(clampedAngle)
+        SmartDashboard.putNumber("TYA", clampedAngle.`in`(Rotations))
+        val request = MotionMagicVoltage(transformedAngle)
         leadMotorController.setControl(request)
     }
-
-    fun setAngleCommand(angle: Angle): Command = Commands.runOnce({ setTargetAngle(angle) })
 
     override val power: Double
         get() = leadMotorController.get()
@@ -62,14 +63,14 @@ class ElevatorJoint(private val config: ElevatorJointConfig) : IdentifiableSubsy
     override val motorVelocity: AngularVelocity
         get() = leadMotorController.velocity.value
 
-    val angle: Angle
-        get() = config.gearRatio.apply(motorPosition)
+    override val angle: Angle
+        get() = config.reduction.apply(motorPosition)
 
-    private val absoluteAngle: Angle
-        get() = absoluteEncoder.position
+    override val angularVelocity: AngularVelocity
+        get() = config.reduction.apply(motorVelocity)
 
-    override fun matchRelativeEncodersToAbsoluteEncoders() {
-        leadMotorController.setPosition(config.gearRatio.unapply(absoluteAngle))
+    override fun onMatchRelativeEncodersToAbsoluteEncoders() {
+        leadMotorController.setPosition(config.reduction.unapply(absoluteAngle))
     }
 
     private fun configureMotorsInterface() {
@@ -94,9 +95,9 @@ class ElevatorJoint(private val config: ElevatorJointConfig) : IdentifiableSubsy
                 .withKG(config.controlGains.g)
 
             MotionMagic
-                .withMotionMagicCruiseVelocity(config.gearRatio.unapply(config.motionTargets.cruiseVelocity))
-                .withMotionMagicAcceleration(config.gearRatio.unapply(config.motionTargets.acceleration))
-                .withMotionMagicJerk(config.gearRatio.unapply(config.motionTargets.jerk))
+                .withMotionMagicCruiseVelocity(config.reduction.unapply(config.motionTargets.cruiseVelocity))
+                .withMotionMagicAcceleration(config.reduction.unapply(config.motionTargets.acceleration))
+                .withMotionMagicJerk(config.reduction.unapply(config.motionTargets.jerk))
         }
 
 
@@ -115,17 +116,4 @@ class ElevatorJoint(private val config: ElevatorJointConfig) : IdentifiableSubsy
             addDoubleProperty("Current Absolute Angle (Rotations)", { absoluteAngle.`in`(Rotations) }, {})
         }
     }
-
-    fun publishToShuffleboard() {
-        val tab = Shuffleboard.getTab(subsystemTabName)
-        tab.add("Elevator Joint", this)
-    }
-
-    @SuppressWarnings("unused")
-    fun createIdentificationRoutine() = GenericSysIdRoutine(
-        name = "Elevator Joint",
-        subsystem = this,
-        forwardsRunningCondition = { angle < config.maximumAngle },
-        backwardsRunningCondition = { angle > config.minimumAngle }
-    )
 }

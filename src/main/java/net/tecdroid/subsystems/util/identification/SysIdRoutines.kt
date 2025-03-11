@@ -8,7 +8,8 @@ import edu.wpi.first.wpilibj.RobotController
 import edu.wpi.first.wpilibj.sysid.SysIdRoutineLog
 import edu.wpi.first.wpilibj2.command.Command
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine
-import net.tecdroid.subsystems.util.generic.IdentifiableSubsystem
+import net.tecdroid.subsystems.util.generic.MeasurableSubsystem
+import net.tecdroid.subsystems.util.generic.TdSubsystem
 
 class SysIdRoutines(
     val quasistaticForward: Command,
@@ -18,7 +19,7 @@ class SysIdRoutines(
 ) {}
 
 class GenericSysIdRoutine(val name: String,
-                          val subsystem: IdentifiableSubsystem,
+                          val subsystem: TdSubsystem,
                           var forwardsRunningCondition : () -> Boolean = { true },
                           var backwardsRunningCondition : () -> Boolean = { true }
     ) {

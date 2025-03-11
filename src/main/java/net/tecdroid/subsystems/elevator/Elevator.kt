@@ -9,25 +9,25 @@ import com.ctre.phoenix6.signals.NeutralModeValue
 import edu.wpi.first.units.Units.Meters
 import edu.wpi.first.units.Units.Rotations
 import edu.wpi.first.units.measure.*
-import edu.wpi.first.util.sendable.Sendable
 import edu.wpi.first.util.sendable.SendableBuilder
-import edu.wpi.first.wpilibj.shuffleboard.Shuffleboard
-import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard
-import edu.wpi.first.wpilibj2.command.Command
-import edu.wpi.first.wpilibj2.command.Commands
-import net.tecdroid.constants.subsystemTabName
-import net.tecdroid.subsystems.util.generic.IdentifiableSubsystem
-import net.tecdroid.subsystems.util.generic.VoltageControlledSubsystem
-import net.tecdroid.subsystems.util.identification.GenericSysIdRoutine
-import net.tecdroid.util.units.clamp
-import net.tecdroid.util.units.radians
+import net.tecdroid.subsystems.util.generic.*
 
-class Elevator(private val config: ElevatorConfig) : IdentifiableSubsystem(), Sendable, VoltageControlledSubsystem {
+class Elevator(private val config: ElevatorConfig) :
+    TdSubsystem("Elevator"),
+    MeasurableSubsystem,
+    LinearSubsystem,
+    LoggableSubsystem,
+    VoltageControlledSubsystem
+{
     private val leadMotorController = TalonFX(config.leadMotorControllerId.id)
     private val followerMotorController = TalonFX(config.followerMotorId.id)
 
+    override val forwardsRunningCondition = { displacement < config.limits.relativeMaximum }
+    override val backwardsRunningCondition = { displacement> config.limits.relativeMinimum }
+
     init {
         configureMotorsInterface()
+        publishToShuffleboard()
     }
 
     override fun setVoltage(voltage: Voltage) {
@@ -35,15 +35,13 @@ class Elevator(private val config: ElevatorConfig) : IdentifiableSubsystem(), Se
         leadMotorController.setControl(request)
     }
 
-    fun setTargetDisplacement(displacement: Distance) {
-        val targetDisplacement = clamp(config.minimumDisplacement, config.maximumDisplacement, displacement)
-        val targetAngle = config.sprocket.linearDisplacementToAngularDisplacement(config.gearRatio.unapply(targetDisplacement))
-        SmartDashboard.putNumber("Invop (Rotations)", targetAngle.`in`(Rotations))
-        val request = MotionMagicVoltage(targetAngle)
+    override fun setDisplacement(targetDisplacement: Distance) {
+        val clampedDisplacement = config.limits.coerceIn(targetDisplacement) as Distance
+        val targetAngle = config.sprocket.linearDisplacementToAngularDisplacement(clampedDisplacement)
+        val transformedAngle = config.reduction.unapply(targetAngle)
+        val request = MotionMagicVoltage(transformedAngle)
         leadMotorController.setControl(request)
     }
-
-    fun setTargetDisplacementCommand(displacement: Distance): Command = Commands.runOnce({ setTargetDisplacement(displacement) })
 
     override val power: Double
         get() = leadMotorController.get()
@@ -54,8 +52,11 @@ class Elevator(private val config: ElevatorConfig) : IdentifiableSubsystem(), Se
     override val motorVelocity: AngularVelocity
         get() = leadMotorController.velocity.value
 
-    val displacement: Distance
-        get() = config.sprocket.angularDisplacementToLinearDisplacement(config.gearRatio.apply(motorPosition))
+    override val displacement: Distance
+        get() = config.sprocket.angularDisplacementToLinearDisplacement(config.reduction.apply(motorPosition))
+
+    override val velocity: LinearVelocity
+        get() = config.sprocket.angularVelocityToLinearVelocity(config.reduction.apply(motorVelocity))
 
     private fun configureMotorsInterface() {
         val talonConfig = TalonFXConfiguration()
@@ -79,9 +80,9 @@ class Elevator(private val config: ElevatorConfig) : IdentifiableSubsystem(), Se
                 .withKG(config.controlGains.g)
 
             MotionMagic
-                .withMotionMagicCruiseVelocity(config.gearRatio.unapply(config.motionTargets.angularVelocity(config.sprocket)))
-                .withMotionMagicAcceleration(config.gearRatio.unapply(config.motionTargets.angularAcceleration(config.sprocket)))
-                .withMotionMagicJerk(config.gearRatio.unapply(config.motionTargets.angularJerk(config.sprocket)))
+                .withMotionMagicCruiseVelocity(config.reduction.unapply(config.motionTargets.angularVelocity(config.sprocket)))
+                .withMotionMagicAcceleration(config.reduction.unapply(config.motionTargets.angularAcceleration(config.sprocket)))
+                .withMotionMagicJerk(config.reduction.unapply(config.motionTargets.angularJerk(config.sprocket)))
         }
 
 
@@ -100,17 +101,5 @@ class Elevator(private val config: ElevatorConfig) : IdentifiableSubsystem(), Se
             addDoubleProperty("Inverse Operation (Rotations)", { motorPosition.`in`(Rotations) }, {})
         }
     }
-
-    fun publishToShuffleboard() {
-        val tab = Shuffleboard.getTab(subsystemTabName)
-        tab.add("Elevator", this)
-
-    }
-    fun createIdentificationRoutine() = GenericSysIdRoutine(
-        name = "Elevator",
-        subsystem = this,
-        forwardsRunningCondition = { displacement < config.maximumDisplacement },
-        backwardsRunningCondition = { displacement> config.minimumDisplacement }
-    )
 }
 

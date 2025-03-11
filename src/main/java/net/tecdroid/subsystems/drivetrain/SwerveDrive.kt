@@ -11,16 +11,15 @@ import edu.wpi.first.units.measure.LinearVelocity
 import edu.wpi.first.util.sendable.Sendable
 import edu.wpi.first.util.sendable.SendableBuilder
 import edu.wpi.first.wpilibj.shuffleboard.Shuffleboard
-import edu.wpi.first.wpilibj2.command.Command
 import edu.wpi.first.wpilibj2.command.Commands
 import edu.wpi.first.wpilibj2.command.SubsystemBase
 import net.tecdroid.constants.subsystemTabName
-import net.tecdroid.subsystems.util.generic.WithAbsoluteEncoders
+import net.tecdroid.subsystems.util.generic.WithThroughBoreAbsoluteEncoder
 import net.tecdroid.util.units.degrees
 import net.tecdroid.util.units.toRotation2d
 import kotlin.math.PI
 
-class SwerveDrive(private val config: SwerveDriveConfig) : SubsystemBase(), Sendable, WithAbsoluteEncoders {
+class SwerveDrive(private val config: SwerveDriveConfig) : SubsystemBase(), Sendable {
     private val imu = Pigeon2(config.imuId.id)
 
     private val modules = config.moduleConfigs.map { SwerveModule(it.first) }
@@ -31,6 +30,7 @@ class SwerveDrive(private val config: SwerveDriveConfig) : SubsystemBase(), Send
 
     init {
         this.configureImuInterface()
+        matchRelativeEncodersToAbsoluteEncoders()
     }
 
     override fun periodic() {
@@ -56,7 +56,7 @@ class SwerveDrive(private val config: SwerveDriveConfig) : SubsystemBase(), Send
         setModuleTargetStates(*desiredStates)
     }
 
-    override fun matchRelativeEncodersToAbsoluteEncoders() {
+    fun matchRelativeEncodersToAbsoluteEncoders() {
         for (module in modules) {
             module.matchRelativeEncodersToAbsoluteEncoders()
         }

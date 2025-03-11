@@ -12,31 +12,32 @@ import edu.wpi.first.units.measure.AngularVelocity
 import edu.wpi.first.units.measure.Voltage
 import edu.wpi.first.util.sendable.Sendable
 import edu.wpi.first.util.sendable.SendableBuilder
-import edu.wpi.first.wpilibj.shuffleboard.Shuffleboard
-import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard
-import edu.wpi.first.wpilibj2.command.Command
-import edu.wpi.first.wpilibj2.command.Commands
-import edu.wpi.first.wpilibj2.command.SubsystemBase
-import net.tecdroid.constants.subsystemTabName
-import net.tecdroid.subsystems.util.generic.IdentifiableSubsystem
-import net.tecdroid.subsystems.util.generic.VoltageControlledSubsystem
-import net.tecdroid.subsystems.util.generic.WithAbsoluteEncoders
-import net.tecdroid.subsystems.util.identification.GenericSysIdRoutine
-import net.tecdroid.util.units.clamp
+import net.tecdroid.subsystems.util.generic.AngularSubsystem
+import net.tecdroid.subsystems.util.generic.LoggableSubsystem
+import net.tecdroid.subsystems.util.generic.TdSubsystem
+import net.tecdroid.subsystems.util.generic.WithThroughBoreAbsoluteEncoder
 import net.tecdroid.wrappers.ThroughBoreAbsoluteEncoder
 
-class Climber(private val config: ClimberConfig) : IdentifiableSubsystem(), Sendable, VoltageControlledSubsystem, WithAbsoluteEncoders
- {
+class Climber(private val config: ClimberConfig) :
+    TdSubsystem("Climber"),
+    Sendable,
+    WithThroughBoreAbsoluteEncoder,
+    AngularSubsystem, LoggableSubsystem {
     private val leadMotorController = TalonFX(config.leadingMotorId.id)
     private val followerMotorController = TalonFX(config.followerMotorId.id)
-    private val absoluteEncoder = ThroughBoreAbsoluteEncoder(
+    override val absoluteEncoder = ThroughBoreAbsoluteEncoder(
         port = config.absoluteEncoderPort,
         offset = config.absoluteEncoderOffset,
         inverted = config.absoluteEncoderInverted
     )
 
+    override val forwardsRunningCondition = { angle < config.limits.relativeMaximum }
+    override val backwardsRunningCondition = { angle > config.limits.relativeMinimum }
+
     init {
         configureMotors()
+        matchRelativeEncodersToAbsoluteEncoders()
+        publishToShuffleboard()
     }
 
      override fun setVoltage(voltage: Voltage) {
@@ -44,13 +45,12 @@ class Climber(private val config: ClimberConfig) : IdentifiableSubsystem(), Send
          leadMotorController.setControl(request)
      }
 
-     fun setAngle(newAngle: Angle) {
-         val targetAngle = clamp(config.minimumAngle, config.maximumAngle, newAngle)
-         val request = MotionMagicVoltage(config.gearRatio.unapply(targetAngle)).withSlot(0)
+     override fun setAngle(targetAngle: Angle) {
+         val clampedAngle = config.limits.coerceIn(targetAngle) as Angle
+         val transformedAngle = config.gearRatio.unapply(clampedAngle)
+         val request = MotionMagicVoltage(transformedAngle).withSlot(0)
          leadMotorController.setControl(request)
      }
-
-     fun setAngleCommand(newAngle: Angle): Command = Commands.runOnce({ setAngle(newAngle) })
 
      override val power: Double
          get() = leadMotorController.get()
@@ -61,13 +61,13 @@ class Climber(private val config: ClimberConfig) : IdentifiableSubsystem(), Send
      override val motorVelocity: AngularVelocity
          get() = leadMotorController.velocity.value
 
-     val angle: Angle
+     override val angle: Angle
          get() = config.gearRatio.apply(motorPosition)
 
-     val absoluteAngle: Angle
-         get() = absoluteEncoder.position
+    override val angularVelocity: AngularVelocity
+        get() = config.gearRatio.apply(motorVelocity)
 
-     override fun matchRelativeEncodersToAbsoluteEncoders() {
+     override fun onMatchRelativeEncodersToAbsoluteEncoders() {
          leadMotorController.setPosition(config.gearRatio.unapply(absoluteAngle))
      }
 
@@ -113,16 +113,4 @@ class Climber(private val config: ClimberConfig) : IdentifiableSubsystem(), Send
              addDoubleProperty("Absolute Angle (Rotations)", { absoluteAngle.`in`(Rotations) }) {}
          }
      }
-
-     fun publishToShuffleboard() {
-         val tab = Shuffleboard.getTab(subsystemTabName)
-         tab.add("Climber" , this)
-     }
-     @SuppressWarnings("unusued")
-     fun createIdentificationRoutine() = GenericSysIdRoutine(
-         name = "Climber",
-         subsystem = this,
-         forwardsRunningCondition = { angle < config.maximumAngle },
-         backwardsRunningCondition = { angle > config.minimumAngle }
-     )
 }

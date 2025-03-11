@@ -35,7 +35,7 @@ class SwerveDriveDriver(
     private var orientation = DriveOrientation.FieldOriented
 
     private val isFieldOriented: Boolean
-        get() = orientation == DriveOrientation.RobotOriented
+        get() = orientation == DriveOrientation.FieldOriented
 
     fun obtainTargetSpeeds(currentAngle: Angle): ChassisSpeeds {
         val xf = longitudinalVelocityFactorSource()
@@ -65,14 +65,6 @@ class SwerveDriveDriver(
         return Commands.runOnce({
             toggleOrientation()
         })
-    }
-
-    fun createDefaultCommand(swerveDrive: SwerveDrive) {
-        val heading = swerveDrive.heading
-
-        swerveDrive.defaultCommand = Commands.run({
-            swerveDrive.drive(obtainTargetSpeeds(heading))
-        }, swerveDrive)
     }
 
     override fun initSendable(builder: SendableBuilder) {
