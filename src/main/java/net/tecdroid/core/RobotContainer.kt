@@ -1,93 +1,113 @@
 package net.tecdroid.core
 
-import edu.wpi.first.units.Units.Meters
-import edu.wpi.first.wpilibj.shuffleboard.Shuffleboard
+import choreo.auto.AutoChooser
+import edu.wpi.first.units.Units.Seconds
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard
 import edu.wpi.first.wpilibj2.command.Command
 import edu.wpi.first.wpilibj2.command.Commands
-import edu.wpi.first.wpilibj2.command.button.Trigger
+import edu.wpi.first.wpilibj2.command.button.RobotModeTriggers
+import net.tecdroid.auto.AutoRoutines
 import net.tecdroid.constants.GenericConstants.driverControllerId
 import net.tecdroid.input.CompliantXboxController
+import net.tecdroid.subsystems.climber.Climber
+import net.tecdroid.subsystems.climber.climberConfig
+import net.tecdroid.subsystems.drivetrain.SwerveDrive
+import net.tecdroid.subsystems.drivetrain.SwerveDriveDriver
 import net.tecdroid.subsystems.drivetrain.swerveDriveConfiguration
+import net.tecdroid.subsystems.elevator.Elevator
 import net.tecdroid.subsystems.elevator.elevatorConfig
+import net.tecdroid.subsystems.elevatorjoint.ElevatorJoint
 import net.tecdroid.subsystems.elevatorjoint.elevatorJointConfig
 import net.tecdroid.subsystems.intake.Intake
 import net.tecdroid.subsystems.intake.intakeConfig
+import net.tecdroid.subsystems.wrist.Wrist
 import net.tecdroid.subsystems.wrist.wristConfig
-import net.tecdroid.systems.SwerveSystem
-import net.tecdroid.systems.arm.*
-import net.tecdroid.util.units.meters
 import net.tecdroid.util.units.rotations
-import net.tecdroid.util.units.volts
+
+import net.tecdroid.systems.arm.ArmController
+import net.tecdroid.systems.arm.ArmPositions
 
 class RobotContainer {
     private val controller = CompliantXboxController(driverControllerId)
-    private val swerve = SwerveSystem(swerveDriveConfiguration)
-    private val arm = ArmSystem(wristConfig, elevatorConfig, elevatorJointConfig)
+    private val swerveDrive = SwerveDrive(swerveDriveConfiguration)
+    private val swerveDriver = SwerveDriveDriver(swerveDrive.maxLinearVelocity, swerveDrive.maxAngularVelocity, Seconds.of(0.1))
+
+    private val auto = AutoRoutines()
+    private val autoChooser = AutoChooser()
+
+    private val joint = ElevatorJoint(elevatorJointConfig)
+    private val elevator = Elevator(elevatorConfig)
+    private val wrist = Wrist(wristConfig)
     private val intake = Intake(intakeConfig)
+    private val climber = Climber(climberConfig)
+
+    private val armIntegration = ArmController()
+    private val armPositions = ArmPositions()
 
     init {
-        val tab = Shuffleboard.getTab("Robot Container")
-        tab.add("Arm System", arm)
+        publishShuffleboardContents()
+        configureDrivers()
+        configureCommands()
+        configureBindings()
+        configureAuto()
+    }
 
-        swerve.linkControllerSticks(controller)
-        swerve.linkReorientationTrigger(controller.start())
+    private fun publishShuffleboardContents() {
+        swerveDrive.publishToShuffleboard()
+        wrist.publishToShuffleboard()
+        joint.publishToShuffleboard()
+        elevator.publishToShuffleboard()
+        climber.publishToShuffleboard()
+    }
 
-        // Limelights
-        swerve.alignToRightAprilTagTrigger(Trigger { controller.leftTriggerAxis > 0.0 }, controller)
-        swerve.alignToLeftAprilTagTrigger(Trigger { controller.rightTriggerAxis > 0.0 }, controller)
+    private fun configureDrivers() {
+        swerveDriver.longitudinalVelocityFactorSource = { controller.leftY * 0.85 }
+        swerveDriver.transversalVelocityFactorSource = { controller.leftX * 0.85 }
+        swerveDriver.angularVelocityFactorSource = { controller.rightX * 0.85 }
+    }
 
-//        controller.back().onTrue(
-//            arm.setPoseCommand(
-//                ArmPoses.Passive.pose,
-//                ArmOrders.WEJ.order
-//            )
-//        )
+    private fun configureCommands() {
+        swerveDriver.createDefaultCommand(swerveDrive)
+    }
 
-        controller.y().onTrue(
-            arm.setPoseCommand(
-                ArmPoses.L4.pose,
-                ArmOrders.JEW.order
-            )
-        )
+    private fun configureBindings() {
+        // controller.x().onTrue(swerveDrive.setHeadingCommand(0.0.radians).andThen(swerveDriver.toggleOrientationCommand()).andThen(Commands.print("Toggled Orientation")))
+        /*controller.y().onTrue(joint.setAngleCommand(0.26.rotations))
+        controller.x().onTrue(joint.setAngleCommand(0.25.rotations))
+        controller.b().onTrue(joint.setAngleCommand(0.15.rotations))
+        controller.a().onTrue(joint.setAngleCommand(0.05.rotations))*/
 
-        controller.b().onTrue(
-            arm.setPoseCommand(
-                ArmPoses.L3.pose,
-                ArmOrders.JEW.order
-            )
-        )
+        /*controller.a().onTrue(armIntegration.setArmPoseCMD(armPositions.reefL2));
+        controller.x().onTrue(armIntegration.setArmPoseCMD(armPositions.reefL3));
+        controller.y().onTrue(armIntegration.setArmPoseCMD(armPositions.reefL4  ));*/
+    }
 
-        controller.a().onTrue(
-            arm.setPoseCommand(
-                ArmPoses.L2.pose,
-                ArmOrders.JEW.order
-            )
-        )
+    private fun configureAuto() {
+        // Adding "two meters forward" routine and cmd
+        autoChooser.addRoutine("Two meters forward routine", auto::runTwoMeters)
+        autoChooser.addCmd("Two meters forward cmd", auto::runTwoMetersCMD)
 
-        controller.x().onTrue(
-            arm.setPoseCommand(
-                ArmPoses.CoralStation.pose,
-                ArmOrders.EJW.order
-            )
-        )
+        // Adding "first cycle" routine and cmd
+        autoChooser.addRoutine("First cycle routine", auto::leftAutoFirstCycle)
+        autoChooser.addCmd("First cycle cmd", auto::leftAutoFirstCycleCMD)
 
-        controller.rightBumper().onTrue(intake.setVoltageCommand(10.0.volts)).onFalse(intake.setVoltageCommand(0.0.volts))
+        // Adding "second cycle" reef to coral station routine and cmd
+        autoChooser.addRoutine("Second cycle reef to coral station routine", auto::leftAutoSecondCycleReefToCoralStation)
+        autoChooser.addCmd("Second cycle reef to coral station cmd", auto::leftAutoSecondCycleReefToCoralStationCMD)
 
-        controller.back().onTrue(Commands.runOnce({
-            arm.wrist.coast()
-            arm.joint.coast()
-            arm.elevator.coast()
-        }))
-
-            controller.leftBumper().onTrue(Commands.runOnce({
-            arm.wrist.brake()
-            arm.joint.brake()
-            arm.elevator.brake()
-        }))
-
+        // Schedule the selected auto during the autonomous period
+        SmartDashboard.putData(autoChooser);
+        RobotModeTriggers.autonomous().whileTrue(autoChooser.selectedCommandScheduler());
     }
 
     val autonomousCommand: Command?
-        get() = null
+        //get() = null
+        get() = autoChooser.selectedCommand()
 
+    fun setup() {
+        swerveDrive.matchRelativeEncodersToAbsoluteEncoders()
+        wrist.matchRelativeEncodersToAbsoluteEncoders()
+        joint.matchRelativeEncodersToAbsoluteEncoders()
+        climber.matchRelativeEncodersToAbsoluteEncoders()
+    }
 }

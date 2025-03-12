@@ -4,34 +4,35 @@ import com.ctre.phoenix6.configs.TalonFXConfiguration
 import com.ctre.phoenix6.controls.VoltageOut
 import com.ctre.phoenix6.hardware.TalonFX
 import com.ctre.phoenix6.signals.NeutralModeValue
-import edu.wpi.first.units.measure.Angle
-import edu.wpi.first.units.measure.AngularVelocity
 import edu.wpi.first.units.measure.Voltage
-import net.tecdroid.subsystems.util.generic.TdSubsystem
+import edu.wpi.first.wpilibj2.command.SubsystemBase
+import net.tecdroid.subsystems.util.generic.VoltageControlledSubsystem
+import edu.wpi.first.wpilibj.DigitalInput
 
-class Intake(private val config: IntakeConfig) : TdSubsystem("Intake") {
+class Intake(private val config: IntakeConfig) : SubsystemBase(), VoltageControlledSubsystem {
     private val motorController = TalonFX(config.motorControllerId.id)
-
-    override val forwardsRunningCondition = { true }
-    override val backwardsRunningCondition = { true }
-
-    override val motorPosition: Angle
-        get() = motorController.position.value
-
-    override val motorVelocity: AngularVelocity
-        get() = motorController.velocity.value
-
-    override val power: Double
-        get() = motorController.get()
+    private val intakeSensor = DigitalInput(0)
 
     init {
         configureMotorInterface()
     }
 
+    // ////////////// //
+    // INTAKE CONTROL //
+    // ////////////// //
+
     override fun setVoltage(voltage: Voltage) {
         val request = VoltageOut(voltage)
         motorController.setControl(request)
     }
+
+    fun hasCoral(): Boolean {
+        return !intakeSensor.get()
+    }
+
+    // ///////////// //
+    // Configuration //
+    // ///////////// //
 
     private fun configureMotorInterface() {
         val talonConfig = TalonFXConfiguration()
@@ -42,7 +43,7 @@ class Intake(private val config: IntakeConfig) : TdSubsystem("Intake") {
 
             CurrentLimits
                 .withSupplyCurrentLimitEnable(true)
-                .withSupplyCurrentLimit(config.motorCurrentLimit)
+                .withSupplyCurrentLimit(config.currentLimit)
         }
 
 

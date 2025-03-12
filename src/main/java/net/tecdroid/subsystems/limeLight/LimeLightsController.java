@@ -1,15 +1,12 @@
-package net.tecdroid.subsystems.drivetrain;
+package net.tecdroid.subsystems.limeLight;
 
 import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.units.Units;
 import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.units.measure.Distance;
-import edu.wpi.first.wpilibj.shuffleboard.Shuffleboard;
-import edu.wpi.first.wpilibj.shuffleboard.ShuffleboardTab;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
-import net.tecdroid.subsystems.limeLight.LimeLightConfiguration;
-import net.tecdroid.subsystems.limeLight.LimeLightModule;
+import net.tecdroid.subsystems.drivetrain.SwerveDriveDriver;
 
 public class LimeLightsController {
     LimeLightModule leftLimeLight;
@@ -18,33 +15,24 @@ public class LimeLightsController {
     PIDController yAxisPIDController;
     PIDController xAxisPIDController;
 
+
     public LimeLightsController() {
         leftLimeLight = new LimeLightModule(LimeLightConfiguration.leftDeviceConfig);
         rightLimeLight = new LimeLightModule(LimeLightConfiguration.rightDeviceConfig);
-        zAxisPIDController = new PIDController(0.0001, 0.0, 0.000001);
-        yAxisPIDController = new PIDController(0.0005, 0.0, 0.000001);
-        xAxisPIDController = new PIDController(0.0001, 0.0, 0.000001);
+        zAxisPIDController = new PIDController(0.01, 0.0, 0.0);
+        yAxisPIDController = new PIDController(0.01, 0.0, 0.0);
+        xAxisPIDController = new PIDController(0.01, 0.0, 0.0);
 
     }
 
-    /**
-     * Gets the distance of the apriltag according to left camera
-     * @param targetDistance distance from the target to the floor
-     * @return the distance of the robot and the apriltag according to left camera
-     */
-    public Distance getLeftLimeLightDistance(Distance targetDistance) {
-        return leftLimeLight.getDistance(targetDistance);
+    public Distance getLeftLimeLightDistance() {
+        return leftLimeLight.getDistance();
+    }
+    public Distance getRightLimeLightDistance() {
+        return rightLimeLight.getDistance();
     }
 
-    /**
-     * Gets the distance of the apriltag according to right camera
-     * @param targetDistance distance from the target to the floor
-     * @return the distance of the robot and the apriltag according to right camera
-     */
-    public Distance getRightLimeLightDistance(Distance targetDistance) {
-        return rightLimeLight.getDistance(targetDistance);
-    }
-
+    // Tx = limelight's horizontal offset
     public Angle getLeftLimeLightTx() {
         return leftLimeLight.getTx();
     }
@@ -61,24 +49,22 @@ public class LimeLightsController {
         return rightLimeLight.getTy();
     }
 
-    public void publishShuffleBoard() {
-        ShuffleboardTab tab = Shuffleboard.getTab("LimeLights");
+    public boolean isAlignedAtReef(boolean usingRight) {
+        Angle tx = usingRight ? getRightLimeLightTx() : getLeftLimeLightTx();
+        Distance aprilTagDistance = usingRight ? getRightLimeLightDistance() : getLeftLimeLightDistance();
 
-        // X angle
-        tab.addDouble("Right Tx", () -> getRightLimeLightTx().in(Units.Degrees));
-        tab.addDouble("Left Tx", () -> getLeftLimeLightTx().in(Units.Degrees));
+        double xTolerance = Units.Degrees.of(5.0).in(Units.Degrees);
+        double xSetPoint = Units.Degrees.of(0.0).in(Units.Degrees);
 
-        // Distance
-        tab.addDouble("Right Distance", () -> getRightLimeLightDistance(Units.Centimeters.of(29.0)).in(Units.Inches));
-        tab.addDouble("Left Distance", () -> getLeftLimeLightDistance(Units.Centimeters.of(29.0)).in(Units.Inches));
+        double yTolerance = Units.Centimeters.of(5.0).in(Units.Centimeters);
+        double ySetPoint = Units.Centimeters.of(0.0).in(Units.Centimeters);
+
+        boolean alignedXAxis = xSetPoint + xTolerance > tx.in(Units.Degrees) && tx.in(Units.Degrees) > xSetPoint - xTolerance;
+        boolean alignedYAxis = ySetPoint + yTolerance > aprilTagDistance.in(Units.Centimeters)
+                && aprilTagDistance.in(Units.Centimeters) > ySetPoint - yTolerance;
+
+        return alignedXAxis && alignedYAxis;
     }
-
-    /**
-     * Rotate the robot to the apriltag until align at the setpoint
-     * @param swerveDriveDriver the driving subsystems
-     * @param setPoint the angle setpoint
-     * @param usingRight if true, you align the robot to the right camera, if false, to the left
-     */
 
     public Command alignZAxisToAprilTagDetection(SwerveDriveDriver swerveDriveDriver, Angle setPoint,
                                                  Boolean usingRight) {
@@ -87,64 +73,64 @@ public class LimeLightsController {
             Angle tx = usingRight ? getRightLimeLightTx() : getLeftLimeLightTx();
 
             double targetingAngularVelocityFactor = zAxisPIDController.calculate(
-                    tx.in(Units.Degrees), setPoint.in(Units.Degrees)) * 0.75;
+                    tx.in(Units.Degrees), setPoint.in(Units.Degrees));
 
             swerveDriveDriver.setAngularVelocityFactorSource(() -> targetingAngularVelocityFactor);
-            swerveDriveDriver.setRobotOriented();
         });
     }
-
-    /**
-     * Rotate the robot to the apriltag until align at the setpoint
-     * @param swerveDriveDriver the driving subsystems
-     * @param setPoint the angle setpoint
-     * @param usingRight if true, you align the robot to the right camera, if false, to the left
-     */
 
     public Command alignXAxisToAprilTagDetection(SwerveDriveDriver swerveDriveDriver, Angle setPoint,
                                                  Boolean usingRight) {
         return Commands.run(() -> {
-            Angle tx = usingRight ? getRightLimeLightTx() : getLeftLimeLightTx();
+            if (leftLimeLight.hasTarget() || rightLimeLight.hasTarget()) {
+                Angle tx = usingRight ? getRightLimeLightTx() : getLeftLimeLightTx();
 
-            double targetingTransversalVelocityFactor = -xAxisPIDController.calculate(
-                    tx.in(Units.Degrees), setPoint.in(Units.Degrees)) * 0.75;
+                double targetingTransversalVelocityFactor = -xAxisPIDController.calculate(
+                        tx.in(Units.Degrees), setPoint.in(Units.Degrees)) * 0.5;
 
-            swerveDriveDriver.setTransversalVelocityFactorSource(() -> targetingTransversalVelocityFactor);
-            swerveDriveDriver.setRobotOriented();
+                swerveDriveDriver.setTransversalVelocityFactorSource(() -> targetingTransversalVelocityFactor);
+            } else {
+                swerveDriveDriver.setTransversalVelocityFactorSource(() -> 0.0);
+
+            }
+        });
+    }
+
+    public Command alignYAxisToAprilTagDetection(SwerveDriveDriver swerveDriveDriver, Distance setpoint, Boolean usingRight) {
+        return Commands.run(() -> {
+            Distance aprilTagDistance = usingRight ? getRightLimeLightDistance() : getLeftLimeLightDistance();
+
+            double targetingLinearVelocityFactor = yAxisPIDController.calculate(
+                    aprilTagDistance.in(Units.Inches), setpoint.in(Units.Inches));
+
+            swerveDriveDriver.setLongitudinalVelocityFactorSource(() -> targetingLinearVelocityFactor);
         });
     }
 
     public Command alignYAxisToAprilTagDetectionWithTy(SwerveDriveDriver swerveDriveDriver, Angle setpoint, Boolean usingRight) {
         return Commands.run(() -> {
-            Angle ty = usingRight ? getRightLimeLightTy() : getLeftLimeLightTy();
+            Angle aprilTagDistance = usingRight ? getRightLimeLightTy() : getLeftLimeLightTy();
 
             double targetingLinearVelocityFactor = yAxisPIDController.calculate(
-                    ty.in(Units.Degrees), setpoint.in(Units.Degrees));
+                    aprilTagDistance.in(Units.Degrees), setpoint.in(Units.Degrees));
 
-            swerveDriveDriver.setLongitudinalVelocityFactorSource(() -> targetingLinearVelocityFactor * 0.75);
-            swerveDriveDriver.setRobotOriented();
+            swerveDriveDriver.setLongitudinalVelocityFactorSource(() -> targetingLinearVelocityFactor * 0.5);
         });
     }
 
-    public Command alignInAllAxis(SwerveDriveDriver swerveDriveDriver, Angle xSetPoint, Angle ySetPoint,
-                                  Angle zSetPoint,Boolean usingRight) {
+    public Command alignInAllAxis(SwerveDriveDriver swerveDriveDriver, Angle xSetPoint, Distance ySetPoint, Boolean usingRight) {
         return Commands.run(() -> {
-            Angle ty = usingRight ? getRightLimeLightTy() : getLeftLimeLightTy();
+            Distance aprilTagDistance = usingRight ? getRightLimeLightDistance() : getLeftLimeLightDistance();
             Angle tx = usingRight ? getRightLimeLightTx() : getLeftLimeLightTx();
 
             double targetingLinearVelocityFactor = yAxisPIDController.calculate(
-                    ty.in(Units.Degrees), ySetPoint.in(Units.Degrees));
+                    aprilTagDistance.in(Units.Inches), ySetPoint.in(Units.Inches));
 
             double targetingTransversalVelocityFactor = -xAxisPIDController.calculate(
                     tx.in(Units.Degrees), xSetPoint.in(Units.Degrees)) * 0.5;
 
-            double targetingAngularVelocityFactor = zAxisPIDController.calculate(
-                    tx.in(Units.Degrees), zSetPoint.in(Units.Degrees)) * 0.75;
-
             swerveDriveDriver.setLongitudinalVelocityFactorSource(() -> targetingLinearVelocityFactor);
             swerveDriveDriver.setTransversalVelocityFactorSource(() -> targetingTransversalVelocityFactor);
-            swerveDriveDriver.setAngularVelocityFactorSource(() -> targetingAngularVelocityFactor);
-            swerveDriveDriver.setRobotOriented();
         });
     }
 
