@@ -25,22 +25,21 @@ import static net.tecdroid.subsystems.intake.IntakeConfigurationKt.getIntakeConf
 import static net.tecdroid.subsystems.wrist.WristConfigurationKt.getWristConfig;
 
 public class AutoRoutines {
+    private final SwerveDrive swerveSubsystem;
+    private final SwerveDriveDriver swerveDriver;
+    private final Intake intake;
+    private final ArmSystem armSystem;
+    private final LimeLightsController limeLightsController;
     private final AutonomousFollower follower;
-    private final Intake intake = new Intake(getIntakeConfig());
-    private final DigitalInput intakeSensor = new DigitalInput(4); // digital input --> invertir la señal (cuando detecta algo, retorna false)
-        private final LimeLightsController limelights = new LimeLightsController();
-    private final SwerveDrive swerveDriveSubsystem = new SwerveDrive(getSwerveDriveConfiguration());
-    private final SwerveDriveDriver swerveDriver = new SwerveDriveDriver(
-            swerveDriveSubsystem.getMaxLinearVelocity(),
-            swerveDriveSubsystem.getMaxAngularVelocity(),
-            Seconds.of(0.1),
-            Seconds.of(0.1));
+    public AutoRoutines(SwerveDrive swerveSubsystem, SwerveDriveDriver swerveDriver,
+                        Intake intake, ArmSystem armSystem, LimeLightsController limeLightsController) {
+        this.swerveSubsystem = swerveSubsystem;
+        this.swerveDriver = swerveDriver;
+        this.intake = intake;
+        this.armSystem = armSystem;
+        this.limeLightsController = limeLightsController;
 
-    private final ArmSystem arm = new ArmSystem(getWristConfig(), getElevatorConfig(), getElevatorJointConfig());
-
-
-    public AutoRoutines() {
-        follower = new AutonomousFollower(this.swerveDriveSubsystem);
+        follower = new AutonomousFollower(swerveSubsystem);
     }
 
     /*public AutoRoutine runTwoMeters() {
@@ -241,7 +240,7 @@ public class AutoRoutines {
                         //limelights.alignYAxisToAprilTagDetection(swerveDriver, )
 
                         // ✅ TODO: Arm logic — place arm in L4
-                        arm.setPoseCommand(ArmPoses.L4.getPose(), ArmOrders.JEW.getOrder())
+                        armSystem.setPoseCommand(ArmPoses.L4.getPose(), ArmOrders.JEW.getOrder())
                 )
         );
 
@@ -252,7 +251,7 @@ public class AutoRoutines {
 
         // All reef -> coralStation cycles will automatically set arm to have coral station intake position
         routine.anyActive(secondCycleReefToCoralStation, thirdCycleReefToCoralStation)
-                .whileTrue(arm.setPoseCommand(ArmPoses.CoralStation.getPose(), ArmOrders.EJW.getOrder()));
+                .whileTrue(armSystem.setPoseCommand(ArmPoses.CoralStation.getPose(), ArmOrders.EJW.getOrder()));
                 //.whileTrue(arm.setArmPoseCMD(armPositions.coralStationIntake));
         // is equal to:
         // secondCycleReefToCoralStation.active().onTrue(arm.setArmPoseCMD(armPositions.coralStationIntake));
@@ -260,7 +259,7 @@ public class AutoRoutines {
 
         // All coralStation -> reef cycles will automatically set arm to have reef L4 position
         routine.anyActive(secondCycleCoralStationToReef, thirdCycleCoralStationToReef)
-                .whileTrue(arm.setPoseCommand(ArmPoses.L4.getPose(), ArmOrders.JEW.getOrder()));
+                .whileTrue(armSystem.setPoseCommand(ArmPoses.L4.getPose(), ArmOrders.JEW.getOrder()));
         // is equal to:
         // secondCycleCoralStationToReef.active().onTrue(arm.setArmPoseCMD(armPositions.reefL4));
         // thirdCycleCoralStationToReef.active().onTrue(arm.setArmPoseCMD(armPositions.reefL4));

@@ -96,5 +96,5 @@ class RobotContainer {
 
 
     val autonomousCommand: Command?
-        get() = auto.choreoTuningCMD();
+        get() = auto.runTwoMetersCMD();
 }
