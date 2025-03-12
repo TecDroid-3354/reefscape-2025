@@ -1,5 +1,7 @@
 package net.tecdroid.subsystems.limeLight;
 
+import edu.wpi.first.networktables.NetworkTable;
+import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.units.Units;
 import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.units.measure.Distance;
@@ -32,7 +34,28 @@ public class LimeLightModule {
         return Angle.ofBaseUnits(ty, Units.Degrees);
     }
 
-    public Distance getDistance() {
+    public Angle getTa() {
+        double ta = LimelightHelpers.getTA(limeLightName);  // Target area (0% to 100% of image)
+        return Angle.ofBaseUnits(ta, Units.Degrees);
+    }
+
+    public Angle getTxnc() {
+        double txnc = LimelightHelpers.getTXNC(limeLightName); // Horizontal offset from principal pixel/point to target in degrees
+        return Angle.ofBaseUnits(txnc, Units.Degrees);
+    }
+
+    public Angle getTync() {
+        double tync = LimelightHelpers.getTYNC(limeLightName);  // Vertical  offset from principal pixel/point to target in degrees
+        return Angle.ofBaseUnits(tync, Units.Degrees);
+    }
+
+
+    /**
+     * Gets the distance of the apriltag
+     * @param targetDistance distance from the target to the floor
+     * @return the distance of the robot and the apriltag
+     */
+    public Distance getDistance(Distance targetDistance) {
         if (hasTarget()) {
             // how many degrees back is your limelight rotated from perfectly vertical?
             double limelightMountAngleRadians = deviceConfig.deviceStructure.limelightMountAngleDegrees
@@ -43,7 +66,7 @@ public class LimeLightModule {
                     .in(Units.Inches);
 
             // distance from the target to the floor
-            double goalHeightInches = deviceConfig.deviceStructure.goalHeightDistance.in(Units.Inches);
+            double goalHeightInches = targetDistance.in(Units.Inches);
 
             double angleToGoalRadians = limelightMountAngleRadians + getTy().in(Units.Radians);
 
