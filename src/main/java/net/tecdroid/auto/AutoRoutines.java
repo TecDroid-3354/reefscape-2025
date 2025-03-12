@@ -5,30 +5,30 @@ import choreo.auto.AutoTrajectory;
 import edu.wpi.first.wpilibj.DigitalInput;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
+import net.tecdroid.subsystems.drivetrain.LimeLightsController;
 import net.tecdroid.subsystems.intake.*;
-import net.tecdroid.subsystems.limeLight.LimeLightsController;
+//import net.tecdroid.subsystems.limeLight.LimeLightsController;
 import net.tecdroid.subsystems.drivetrain.SwerveDrive;
 import net.tecdroid.subsystems.drivetrain.SwerveDriveDriver;
 import  net.tecdroid.subsystems.wrist.WristConfig;
 import net.tecdroid.subsystems.elevatorjoint.ElevatorJointConfig;
 import net.tecdroid.subsystems.elevator.Elevator;
+import net.tecdroid.systems.arm.ArmOrders;
+import net.tecdroid.systems.arm.ArmPoses;
 import net.tecdroid.systems.arm.ArmSystem;
 
 import static edu.wpi.first.units.Units.*;
 import static net.tecdroid.subsystems.drivetrain.SwerveDriveConfigurationKt.getSwerveDriveConfiguration;
-import static net.tecdroid.subsystems.elevator.ElevatorConfigurationKt.elevatorConfig;
 import static net.tecdroid.subsystems.elevator.ElevatorConfigurationKt.getElevatorConfig;
-import static net.tecdroid.subsystems.elevatorjoint.ElevatorJointConfigurationKt.elevatorJointConfig;
 import static net.tecdroid.subsystems.elevatorjoint.ElevatorJointConfigurationKt.getElevatorJointConfig;
 import static net.tecdroid.subsystems.intake.IntakeConfigurationKt.getIntakeConfig;
 import static net.tecdroid.subsystems.wrist.WristConfigurationKt.getWristConfig;
-import static net.tecdroid.subsystems.wrist.WristConfigurationKt.wristConfig;
 
 public class AutoRoutines {
     private final AutonomousFollower follower;
     private final Intake intake = new Intake(getIntakeConfig());
     private final DigitalInput intakeSensor = new DigitalInput(4); // digital input --> invertir la señal (cuando detecta algo, retorna false)
-    private final LimeLightsController limelights = new LimeLightsController();
+        private final LimeLightsController limelights = new LimeLightsController();
     private final SwerveDrive swerveDriveSubsystem = new SwerveDrive(getSwerveDriveConfiguration());
     private final SwerveDriveDriver swerveDriver = new SwerveDriveDriver(
             swerveDriveSubsystem.getMaxLinearVelocity(),
@@ -199,6 +199,25 @@ public class AutoRoutines {
 
 
 
+    // tuning test
+    public AutoRoutine choreoTuning() {
+        AutoRoutine routine = follower.factory.newRoutine("choreo tuning");
+        AutoTrajectory cycle = routine.trajectory("choreo-tuning");
+
+        routine.active().onTrue(
+                Commands.sequence(
+                        cycle.resetOdometry(),
+                        cycle.cmd()
+                )
+        );
+
+        return routine;
+    }
+
+    public Command choreoTuningCMD() {
+        return choreoTuning().cmd();
+    }
+
 
 
 
@@ -222,7 +241,7 @@ public class AutoRoutines {
                         //limelights.alignYAxisToAprilTagDetection(swerveDriver, )
 
                         // ✅ TODO: Arm logic — place arm in L4
-                        arm.setArmPoseCMD(armPositions.reefL4)
+                        arm.setPoseCommand(ArmPoses.L4.getPose(), ArmOrders.JEW.getOrder())
                 )
         );
 
@@ -233,14 +252,15 @@ public class AutoRoutines {
 
         // All reef -> coralStation cycles will automatically set arm to have coral station intake position
         routine.anyActive(secondCycleReefToCoralStation, thirdCycleReefToCoralStation)
-                .whileTrue(arm.setArmPoseCMD(armPositions.coralStationIntake));
+                .whileTrue(arm.setPoseCommand(ArmPoses.CoralStation.getPose(), ArmOrders.EJW.getOrder()));
+                //.whileTrue(arm.setArmPoseCMD(armPositions.coralStationIntake));
         // is equal to:
         // secondCycleReefToCoralStation.active().onTrue(arm.setArmPoseCMD(armPositions.coralStationIntake));
         // thirdCycleReefToCoralStation.active().onTrue(arm.setArmPoseCMD(armPositions.coralStationIntake));
 
         // All coralStation -> reef cycles will automatically set arm to have reef L4 position
         routine.anyActive(secondCycleCoralStationToReef, thirdCycleCoralStationToReef)
-                .whileTrue(arm.setArmPoseCMD(armPositions.reefL4));
+                .whileTrue(arm.setPoseCommand(ArmPoses.L4.getPose(), ArmOrders.JEW.getOrder()));
         // is equal to:
         // secondCycleCoralStationToReef.active().onTrue(arm.setArmPoseCMD(armPositions.reefL4));
         // thirdCycleCoralStationToReef.active().onTrue(arm.setArmPoseCMD(armPositions.reefL4));
@@ -286,10 +306,11 @@ public class AutoRoutines {
         //step 5 secondCycleCoralStationToReef.done().and(intake::hasCoral).onTrue(intake.setVoltageCommand(Volts.of(10.0)));
         secondCycleCoralStationToReef.done().onTrue(
                 Commands.sequence(
-                        // ✅ TODO: AQUÍ PONER LÓGICA DE LIMELIGHTS PARA ALINEARSE CON EL REEF
-                        limelights.alignInAllAxis(swerveDriver, Degrees.of(0.0), Inches.of(5.0), true),
-                        Commands.waitUntil(() -> limelights.isAlignedAtReef(true) || Commands.waitTime(Seconds.of(3))
-                                .isFinished()).andThen(intake.setVoltageCommand(Volts.of(10.0))),
+                        // TODO: AQUÍ PONER LÓGICA DE LIMELIGHTS PARA ALINEARSE CON EL REEF
+                        // limelights.alignInAllAxis(swerveDriver, Degrees.of(0.0), Inches.of(5.0), true),
+                        /*Commands.waitUntil(() -> limelights.isAlignedAtReef(true) || Commands.waitTime(Seconds.of(3))
+                                .isFinished()).andThen(intake.setVoltageCommand(Volts.of(10.0))),*/
+                        intake.setVoltageCommand(Volts.of(10.0)),
                         Commands.waitUntil(() -> !intake.hasCoral() || Commands.waitTime(Seconds.of(2))
                                 .isFinished()).andThen(
 

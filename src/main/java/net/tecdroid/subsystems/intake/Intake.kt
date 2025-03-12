@@ -7,10 +7,13 @@ import com.ctre.phoenix6.signals.NeutralModeValue
 import edu.wpi.first.units.measure.Angle
 import edu.wpi.first.units.measure.AngularVelocity
 import edu.wpi.first.units.measure.Voltage
+import edu.wpi.first.wpilibj.DigitalInput
 import net.tecdroid.subsystems.util.generic.TdSubsystem
 
 class Intake(private val config: IntakeConfig) : TdSubsystem("Intake") {
     private val motorController = TalonFX(config.motorControllerId.id)
+    private val intakeSensor = DigitalInput(0)
+
 
     override val forwardsRunningCondition = { true }
     override val backwardsRunningCondition = { true }
@@ -31,6 +34,10 @@ class Intake(private val config: IntakeConfig) : TdSubsystem("Intake") {
     override fun setVoltage(voltage: Voltage) {
         val request = VoltageOut(voltage)
         motorController.setControl(request)
+    }
+
+    fun hasCoral(): Boolean {
+        return !intakeSensor.get()
     }
 
     private fun configureMotorInterface() {

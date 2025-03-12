@@ -96,5 +96,5 @@ class RobotContainer {
 
 
     val autonomousCommand: Command?
-        get() = null // kdsafd
+        get() = auto.choreoTuningCMD();
 }
