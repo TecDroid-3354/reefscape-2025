@@ -36,8 +36,8 @@ val elevatorConfig = ElevatorConfig(
 
     limits = SubsystemLimits(
         absoluteMinimum = 0.0.meters,
-        relativeMinimum = 0.02.meters + 0.04.meters,
-        relativeMaximum = 1.009.meters - 0.05.meters,
+        relativeMinimum = 0.02.meters,
+        relativeMaximum = 1.030.meters,
         absoluteMaximum = 1.0389.meters,
     ),
 

@@ -81,6 +81,16 @@ class ElevatorJoint(private val config: ElevatorJointConfig) :
         leadMotorController.setPosition(config.reduction.unapply(absoluteAngle))
     }
 
+    fun coast() {
+        leadMotorController.setNeutralMode(NeutralModeValue.Coast)
+        followerMotorController.setNeutralMode(NeutralModeValue.Coast)
+    }
+
+    fun brake() {
+        leadMotorController.setNeutralMode(NeutralModeValue.Brake)
+        followerMotorController.setNeutralMode(NeutralModeValue.Brake)
+    }
+
     private fun configureMotorsInterface() {
         val talonConfig = TalonFXConfiguration()
 

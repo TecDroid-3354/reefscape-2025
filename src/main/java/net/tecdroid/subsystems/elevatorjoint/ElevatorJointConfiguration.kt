@@ -38,13 +38,13 @@ val elevatorJointConfig = ElevatorJointConfig(
 
     limits = SubsystemLimits(
         absoluteMinimum = 0.011.rotations,
-        relativeMinimum = 0.025.rotations + 0.02.rotations,
-        relativeMaximum = 0.255.rotations - 0.02.rotations,
+        relativeMinimum = 0.025.rotations,
+        relativeMaximum = 0.26.rotations,
         absoluteMaximum = 0.2682.rotations,
     ),
 
     controlGains = ControlGains(
-        p = 0.6,
+        p = 0.8,
         s = 0.14604, // 0.11123,
         v = 0.11017, // 0.11406,
         a = 0.0035221, // 0.0018075,

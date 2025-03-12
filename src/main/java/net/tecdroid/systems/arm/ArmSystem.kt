@@ -34,27 +34,27 @@ enum class ArmPoses(val pose: ArmPose) {
     )),
 
     L2(ArmPose(
-        wristPosition         = 0.34136.rotations,
+        wristPosition         = 0.36.rotations,
         elevatorDisplacement  = 0.01.meters,
-        elevatorJointPosition = 0.2535.rotations
+        elevatorJointPosition = 0.26223.rotations
     )),
 
     L3(ArmPose(
-        wristPosition         = 0.3459.rotations,
-        elevatorDisplacement  = 0.4500.meters,
-        elevatorJointPosition = 0.2524.rotations
+        wristPosition         = 0.34.rotations,
+        elevatorDisplacement  = 0.4117.meters,
+        elevatorJointPosition = 0.26223.rotations
     )),
 
     L4(ArmPose(
-        wristPosition         = 0.35706.rotations,
-        elevatorDisplacement  = 1.051.meters,
-        elevatorJointPosition = 0.25586.rotations
+        wristPosition         = 0.3261.rotations,
+        elevatorDisplacement  = 1.0055.meters,
+        elevatorJointPosition = 0.26223.rotations
     )),
 
     CoralStation(ArmPose(
-        wristPosition         = 0.3293.rotations,
-        elevatorDisplacement  = 0.0150.meters,
-        elevatorJointPosition = 0.1842.rotations
+        wristPosition         = 0.378.rotations,
+        elevatorDisplacement  = 0.01.meters,
+        elevatorJointPosition = 0.188.rotations
     ))
 }
 
@@ -68,9 +68,9 @@ enum class ArmOrders(val order: ArmOrder) {
 }
 
 class ArmSystem(wristConfig: WristConfig, elevatorConfig: ElevatorConfig, elevatorJointConfig: ElevatorJointConfig) : Sendable {
-    private val wrist = Wrist(wristConfig)
-    private val elevator = Elevator(elevatorConfig)
-    private val joint = ElevatorJoint(elevatorJointConfig)
+    val wrist = Wrist(wristConfig)
+    val elevator = Elevator(elevatorConfig)
+    val joint = ElevatorJoint(elevatorJointConfig)
 
     init {
         wrist.matchRelativeEncodersToAbsoluteEncoders()

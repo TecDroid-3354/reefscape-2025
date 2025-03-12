@@ -64,8 +64,20 @@ class Elevator(private val config: ElevatorConfig) :
     override val displacement: Distance
         get() = config.sprocket.angularDisplacementToLinearDisplacement(config.reduction.apply(motorPosition))
 
+    val x = {displacement}
+
     override val velocity: LinearVelocity
         get() = config.sprocket.angularVelocityToLinearVelocity(config.reduction.apply(motorVelocity))
+
+    fun coast() {
+        leadMotorController.setNeutralMode(NeutralModeValue.Coast)
+        followerMotorController.setNeutralMode(NeutralModeValue.Coast)
+    }
+
+    fun brake() {
+        leadMotorController.setNeutralMode(NeutralModeValue.Brake)
+        followerMotorController.setNeutralMode(NeutralModeValue.Brake)
+    }
 
     private fun configureMotorsInterface() {
         val talonConfig = TalonFXConfiguration()
