@@ -91,6 +91,10 @@ class RobotContainer {
         autoChooser.addRoutine("First cycle routine", auto::leftAutoFirstCycle)
         autoChooser.addCmd("First cycle cmd", auto::leftAutoFirstCycleCMD)
 
+        // Adding "second cycle" reef to coral station routine and cmd
+        autoChooser.addRoutine("Second cycle reef to coral station routine", auto::leftAutoSecondCycleReefToCoralStation)
+        autoChooser.addCmd("Second cycle reef to coral station cmd", auto::leftAutoSecondCycleReefToCoralStationCMD)
+
         // Schedule the selected auto during the autonomous period
         SmartDashboard.putData(autoChooser);
         RobotModeTriggers.autonomous().whileTrue(autoChooser.selectedCommandScheduler());
