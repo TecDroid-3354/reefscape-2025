@@ -2,7 +2,9 @@ package net.tecdroid.auto;
 
 import choreo.auto.AutoRoutine;
 import choreo.auto.AutoTrajectory;
+import edu.wpi.first.units.measure.Time;
 import edu.wpi.first.wpilibj.DigitalInput;
+import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
@@ -12,9 +14,14 @@ import net.tecdroid.subsystems.drivetrain.SwerveDrive;
 import net.tecdroid.subsystems.drivetrain.SwerveDriveDriver;
 import net.tecdroid.systems.arm.ArmController;
 import net.tecdroid.systems.arm.ArmPositions;
+import org.opencv.core.TickMeter;
 
-import static edu.wpi.first.units.Units.Volts;
-import static edu.wpi.first.units.Units.Seconds;
+import javax.management.timer.TimerMBean;
+import javax.naming.TimeLimitExceededException;
+
+import java.util.TimerTask;
+
+import static edu.wpi.first.units.Units.*;
 import static net.tecdroid.subsystems.drivetrain.SwerveDriveConfigurationKt.getSwerveDriveConfiguration;
 import static net.tecdroid.subsystems.intake.IntakeConfigurationKt.getIntakeConfig;
 
@@ -201,10 +208,7 @@ public class AutoRoutines {
                             //limelights.alignYAxisToAprilTagDetection(swerveDriver, )
 
                         // ✅ TODO: Arm logic — place arm in L4
-                        arm.setArmPoseCMD(armPositions.reefL4),
-
-                        // ✅ TODO: Intake logic — outtake
-                        intake.setVoltageCommand(Volts.of(10.0))
+                        arm.setArmPoseCMD(armPositions.reefL4)
                 )
         );
 
@@ -232,17 +236,62 @@ public class AutoRoutines {
 
         // ! Cycle #2 : Second coral
 
-        firstCycleBargeToReef.done().onTrue(intake.setVoltageCommand(Volts.of(10.0))); // ✅
+        //firstCycleBargeToReef.done().onTrue(intake.setVoltageCommand(Volts.of(10.0))); // ✅
+        firstCycleBargeToReef.done().onTrue(
+                Commands.sequence(
+                        intake.setVoltageCommand(Volts.of(10.0)),
+                        Commands.waitUntil(() -> !intake.hasCoral() || Commands.waitTime(Seconds.of(2))
+                            .isFinished()).andThen(
+                                intake.stopCommand(), // step 1: leaving piece from cycle 1 (precharged)
+                                secondCycleReefToCoralStation.cmd() // step 2: going from reef to coral station
+                        )
+                )
+        );
 
-        firstCycleBargeToReef.done().and(() -> !intake.hasCoral()).onTrue(secondCycleReefToCoralStation.cmd()); // ✅
+        //step 2: version 1 — firstCycleBargeToReef.done().and(() -> !intake.hasCoral()).onTrue(secondCycleReefToCoralStation.cmd()); // ✅
+        /*step 2: version 2 — firstCycleBargeToReef.done().onTrue(
+                Commands.waitUntil(() -> !intake.hasCoral() || Commands.waitTime(Seconds.of(2)).isFinished()).andThen(
+                        secondCycleReefToCoralStation.cmd()
+                )
+        ); // ✅*/
 
-        secondCycleReefToCoralStation.done().and(intake::hasCoral).onTrue(secondCycleCoralStationToReef.cmd()); // ✅
+        secondCycleReefToCoralStation.done().onTrue(
+                Commands.sequence(
+                        intake.setVoltageCommand(Volts.of(10.0)),
+                        Commands.waitUntil(intake::hasCoral).andThen(
+                            Commands.sequence(
+                                intake.stopCommand(), // step 3: intaking at coral station
+                                secondCycleCoralStationToReef.cmd() // step 4: going from coral station to reef
+                            )
+                        )
+                )
+        ); // ✅
 
-        secondCycleCoralStationToReef.done().and(intake::hasCoral).onTrue(intake.setVoltageCommand(Volts.of(10.0))); // ✅
+        //step 4 secondCycleReefToCoralStation.done().and(intake::hasCoral).onTrue(secondCycleCoralStationToReef.cmd()); // ✅
+
+        //step 5 secondCycleCoralStationToReef.done().and(intake::hasCoral).onTrue(intake.setVoltageCommand(Volts.of(10.0)));
+        secondCycleCoralStationToReef.done().onTrue(
+                Commands.sequence(
+                        // ✅ TODO: AQUÍ PONER LÓGICA DE LIMELIGHTS PARA ALINEARSE CON EL REEF
+                        limelights.alignInAllAxis(swerveDriver, Degrees.of(0.0), Inches.of(5.0), true),
+                        Commands.waitUntil(() -> limelights.isAlignedAtReef(true) || Commands.waitTime(Seconds.of(3))
+                                .isFinished()).andThen(intake.setVoltageCommand(Volts.of(10.0))),
+                        Commands.waitUntil(() -> !intake.hasCoral() || Commands.waitTime(Seconds.of(2))
+                                .isFinished()).andThen(
+
+                )
+                )
+        );//
+
+
+        // ! Cycle #3
+        // : Third coral
+
+
+
+
 
         // TODO: ALIGN WITH LIMELIGHT
-
-
 
         return routine;
     }
