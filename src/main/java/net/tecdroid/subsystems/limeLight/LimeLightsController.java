@@ -8,6 +8,7 @@ import edu.wpi.first.wpilibj.shuffleboard.Shuffleboard;
 import edu.wpi.first.wpilibj.shuffleboard.ShuffleboardTab;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
+import net.tecdroid.input.CompliantXboxController;
 import net.tecdroid.subsystems.limeLight.LimeLightConfiguration;
 import net.tecdroid.subsystems.limeLight.LimeLightModule;
 
@@ -127,7 +128,7 @@ public class LimeLightsController {
     }
 
     public Command alignInAllAxis(SwerveDriveDriver swerveDriveDriver, Angle xSetPoint, Angle ySetPoint,
-                                  Angle zSetPoint,Boolean usingRight) {
+                                  Angle zSetPoint, Boolean usingRight, CompliantXboxController controller) {
         return Commands.run(() -> {
             Angle ty = usingRight ? getRightLimeLightTy() : getLeftLimeLightTy();
             Angle tx = usingRight ? getRightLimeLightTx() : getLeftLimeLightTx();
@@ -141,9 +142,11 @@ public class LimeLightsController {
             double targetingAngularVelocityFactor = zAxisPIDController.calculate(
                     tx.in(Units.Degrees), zSetPoint.in(Units.Degrees)) * 0.75;
 
+            double joystickRxVelocity = controller.getRightX() * 0.25;
+
             swerveDriveDriver.setLongitudinalVelocityFactorSource(() -> targetingLinearVelocityFactor);
             swerveDriveDriver.setTransversalVelocityFactorSource(() -> targetingTransversalVelocityFactor);
-            swerveDriveDriver.setAngularVelocityFactorSource(() -> targetingAngularVelocityFactor);
+            swerveDriveDriver.setAngularVelocityFactorSource(() -> targetingAngularVelocityFactor + joystickRxVelocity);
             swerveDriveDriver.setRobotOriented();
         });
     }
