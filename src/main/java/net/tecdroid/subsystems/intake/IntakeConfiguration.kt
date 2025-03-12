@@ -6,18 +6,12 @@ import net.tecdroid.util.*
 
 data class IntakeConfig(
     val motorControllerId: NumericId,
-    val motorProperties: MotorProperties,
-    val currentLimit: Current,
-    val positiveDirection: RotationalDirection,
-    val controlGains: ControlGains,
-    val motionTargets: MotionTargets
+    val motorDirection: RotationalDirection,
+    val motorCurrentLimit: Current,
 )
 
 public val intakeConfig = IntakeConfig(
     motorControllerId = NumericId(62),
-    motorProperties = Motors.krakenX60,
-    currentLimit = 30.0.amps,
-    positiveDirection = RotationalDirection.Clockwise,
-    controlGains = ControlGains(),
-    motionTargets = MotionTargets()
+    motorDirection = RotationalDirection.Clockwise,
+    motorCurrentLimit = 30.0.amps,
 )

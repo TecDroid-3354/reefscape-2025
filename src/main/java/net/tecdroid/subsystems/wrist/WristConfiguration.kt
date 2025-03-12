@@ -13,45 +13,49 @@ import net.tecdroid.util.units.seconds
 import net.tecdroid.util.SubsystemLimits
 
 data class WristConfig(
-    val absoluteEncoderIsInverted: Boolean,
     val motorControllerId: NumericId,
-    val absoluteEncoderPort: NumericId,
+    val motorDirection: RotationalDirection,
     val motorCurrentLimit: Current,
-    val positiveDirection: RotationalDirection,
-    val reduction: Reduction,
+
+    val absoluteEncoderPort: NumericId,
+    val absoluteEncoderIsInverted: Boolean,
     val absoluteEncoderOffset: Angle,
+
+    val reduction: Reduction,
     val limits: SubsystemLimits<AngleUnit>,
     val controlGains: ControlGains,
     val motionTargets: AngularMotionTargets,
 )
 
 val wristConfig = WristConfig(
-    absoluteEncoderIsInverted = false,
     motorControllerId = NumericId(61),
-    absoluteEncoderPort = NumericId(2),
+    motorDirection = Clockwise,
     motorCurrentLimit = 30.0.amps,
-    positiveDirection = Clockwise,
+
+    absoluteEncoderPort = NumericId(2),
+    absoluteEncoderIsInverted = false,
+    absoluteEncoderOffset = (0.1501).rotations,
+
     reduction = Reduction(214.285714),
-    absoluteEncoderOffset = (0.32761).rotations,
 
     limits = SubsystemLimits(
-        absoluteMinimum = 0.0.degrees,
-        absoluteMaximum = 0.371.rotations,
-        relativeMinimum = 0.0271.rotations,
-        relativeMaximum = 0.33.rotations,
+        absoluteMinimum = 0.0.rotations,
+        relativeMinimum = 0.021.rotations,
+        relativeMaximum = 0.3504.rotations,
+        absoluteMaximum = 0.3748.rotations,
     ),
 
     controlGains = ControlGains(
         p = 0.1,
-        s = 0.083806,
-        v = 0.11177,
-        a = 0.0022073,
-        g = 0.0
+        s = 0.1191,
+        v = 0.11037,
+        a = 0.0019686,
+        g = 0.0012195
     ),
 
     motionTargets = AngularMotionTargets(
         cruiseVelocity = 0.5.rotations.per(Second),
-        accelerationTimePeriod = 0.7.seconds,
+        accelerationTimePeriod = 0.5.seconds,
         jerkTimePeriod = 0.1.seconds
     )
 )

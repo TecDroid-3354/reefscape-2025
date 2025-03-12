@@ -26,4 +26,3 @@ val Double.volts: Voltage
 
 val Double.amps: Current
     get() = Amps.of(this)
-

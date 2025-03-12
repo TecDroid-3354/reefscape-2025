@@ -16,7 +16,6 @@ public class Robot extends TimedRobot {
 
     @Override
     public void robotInit() {
-        container.setup();
         DriverStation.silenceJoystickConnectionWarning(true);
     }
 
@@ -28,6 +27,7 @@ public class Robot extends TimedRobot {
 
     @Override
     public void disabledInit() {
+        CommandScheduler.getInstance().cancelAll();
     }
 
     @Override

@@ -1,17 +1,13 @@
 package net.tecdroid.systems
 
 import edu.wpi.first.math.controller.PIDController
-import edu.wpi.first.units.Units.Degrees
 import edu.wpi.first.units.Units.Radians
-import edu.wpi.first.units.measure.Angle
-import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard
 import edu.wpi.first.wpilibj2.command.Commands
 import edu.wpi.first.wpilibj2.command.button.Trigger
 import net.tecdroid.input.CompliantXboxController
 import net.tecdroid.subsystems.drivetrain.SwerveDrive
 import net.tecdroid.subsystems.drivetrain.SwerveDriveConfig
 import net.tecdroid.subsystems.drivetrain.SwerveDriveDriver
-import net.tecdroid.util.NumericId
 import net.tecdroid.util.units.degrees
 import net.tecdroid.util.units.radians
 import net.tecdroid.util.units.seconds
@@ -56,7 +52,7 @@ class SwerveSystem(swerveDriveConfig: SwerveDriveConfig) {
         }
     }
 
-    fun linkOrientationCommand(trigger: Trigger) {
+    fun linkReorientationTrigger(trigger: Trigger) {
         trigger.onTrue(drive.setHeadingCommand(0.0.radians).andThen(driver.toggleOrientationCommand()))
     }
 }

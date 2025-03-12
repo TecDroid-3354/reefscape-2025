@@ -13,7 +13,9 @@ import edu.wpi.first.units.measure.Voltage
 import edu.wpi.first.util.sendable.SendableBuilder
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard
 import net.tecdroid.subsystems.util.generic.*
+import net.tecdroid.util.units.abs
 import net.tecdroid.wrappers.ThroughBoreAbsoluteEncoder
+import kotlin.math.absoluteValue
 
 class ElevatorJoint(private val config: ElevatorJointConfig) :
     TdSubsystem("Elevator Joint"),
@@ -23,7 +25,8 @@ class ElevatorJoint(private val config: ElevatorJointConfig) :
     VoltageControlledSubsystem,
     WithThroughBoreAbsoluteEncoder {
     private val leadMotorController = TalonFX(config.leadMotorControllerId.id)
-    private val followerMotorController = TalonFX(config.followerMotorId.id)
+    private val followerMotorController = TalonFX(config.followerMotorControllerId.id)
+    private var target: Angle
 
     override val absoluteEncoder =
         ThroughBoreAbsoluteEncoder(
@@ -39,6 +42,7 @@ class ElevatorJoint(private val config: ElevatorJointConfig) :
         configureMotorsInterface()
         matchRelativeEncodersToAbsoluteEncoders()
         publishToShuffleboard()
+        target = motorPosition
     }
 
     override fun setVoltage(voltage: Voltage) {
@@ -49,10 +53,14 @@ class ElevatorJoint(private val config: ElevatorJointConfig) :
     override fun setAngle(targetAngle: Angle) {
         val clampedAngle = config.limits.coerceIn(targetAngle) as Angle
         val transformedAngle = config.reduction.unapply(clampedAngle)
-        SmartDashboard.putNumber("TYA", clampedAngle.`in`(Rotations))
         val request = MotionMagicVoltage(transformedAngle)
+
+        target = transformedAngle
         leadMotorController.setControl(request)
     }
+
+    fun getPositionError(): Angle =
+        if (target > motorPosition) target - motorPosition else motorPosition - target
 
     override val power: Double
         get() = leadMotorController.get()
@@ -79,11 +87,11 @@ class ElevatorJoint(private val config: ElevatorJointConfig) :
         with(talonConfig) {
             MotorOutput
                 .withNeutralMode(NeutralModeValue.Coast)
-                .withInverted(config.positiveDirection.toInvertedValue())
+                .withInverted(config.motorDirection.toInvertedValue())
 
             CurrentLimits
                 .withSupplyCurrentLimitEnable(true)
-                .withSupplyCurrentLimit(config.currentLimit)
+                .withSupplyCurrentLimit(config.motorCurrentLimit)
 
             Slot0
                 .withKP(config.controlGains.p)
@@ -99,7 +107,6 @@ class ElevatorJoint(private val config: ElevatorJointConfig) :
                 .withMotionMagicAcceleration(config.reduction.unapply(config.motionTargets.acceleration))
                 .withMotionMagicJerk(config.reduction.unapply(config.motionTargets.jerk))
         }
-
 
         leadMotorController.clearStickyFaults()
         followerMotorController.clearStickyFaults()

@@ -7,8 +7,17 @@ import net.tecdroid.util.units.volts
 
 interface VoltageControlledSubsystem {
     fun setVoltage(voltage: Voltage)
-    fun setVoltageCommand(voltage: Voltage): Command = Commands.runOnce({ setVoltage(voltage) })
+    fun setVoltageCommand(voltage: Voltage): Command = Commands.runOnce(
+        { setVoltage(voltage) },
+        if (this is TdSubsystem) this
+        else throw IllegalStateException("Attempted to set voltage output on a non-subsystem.")
+    )
+
     fun stop() = setVoltage(0.0.volts)
-    fun stopCommand(): Command = Commands.runOnce(::stop)
+    fun stopCommand(): Command = Commands.runOnce(
+        ::stop,
+        if(this is TdSubsystem) this
+        else throw IllegalStateException("Attempted to stop a non-subsystem. This has no safety guarantees.")
+    )
 }
 

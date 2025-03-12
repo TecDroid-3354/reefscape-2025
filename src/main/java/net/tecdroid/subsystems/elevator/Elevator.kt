@@ -11,6 +11,8 @@ import edu.wpi.first.units.Units.Rotations
 import edu.wpi.first.units.measure.*
 import edu.wpi.first.util.sendable.SendableBuilder
 import net.tecdroid.subsystems.util.generic.*
+import net.tecdroid.util.units.abs
+import kotlin.math.absoluteValue
 
 class Elevator(private val config: ElevatorConfig) :
     TdSubsystem("Elevator"),
@@ -21,13 +23,15 @@ class Elevator(private val config: ElevatorConfig) :
 {
     private val leadMotorController = TalonFX(config.leadMotorControllerId.id)
     private val followerMotorController = TalonFX(config.followerMotorId.id)
+    private var target: Angle
 
     override val forwardsRunningCondition = { displacement < config.limits.relativeMaximum }
-    override val backwardsRunningCondition = { displacement> config.limits.relativeMinimum }
+    override val backwardsRunningCondition = { displacement > config.limits.relativeMinimum }
 
     init {
         configureMotorsInterface()
         publishToShuffleboard()
+        target = motorPosition
     }
 
     override fun setVoltage(voltage: Voltage) {
@@ -40,8 +44,13 @@ class Elevator(private val config: ElevatorConfig) :
         val targetAngle = config.sprocket.linearDisplacementToAngularDisplacement(clampedDisplacement)
         val transformedAngle = config.reduction.unapply(targetAngle)
         val request = MotionMagicVoltage(transformedAngle)
+
+        target = transformedAngle
         leadMotorController.setControl(request)
     }
+
+    fun getPositionError(): Angle =
+        if (target > motorPosition) target - motorPosition else motorPosition - target
 
     override val power: Double
         get() = leadMotorController.get()
@@ -64,11 +73,11 @@ class Elevator(private val config: ElevatorConfig) :
         with(talonConfig) {
             MotorOutput
                 .withNeutralMode(NeutralModeValue.Brake)
-                .withInverted(config.positiveDirection.toInvertedValue())
+                .withInverted(config.motorDirection.toInvertedValue())
 
             CurrentLimits
                 .withSupplyCurrentLimitEnable(true)
-                .withSupplyCurrentLimit(config.currentLimit)
+                .withSupplyCurrentLimit(config.motorCurrentLimit)
 
             Slot0
                 .withKP(config.controlGains.p)

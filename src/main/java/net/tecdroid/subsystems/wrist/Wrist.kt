@@ -11,7 +11,9 @@ import edu.wpi.first.units.measure.AngularVelocity
 import edu.wpi.first.units.measure.Voltage
 import edu.wpi.first.util.sendable.SendableBuilder
 import net.tecdroid.subsystems.util.generic.*
+import net.tecdroid.util.units.abs
 import net.tecdroid.wrappers.ThroughBoreAbsoluteEncoder
+import kotlin.math.absoluteValue
 
 class Wrist(private val config: WristConfig) :
     TdSubsystem("Wrist"),
@@ -19,6 +21,7 @@ class Wrist(private val config: WristConfig) :
     WithThroughBoreAbsoluteEncoder,
     AngularSubsystem {
     private val motorController = TalonFX(config.motorControllerId.id)
+    private var target : Angle
 
     override val absoluteEncoder = ThroughBoreAbsoluteEncoder(
         port = config.absoluteEncoderPort,
@@ -33,6 +36,7 @@ class Wrist(private val config: WristConfig) :
         configureMotorInterface()
         matchRelativeEncodersToAbsoluteEncoders()
         publishToShuffleboard()
+        target = motorPosition
     }
 
     override fun setVoltage(voltage: Voltage) {
@@ -44,8 +48,13 @@ class Wrist(private val config: WristConfig) :
         val clampedAngle = config.limits.coerceIn(targetAngle) as Angle
         val transformedAngle = config.reduction.unapply(clampedAngle)
         val request = MotionMagicVoltage(transformedAngle).withSlot(0)
+
+        target = transformedAngle
         motorController.setControl(request)
     }
+
+    fun getPositionError(): Angle =
+        if (target > motorPosition) target - motorPosition else motorPosition - target
 
     override val power: Double
         get() = motorController.get()
@@ -66,17 +75,13 @@ class Wrist(private val config: WristConfig) :
         motorController.setPosition(config.reduction.unapply(absoluteAngle))
     }
 
-    // ///////////// //
-    // Configuration //
-    // ///////////// //
-
     private fun configureMotorInterface() {
         val talonConfig = TalonFXConfiguration()
 
         with(talonConfig) {
             MotorOutput
                 .withNeutralMode(NeutralModeValue.Brake)
-                .withInverted(config.positiveDirection.toInvertedValue())
+                .withInverted(config.motorDirection.toInvertedValue())
 
             CurrentLimits
                 .withSupplyCurrentLimitEnable(true)

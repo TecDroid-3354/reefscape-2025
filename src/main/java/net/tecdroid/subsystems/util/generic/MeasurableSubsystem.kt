@@ -4,6 +4,7 @@ import edu.wpi.first.units.measure.Angle
 import edu.wpi.first.units.measure.AngularVelocity
 import edu.wpi.first.units.measure.Distance
 import edu.wpi.first.units.measure.LinearVelocity
+import edu.wpi.first.wpilibj2.command.Command
 import edu.wpi.first.wpilibj2.command.Commands
 
 interface MeasurableSubsystem : VoltageControlledSubsystem {
@@ -17,7 +18,11 @@ interface AngularSubsystem {
     val angularVelocity: AngularVelocity
 
     fun setAngle(targetAngle: Angle)
-    fun setAngleCommand(targetAngle: Angle) = Commands.runOnce({ setAngle(targetAngle) })
+    fun setAngleCommand(targetAngle: Angle): Command = Commands.runOnce(
+        { setAngle(targetAngle) },
+        if (this is TdSubsystem) this
+        else throw IllegalStateException("Attempted to run an angular position command on a non-subsystem")
+    )
 }
 
 interface LinearSubsystem {
@@ -25,5 +30,9 @@ interface LinearSubsystem {
     val velocity: LinearVelocity
 
     fun setDisplacement(targetDisplacement: Distance)
-    fun setDisplacementCommand(targetDisplacement: Distance) = Commands.runOnce({ setDisplacement(targetDisplacement) })
+    fun setDisplacementCommand(targetDisplacement: Distance): Command = Commands.runOnce(
+        { setDisplacement(targetDisplacement) },
+        if (this is TdSubsystem) this
+        else throw IllegalStateException("Attempted to run a linear position command on a non-subsystem")
+    )
 }

@@ -14,10 +14,12 @@ import net.tecdroid.util.units.seconds
 data class ElevatorConfig(
     val leadMotorControllerId: NumericId,
     val followerMotorId: NumericId,
-    val positiveDirection: RotationalDirection,
-    val currentLimit: Current,
+    val motorDirection: RotationalDirection,
+    val motorCurrentLimit: Current,
+
     val reduction: Reduction,
     val sprocket: Sprocket,
+
     val limits: SubsystemLimits<DistanceUnit>,
     val controlGains: ControlGains,
     val motionTargets: LinearMotionTargets,
@@ -26,23 +28,30 @@ data class ElevatorConfig(
 val elevatorConfig = ElevatorConfig(
     leadMotorControllerId = NumericId(53),
     followerMotorId = NumericId(54),
-    positiveDirection = Clockwise,
-    currentLimit = 40.0.amps,
+    motorDirection = Clockwise,
+    motorCurrentLimit = 40.0.amps,
+
     reduction = Reduction(8.9285),
     sprocket = Sprocket.fromRadius(Inches.of(1 + 1.0 / 8.0)),
+
     limits = SubsystemLimits(
         absoluteMinimum = 0.0.meters,
-        relativeMinimum = 0.02.meters,
-        relativeMaximum = 1.009.meters,
+        relativeMinimum = 0.02.meters + 0.04.meters,
+        relativeMaximum = 1.009.meters - 0.05.meters,
         absoluteMaximum = 1.0389.meters,
     ),
+
     controlGains = ControlGains(
         p = 0.2,
-        s = 0.12362, // 0.056261,
-        v = 0.11253, // 0.11846,
-        a = 0.0021073, // 0.0023818,
-        g = 0.1135, // 0.24064
+        s = 0.079404,
+        v = 0.1174,
+        a = 0.0020923,
+        g = 0.23015
     ),
-    motionTargets = LinearMotionTargets(1.2.meters.per(Second), 0.5.seconds, 0.1.seconds),
-//    motionTargets = LinearMotionTargets(1.45.meters.per(Second), 0.5.seconds, 0.1.seconds),
+
+    motionTargets = LinearMotionTargets(
+        cruiseVelocity = 1.2.meters.per(Second),
+        accelerationTimePeriod = 0.5.seconds,
+        jerkTimePeriod = 0.1.seconds
+    ),
 )
