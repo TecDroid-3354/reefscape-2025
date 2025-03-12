@@ -1,25 +1,29 @@
-package net.tecdroid.subsystems.limeLight;
+package net.tecdroid.subsystems.drivetrain;
 
 import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.units.Units;
 import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.units.measure.Distance;
+import edu.wpi.first.wpilibj.shuffleboard.Shuffleboard;
+import edu.wpi.first.wpilibj.shuffleboard.ShuffleboardTab;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
-import net.tecdroid.subsystems.drivetrain.SwerveDriveDriver;
+import net.tecdroid.subsystems.limeLight.LimeLightConfiguration;
+import net.tecdroid.subsystems.limeLight.LimeLightModule;
 
 public class LimeLightsController {
     LimeLightModule leftLimeLight;
     LimeLightModule rightLimeLight;
     PIDController zAxisPIDController;
     PIDController yAxisPIDController;
-
+    PIDController xAxisPIDController;
 
     public LimeLightsController() {
         leftLimeLight = new LimeLightModule(LimeLightConfiguration.leftDeviceConfig);
         rightLimeLight = new LimeLightModule(LimeLightConfiguration.rightDeviceConfig);
-        zAxisPIDController = new PIDController(0.01, 0.0, 0.0);
-        yAxisPIDController = new PIDController(0.01, 0.0, 0.0);
+        zAxisPIDController = new PIDController(0.0001, 0.0, 0.000001);
+        yAxisPIDController = new PIDController(0.0005, 0.0, 0.000001);
+        xAxisPIDController = new PIDController(0.0001, 0.0, 0.000001);
 
     }
 
@@ -41,31 +45,32 @@ public class LimeLightsController {
         return rightLimeLight.getDistance(targetDistance);
     }
 
-    /**
-     * Gets the distance average of the apriltag according to both cameras
-     * @param targetDistance distance from the target to the floor
-     * @return the distance of the robot and the apriltag according to both cameras
-     */
-    public Distance getLimeLightAverageDistance(Distance targetDistance) {
-        if (leftLimeLight.hasTarget() && rightLimeLight.hasTarget()) {
-            double distanceAverage = (getLeftLimeLightDistance(targetDistance).in(Units.Inches)
-                    + getRightLimeLightDistance(targetDistance).in(Units.Inches)) / 2;
-            return Distance.ofBaseUnits(distanceAverage, Units.Inches);
-        } else if (leftLimeLight.hasTarget() && !rightLimeLight.hasTarget()) {
-            return leftLimeLight.getDistance(targetDistance);
-        } else if (!leftLimeLight.hasTarget() && rightLimeLight.hasTarget()) {
-            return rightLimeLight.getDistance(targetDistance);
-        } else {
-            return Distance.ofBaseUnits(0, Units.Inches);
-        }
-    }
-
     public Angle getLeftLimeLightTx() {
         return leftLimeLight.getTx();
     }
 
     public Angle getRightLimeLightTx() {
         return rightLimeLight.getTx();
+    }
+
+    public Angle getLeftLimeLightTy() {
+        return leftLimeLight.getTy();
+    }
+
+    public Angle getRightLimeLightTy() {
+        return rightLimeLight.getTy();
+    }
+
+    public void publishShuffleBoard() {
+        ShuffleboardTab tab = Shuffleboard.getTab("LimeLights");
+
+        // X angle
+        tab.addDouble("Right Tx", () -> getRightLimeLightTx().in(Units.Degrees));
+        tab.addDouble("Left Tx", () -> getLeftLimeLightTx().in(Units.Degrees));
+
+        // Distance
+        tab.addDouble("Right Distance", () -> getRightLimeLightDistance(Units.Centimeters.of(29.0)).in(Units.Inches));
+        tab.addDouble("Left Distance", () -> getLeftLimeLightDistance(Units.Centimeters.of(29.0)).in(Units.Inches));
     }
 
     /**
@@ -82,44 +87,64 @@ public class LimeLightsController {
             Angle tx = usingRight ? getRightLimeLightTx() : getLeftLimeLightTx();
 
             double targetingAngularVelocityFactor = zAxisPIDController.calculate(
-                    tx.in(Units.Degrees), setPoint.in(Units.Degrees));
+                    tx.in(Units.Degrees), setPoint.in(Units.Degrees)) * 0.75;
 
             swerveDriveDriver.setAngularVelocityFactorSource(() -> targetingAngularVelocityFactor);
+            swerveDriveDriver.setRobotOriented();
         });
     }
 
     /**
-     * Move the robot to the apriltag until be at the setpoint
+     * Rotate the robot to the apriltag until align at the setpoint
      * @param swerveDriveDriver the driving subsystems
-     * @param setpoint the distance setpoint
-     * @param targetDistance distance from the target to the floor
+     * @param setPoint the angle setpoint
      * @param usingRight if true, you align the robot to the right camera, if false, to the left
      */
-    public Command alignYAxisToAprilTagDetection(SwerveDriveDriver swerveDriveDriver, Distance setpoint,
-                                                 Distance targetDistance, Boolean usingRight) {
+
+    public Command alignXAxisToAprilTagDetection(SwerveDriveDriver swerveDriveDriver, Angle setPoint,
+                                                 Boolean usingRight) {
         return Commands.run(() -> {
-            Distance aprilTagDistance = usingRight ? getRightLimeLightDistance(targetDistance) : getLeftLimeLightDistance(targetDistance);
+            Angle tx = usingRight ? getRightLimeLightTx() : getLeftLimeLightTx();
 
-            double targetingLinearVelocityFactor = yAxisPIDController.calculate(
-                    getLimeLightAverageDistance(targetDistance).in(Units.Inches), setpoint.in(Units.Inches));
+            double targetingTransversalVelocityFactor = -xAxisPIDController.calculate(
+                    tx.in(Units.Degrees), setPoint.in(Units.Degrees)) * 0.75;
 
-            swerveDriveDriver.setLongitudinalVelocityFactorSource(() -> targetingLinearVelocityFactor);
+            swerveDriveDriver.setTransversalVelocityFactorSource(() -> targetingTransversalVelocityFactor);
+            swerveDriveDriver.setRobotOriented();
         });
     }
 
-    /**
-     * Move the robot to the apriltag until be at the setpoint
-     * @param swerveDriveDriver the driving subsystems
-     * @param setpoint the distance setpoint
-     * @param targetDistance distance from the target to the floor
-     */
-    public Command alignYAxisToAprilTagDetectionUsingBothCameras(SwerveDriveDriver swerveDriveDriver, Distance setpoint,
-                                                 Distance targetDistance) {
+    public Command alignYAxisToAprilTagDetectionWithTy(SwerveDriveDriver swerveDriveDriver, Angle setpoint, Boolean usingRight) {
         return Commands.run(() -> {
+            Angle ty = usingRight ? getRightLimeLightTy() : getLeftLimeLightTy();
+
             double targetingLinearVelocityFactor = yAxisPIDController.calculate(
-                    getLimeLightAverageDistance(targetDistance).in(Units.Inches), setpoint.in(Units.Inches));
+                    ty.in(Units.Degrees), setpoint.in(Units.Degrees));
+
+            swerveDriveDriver.setLongitudinalVelocityFactorSource(() -> targetingLinearVelocityFactor * 0.75);
+            swerveDriveDriver.setRobotOriented();
+        });
+    }
+
+    public Command alignInAllAxis(SwerveDriveDriver swerveDriveDriver, Angle xSetPoint, Angle ySetPoint,
+                                  Angle zSetPoint,Boolean usingRight) {
+        return Commands.run(() -> {
+            Angle ty = usingRight ? getRightLimeLightTy() : getLeftLimeLightTy();
+            Angle tx = usingRight ? getRightLimeLightTx() : getLeftLimeLightTx();
+
+            double targetingLinearVelocityFactor = yAxisPIDController.calculate(
+                    ty.in(Units.Degrees), ySetPoint.in(Units.Degrees));
+
+            double targetingTransversalVelocityFactor = -xAxisPIDController.calculate(
+                    tx.in(Units.Degrees), xSetPoint.in(Units.Degrees)) * 0.5;
+
+            double targetingAngularVelocityFactor = zAxisPIDController.calculate(
+                    tx.in(Units.Degrees), zSetPoint.in(Units.Degrees)) * 0.75;
 
             swerveDriveDriver.setLongitudinalVelocityFactorSource(() -> targetingLinearVelocityFactor);
+            swerveDriveDriver.setTransversalVelocityFactorSource(() -> targetingTransversalVelocityFactor);
+            swerveDriveDriver.setAngularVelocityFactorSource(() -> targetingAngularVelocityFactor);
+            swerveDriveDriver.setRobotOriented();
         });
     }
 

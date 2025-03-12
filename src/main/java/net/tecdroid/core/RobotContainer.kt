@@ -4,6 +4,7 @@ import edu.wpi.first.units.Units.Meters
 import edu.wpi.first.wpilibj.shuffleboard.Shuffleboard
 import edu.wpi.first.wpilibj2.command.Command
 import edu.wpi.first.wpilibj2.command.Commands
+import edu.wpi.first.wpilibj2.command.button.Trigger
 import net.tecdroid.constants.GenericConstants.driverControllerId
 import net.tecdroid.input.CompliantXboxController
 import net.tecdroid.subsystems.drivetrain.swerveDriveConfiguration
@@ -30,6 +31,10 @@ class RobotContainer {
 
         swerve.linkControllerSticks(controller)
         swerve.linkReorientationTrigger(controller.start())
+
+        // Limelights
+        swerve.alignToRightAprilTagTrigger(Trigger { controller.leftTriggerAxis > 0.0 }, controller)
+        swerve.alignToLeftAprilTagTrigger(Trigger { controller.rightTriggerAxis > 0.0 }, controller)
 
 //        controller.back().onTrue(
 //            arm.setPoseCommand(

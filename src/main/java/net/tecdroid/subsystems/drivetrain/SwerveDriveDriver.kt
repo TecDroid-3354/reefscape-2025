@@ -67,6 +67,14 @@ class SwerveDriveDriver(
         })
     }
 
+    fun setFieldOriented() {
+        orientation = DriveOrientation.FieldOriented
+    }
+
+    fun setRobotOriented() {
+        orientation = DriveOrientation.RobotOriented
+    }
+
     override fun initSendable(builder: SendableBuilder) {
         with(builder) {
             addDoubleProperty("Longitudinal Factor", longitudinalVelocityFactorSource) {}

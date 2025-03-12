@@ -1,21 +1,24 @@
 package net.tecdroid.subsystems.limeLight;
 
+import edu.wpi.first.networktables.NetworkTable;
+import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.units.Units;
 import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.units.measure.Distance;
 
 public class LimeLightModule {
     private String limeLightName = "";
-    private DeviceConfig deviceConfig;
+    private final DeviceConfig deviceConfig;
+
 
     public LimeLightModule(DeviceConfig deviceConfig) {
         this.deviceConfig = deviceConfig;
         this.limeLightName = deviceConfig.DeviceName.limeLightName;
     }
 
-    public int getDetectionId() {
-        return (int)LimelightHelpers.getFiducialID(limeLightName);
-    }
+    /*public int getDetectionId() {
+        return (int) LimelightHelpers.getFiducialID(limeLightName);
+    }*/
 
     public boolean hasTarget() {
         return LimelightHelpers.getTV(limeLightName);
@@ -27,7 +30,7 @@ public class LimeLightModule {
     }
 
     public Angle getTy() {
-        double ty = LimelightHelpers.getTY(limeLightName);  // Vertical offset from crosshair to target in degrees
+        double ty = LimelightHelpers.getTY(limeLightName); // Vertical offset from crosshair to target in degrees
         return Angle.ofBaseUnits(ty, Units.Degrees);
     }
 
@@ -37,7 +40,7 @@ public class LimeLightModule {
     }
 
     public Angle getTxnc() {
-        double txnc = LimelightHelpers.getTXNC(limeLightName);  // Horizontal offset from principal pixel/point to target in degrees
+        double txnc = LimelightHelpers.getTXNC(limeLightName); // Horizontal offset from principal pixel/point to target in degrees
         return Angle.ofBaseUnits(txnc, Units.Degrees);
     }
 
@@ -53,24 +56,28 @@ public class LimeLightModule {
      * @return the distance of the robot and the apriltag
      */
     public Distance getDistance(Distance targetDistance) {
-        // how many degrees back is your limelight rotated from perfectly vertical?
-        double limelightMountAngleDegrees = deviceConfig.deviceStructure.limelightMountAngleDegrees
-                .in(Units.Degrees);
+        if (hasTarget()) {
+            // how many degrees back is your limelight rotated from perfectly vertical?
+            double limelightMountAngleRadians = deviceConfig.deviceStructure.limelightMountAngleDegrees
+                    .in(Units.Radians);
 
-        // distance from the center of the Limelight lens to the floor
-        double limelightLensHeightInches = deviceConfig.deviceStructure.limelightLensHeightDistance
-                .in(Units.Inches);
+            // distance from the center of the Limelight lens to the floor
+            double limelightLensHeightInches = deviceConfig.deviceStructure.limelightLensHeightDistance
+                    .in(Units.Inches);
 
-        // distance from the target to the floor
-        double goalHeightInches = targetDistance.in(Units.Inches);
+            // distance from the target to the floor
+            double goalHeightInches = targetDistance.in(Units.Inches);
 
-        double angleToGoalDegrees = limelightMountAngleDegrees + getTy().in(Units.Degrees);
-        double angleToGoalRadians = angleToGoalDegrees * (3.14159 / 180.0);
+            double angleToGoalRadians = limelightMountAngleRadians + getTy().in(Units.Radians);
 
-        //calculate distance
-        double distanceFromLimelightToGoalInches = (goalHeightInches - limelightLensHeightInches) / Math.tan(angleToGoalRadians);
+            //calculate distance
+            double distanceFromLimelightToGoalInches = (goalHeightInches - limelightLensHeightInches) / Math.tan(angleToGoalRadians);
 
-        return Distance.ofBaseUnits(distanceFromLimelightToGoalInches, Units.Inches);
+            return Units.Inches.of(distanceFromLimelightToGoalInches);
+        } else {
+            return Units.Inches.of(0.0);
+        }
+
     }
 
     public record DeviceName(String limeLightName) {}

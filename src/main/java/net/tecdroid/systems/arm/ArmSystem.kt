@@ -41,7 +41,7 @@ enum class ArmPoses(val pose: ArmPose) {
 
     L3(ArmPose(
         wristPosition         = 0.34.rotations,
-        elevatorDisplacement  = 0.4117.meters,
+        elevatorDisplacement  = 0.3617.meters,
         elevatorJointPosition = 0.26223.rotations
     )),
 
