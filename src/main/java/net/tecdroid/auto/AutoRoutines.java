@@ -26,56 +26,18 @@ import static net.tecdroid.subsystems.wrist.WristConfigurationKt.getWristConfig;
 
 public class AutoRoutines {
     private final SwerveDrive swerveSubsystem;
-    private final SwerveDriveDriver swerveDriver;
     private final Intake intake;
     private final ArmSystem armSystem;
-    private final LimeLightsController limeLightsController;
     private final AutonomousFollower follower;
-    public AutoRoutines(SwerveDrive swerveSubsystem, SwerveDriveDriver swerveDriver,
-                        Intake intake, ArmSystem armSystem, LimeLightsController limeLightsController) {
+    public AutoRoutines(SwerveDrive swerveSubsystem, Intake intake, ArmSystem armSystem) {
         this.swerveSubsystem = swerveSubsystem;
-        this.swerveDriver = swerveDriver;
         this.intake = intake;
         this.armSystem = armSystem;
-        this.limeLightsController = limeLightsController;
 
         follower = new AutonomousFollower(swerveSubsystem);
     }
 
-    /*public AutoRoutine runTwoMeters() {
-        AutoRoutine routine = follower.factory.newRoutine("runTwoMeters");
-        AutoTrajectory twoMeters = routine.trajectory("TwoMeters");
-
-        routine.active().onTrue(
-                Commands.sequence(
-                        twoMeters.resetOdometry(),
-                        twoMeters.cmd()
-                )
-        );
-
-        return routine;
-    }
-
-    public AutoRoutine runMinusTwoMeters() {
-        AutoRoutine routine = follower.factory.newRoutine("runMinusTwoMeters");
-        AutoTrajectory twoMeters = routine.trajectory("NegativeTwoMeters");
-
-        routine.active().onTrue(
-                Commands.sequence(
-                        twoMeters.resetOdometry(),
-                        twoMeters.cmd()
-                )
-        );
-
-        return routine;
-    }
-
-    public Command runTwoMeterCMD() {
-        return runTwoMeters().cmd();
-    }
-    public Command runMinusTwoMeterCMD() {
-        return runMinusTwoMeters().cmd();
-    }
+    /*
 
 
 
@@ -142,6 +104,8 @@ public class AutoRoutines {
 
     // Individual segments
 
+
+    // TEST SEGMENTS
     public AutoRoutine runTwoMeters() {
         AutoRoutine routine = follower.factory.newRoutine("runTwoMeters");
         AutoTrajectory twoMeters = routine.trajectory("TwoMeters");
@@ -156,9 +120,67 @@ public class AutoRoutines {
         return routine;
     }
 
+    public AutoRoutine runMinusTwoMeters() {
+        AutoRoutine routine = follower.factory.newRoutine("runMinusTwoMeters");
+        AutoTrajectory twoMeters = routine.trajectory("NegativeTwoMeters");
+
+        routine.active().onTrue(
+                Commands.sequence(
+                        twoMeters.resetOdometry(),
+                        twoMeters.cmd()
+                )
+        );
+
+        return routine;
+    }
+
     public Command runTwoMetersCMD() {
         return runTwoMeters().cmd();
     }
+    public Command runMinusTwoMetersCMD() {
+        return runMinusTwoMeters().cmd();
+    }
+
+    public AutoRoutine leftToRight() {
+        AutoRoutine routine = follower.factory.newRoutine("leftToRight");
+        AutoTrajectory cycle = routine.trajectory("LEFTTORIGHT90DEGREES");
+
+        routine.active().onTrue(
+                Commands.sequence(
+                        cycle.resetOdometry(),
+                        cycle.cmd()
+                )
+        );
+
+        return routine;
+    }
+
+    public Command leftToRightCMD() {
+        return leftToRight().cmd();
+    }
+
+    public AutoRoutine rightToLeft() {
+        AutoRoutine routine = follower.factory.newRoutine("leftToRight");
+        AutoTrajectory cycle = routine.trajectory("RIGHTTOLEFT90DEGREES");
+
+        routine.active().onTrue(
+                Commands.sequence(
+                        cycle.resetOdometry(),
+                        cycle.cmd()
+                )
+        );
+
+        return routine;
+    }
+
+    public Command rightToLeftCMD() {
+        return rightToLeft().cmd();
+    }
+
+
+
+
+
 
     public AutoRoutine leftAutoFirstCycle() {
         AutoRoutine routine = follower.factory.newRoutine("First cycle");
@@ -236,11 +258,12 @@ public class AutoRoutines {
                 Commands.sequence(
                         firstCycleBargeToReef.resetOdometry(),
                         firstCycleBargeToReef.cmd(),
+                        // TODO: CHECK THE EVENT NAME
+                        Commands.waitUntil(firstCycleBargeToReef.atTime("armPoseEventMarker")).andThen(
+                                armSystem.setPoseCommand(ArmPoses.L4.getPose(), ArmOrders.JEW.getOrder())
+                        )
                         // TODO: Limelight logic
                         //limelights.alignYAxisToAprilTagDetection(swerveDriver, )
-
-                        // ✅ TODO: Arm logic — place arm in L4
-                        armSystem.setPoseCommand(ArmPoses.L4.getPose(), ArmOrders.JEW.getOrder())
                 )
         );
 

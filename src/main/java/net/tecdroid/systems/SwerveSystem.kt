@@ -18,7 +18,7 @@ import kotlin.math.atan2
 class SwerveSystem(swerveDriveConfig: SwerveDriveConfig) {
     private val limeLightsController = LimeLightsController()
 
-    private val drive = SwerveDrive(
+    val drive = SwerveDrive(
         config = swerveDriveConfig
     )
 

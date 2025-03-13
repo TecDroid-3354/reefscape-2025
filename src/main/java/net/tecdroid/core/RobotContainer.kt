@@ -1,5 +1,6 @@
 package net.tecdroid.core
 
+import choreo.auto.AutoChooser
 import edu.wpi.first.units.Units.Meters
 import edu.wpi.first.wpilibj.shuffleboard.Shuffleboard
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard
@@ -29,8 +30,8 @@ class RobotContainer {
     private val arm = ArmSystem(wristConfig, elevatorConfig, elevatorJointConfig)
     private val intake = Intake(intakeConfig)
 
-    private val auto = AutoRoutines()
-//    private val autoChooser = AutoChooser()
+    private val auto = AutoRoutines(swerve.drive, intake, arm)
+    private val autoChooser = AutoChooser()
 
     init {
         val tab = Shuffleboard.getTab("Robot Container")
@@ -38,6 +39,7 @@ class RobotContainer {
 
         swerve.linkControllerSticks(controller)
         swerve.linkReorientationTrigger(controller.start())
+        autoDashboard();
 
         // Limelights
         swerve.alignToRightAprilTagTrigger(Trigger { controller.leftTriggerAxis > 0.0 }, controller)
@@ -94,7 +96,26 @@ class RobotContainer {
 
     }
 
+    private fun autoDashboard() {
+        // Test paths made for tuning
+        autoChooser.addRoutine("run two meters forward routine", auto::runTwoMeters);
+        autoChooser.addCmd("run two meters forward cmd", auto::runTwoMetersCMD);
+
+        autoChooser.addRoutine("run two meters backward routine", auto::runMinusTwoMeters);
+        autoChooser.addCmd("run two meters backward cmd", auto::runMinusTwoMetersCMD);
+
+        autoChooser.addRoutine("left to right auto routine", auto::leftToRight);
+        autoChooser.addCmd("left to right auto cmd", auto::leftToRightCMD);
+
+        autoChooser.addRoutine("right to left auto cmd", auto::rightToLeft);
+        autoChooser.addCmd("right to left auto cmd", auto::rightToLeftCMD);
+
+        SmartDashboard.putData(autoChooser);
+
+        // Schedules the selected auto for autonomous
+        RobotModeTriggers.autonomous().whileTrue(autoChooser.selectedCommandScheduler());
+    }
 
     val autonomousCommand: Command?
-        get() = auto.runTwoMetersCMD();
+        get() = autoChooser.selectedCommand();
 }
