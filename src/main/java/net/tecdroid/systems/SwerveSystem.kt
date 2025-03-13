@@ -6,7 +6,6 @@ import edu.wpi.first.units.Units.Radians
 import edu.wpi.first.wpilibj2.command.Commands
 import edu.wpi.first.wpilibj2.command.button.Trigger
 import net.tecdroid.input.CompliantXboxController
-import net.tecdroid.subsystems.drivetrain.LimeLightsController
 import net.tecdroid.subsystems.drivetrain.SwerveDrive
 import net.tecdroid.subsystems.drivetrain.SwerveDriveConfig
 import net.tecdroid.subsystems.drivetrain.SwerveDriveDriver
@@ -16,7 +15,6 @@ import net.tecdroid.util.units.seconds
 import kotlin.math.atan2
 
 class SwerveSystem(swerveDriveConfig: SwerveDriveConfig) {
-    private val limeLightsController = LimeLightsController()
 
     private val drive = SwerveDrive(
         config = swerveDriveConfig
@@ -58,25 +56,5 @@ class SwerveSystem(swerveDriveConfig: SwerveDriveConfig) {
 
     fun linkReorientationTrigger(trigger: Trigger) {
         trigger.onTrue(drive.setHeadingCommand(0.0.radians).andThen(driver.toggleOrientationCommand()))
-    }
-
-    fun alignToLeftAprilTagTrigger(trigger: Trigger, controller: CompliantXboxController) {
-        trigger.whileTrue(
-       limeLightsController.alignInAllAxis(
-                driver, Units.Degrees.of(0.0), Units.Degrees.of(0.0), Units.Degrees.of(0.0),false, controller))
-            .onFalse(Commands.runOnce({
-                linkControllerSticks(controller)
-                driver.setFieldOriented()
-            }))
-    }
-
-    fun alignToRightAprilTagTrigger(trigger: Trigger, controller: CompliantXboxController) {
-        trigger.whileTrue(
-            limeLightsController.alignInAllAxis(
-                driver, Units.Degrees.of(0.0), Units.Degrees.of(0.0), Units.Degrees.of(0.0),true, controller))
-            .onFalse(Commands.runOnce({
-                linkControllerSticks(controller)
-                driver.setFieldOriented()
-            }))
     }
 }
