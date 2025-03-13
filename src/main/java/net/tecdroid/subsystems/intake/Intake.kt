@@ -38,6 +38,8 @@ class Intake(private val config: IntakeConfig) : TdSubsystem("Intake") {
         motorController.setControl(request)
     }
 
+    fun hasCoral() = !sensor.get()
+
     private fun configureMotorInterface() {
         val talonConfig = TalonFXConfiguration()
 

@@ -8,10 +8,7 @@ import net.tecdroid.subsystems.elevator.elevatorConfig
 import net.tecdroid.subsystems.elevatorjoint.elevatorJointConfig
 import net.tecdroid.subsystems.intake.intakeConfig
 import net.tecdroid.subsystems.wrist.wristConfig
-import net.tecdroid.systems.SwerveSystem
-import net.tecdroid.systems.ArmOrders
-import net.tecdroid.systems.ArmPoses
-import net.tecdroid.systems.ArmSystem
+import net.tecdroid.systems.*
 
 class RobotContainer {
     private val controller = CompliantXboxController(driverControllerId)
@@ -24,8 +21,9 @@ class RobotContainer {
     }
 
     private fun linkMovement() {
-        swerve.linkControllerSticks(controller)
         swerve.linkReorientationTrigger(controller.start())
+        swerve.linkControllerMovement(controller)
+        swerve.linkLimelightTriggers(controller.leftTrigger(0.5), controller.rightTrigger(0.5), controller)
     }
 
     private fun linkPoses() {

@@ -3,6 +3,8 @@ package net.tecdroid.util
 import edu.wpi.first.units.Measure
 import edu.wpi.first.units.Unit
 
+val pidOutputRange = (-1.0) .. (1.0)
+
 fun <U: Unit> clamp(min: Measure<U>, max: Measure<U>, value: Measure<U>): Measure<U> {
     return if (value > max) max else if (value < min) min else value
 }
