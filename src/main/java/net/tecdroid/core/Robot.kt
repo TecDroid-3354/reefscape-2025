@@ -1,84 +1,68 @@
-package net.tecdroid.core;
+package net.tecdroid.core
 
-import edu.wpi.first.wpilibj.DriverStation;
-import edu.wpi.first.wpilibj.TimedRobot;
-import edu.wpi.first.wpilibj2.command.Command;
-import edu.wpi.first.wpilibj2.command.CommandScheduler;
+import edu.wpi.first.wpilibj.DriverStation
+import edu.wpi.first.wpilibj.TimedRobot
+import edu.wpi.first.wpilibj.shuffleboard.Shuffleboard
+import edu.wpi.first.wpilibj.shuffleboard.ShuffleboardTab
+import edu.wpi.first.wpilibj2.command.Command
+import edu.wpi.first.wpilibj2.command.CommandScheduler
+import frc.robot.LimelightHelpers
 
-public class Robot extends TimedRobot {
-    private Command autonomousCommand;
+class Robot : TimedRobot() {
+    private var autonomousCommand: Command? = null
 
-    private final RobotContainer container;
+    private val container = RobotContainer()
 
-    public Robot() {
-        container = new RobotContainer();
+    override fun robotInit() {
+        DriverStation.silenceJoystickConnectionWarning(true)
     }
 
-    @Override
-    public void robotInit() {
-        DriverStation.silenceJoystickConnectionWarning(true);
-    }
-
-    @Override
-    public void robotPeriodic() {
+    override fun robotPeriodic() {
         CommandScheduler.getInstance()
-                        .run();
+            .run()
     }
 
-    @Override
-    public void disabledInit() {
-        CommandScheduler.getInstance().cancelAll();
+    override fun disabledInit() {
+        CommandScheduler.getInstance().cancelAll()
     }
 
-    @Override
-    public void disabledPeriodic() {
+    override fun disabledPeriodic() {
     }
 
-    @Override
-    public void disabledExit() {
-
+    override fun disabledExit() {
     }
 
-    @Override
-    public void autonomousInit() {
-        autonomousCommand = container.getAutonomousCommand();
+    override fun autonomousInit() {
+        autonomousCommand = container.autonomousCommand
 
         if (autonomousCommand != null) {
-            autonomousCommand.schedule();
+            autonomousCommand!!.schedule()
         }
     }
 
-    @Override
-    public void autonomousPeriodic() {
+    override fun autonomousPeriodic() {
     }
 
-    @Override
-    public void teleopInit() {
+    override fun teleopInit() {
         if (autonomousCommand != null) {
-            autonomousCommand.cancel();
+            autonomousCommand!!.cancel()
         }
-
     }
 
-    @Override
-    public void teleopPeriodic() {
+    override fun teleopPeriodic() {
     }
 
-    @Override
-    public void testInit() {
+    override fun testInit() {
         CommandScheduler.getInstance()
-                        .cancelAll();
+            .cancelAll()
     }
 
-    @Override
-    public void testPeriodic() {
+    override fun testPeriodic() {
     }
 
-    @Override
-    public void simulationInit() {
+    override fun simulationInit() {
     }
 
-    @Override
-    public void simulationPeriodic() {
+    override fun simulationPeriodic() {
     }
 }

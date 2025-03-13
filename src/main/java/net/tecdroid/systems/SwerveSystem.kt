@@ -3,6 +3,7 @@ package net.tecdroid.systems
 import edu.wpi.first.math.controller.PIDController
 import edu.wpi.first.units.Units
 import edu.wpi.first.units.Units.Radians
+import edu.wpi.first.wpilibj.shuffleboard.Shuffleboard
 import edu.wpi.first.wpilibj2.command.Commands
 import edu.wpi.first.wpilibj2.command.button.Trigger
 import net.tecdroid.input.CompliantXboxController
@@ -13,12 +14,16 @@ import net.tecdroid.subsystems.drivetrain.SwerveDriveDriver
 import net.tecdroid.util.units.degrees
 import net.tecdroid.util.units.radians
 import net.tecdroid.util.units.seconds
+import net.tecdroid.vision.limelight.Limelight
+import net.tecdroid.vision.limelight.LimelightConfig
 import kotlin.math.atan2
 
 class SwerveSystem(swerveDriveConfig: SwerveDriveConfig) {
-    private val limeLightsController = LimeLightsController()
+    val xOffPid = PIDController(0.08, 0.0, 0.0)
+    val yOffPid = PIDController(0.08, 0.0, 0.0)
+    val rOffPid = PIDController(0.01, 0.0, 0.0)
 
-    private val drive = SwerveDrive(
+    val drive = SwerveDrive(
         config = swerveDriveConfig
     )
 
@@ -31,8 +36,8 @@ class SwerveSystem(swerveDriveConfig: SwerveDriveConfig) {
     private val heading
         get() = drive.heading
 
-    private val cardinalDirectionAlignmentController = PIDController(0.01, 0.0, 0.01)
-    private var lastCardinalHeading = 0.0.radians
+    val leftLimelight = Limelight(LimelightConfig(name = "limelight-left"))
+    val rightLimelight = Limelight(LimelightConfig(name = "limelight-right"))
 
     init {
         drive.matchRelativeEncodersToAbsoluteEncoders()
@@ -44,39 +49,41 @@ class SwerveSystem(swerveDriveConfig: SwerveDriveConfig) {
     }
 
     fun linkControllerSticks(controller: CompliantXboxController) {
-        driver.longitudinalVelocityFactorSource = { controller.leftY * 0.85 }
-        driver.transversalVelocityFactorSource = { controller.leftX * 0.85 }
-        driver.angularVelocityFactorSource = { controller.rightX * 0.85 }
-    }
-
-    fun linkCardinalDirectionMovement(controller: CompliantXboxController) {
-        driver.angularVelocityFactorSource = {
-            val targetAngle = atan2(controller.rightY, controller.rightX).radians - 90.0.degrees
-            cardinalDirectionAlignmentController.calculate(heading.`in`(Radians), targetAngle.`in`(Radians)) * 0.25
-        }
+        driver.longitudinalVelocityFactorSource = { controller.leftY * 0.25 }
+        driver.transversalVelocityFactorSource = { controller.leftX * 0.25 }
+        driver.angularVelocityFactorSource = { controller.rightX * 0.25 }
     }
 
     fun linkReorientationTrigger(trigger: Trigger) {
         trigger.onTrue(drive.setHeadingCommand(0.0.radians).andThen(driver.toggleOrientationCommand()))
     }
 
-    fun alignToLeftAprilTagTrigger(trigger: Trigger, controller: CompliantXboxController) {
-        trigger.whileTrue(
-       limeLightsController.alignInAllAxis(
-                driver, Units.Degrees.of(0.0), Units.Degrees.of(0.0), Units.Degrees.of(0.0),false, controller))
-            .onFalse(Commands.runOnce({
-                linkControllerSticks(controller)
-                driver.setFieldOriented()
-            }))
+    fun alignToLimelight(limelight: Limelight) {
+        driver.setRobotOriented()
+
+        driver.longitudinalVelocityFactorSource = {
+            val pose = limelight.pose
+            if (!limelight.hasTarget()) 0.0 else
+            xOffPid.calculate(-pose.z, 0.2809).coerceIn(-1.0, 1.0) * 0.8
+        }
+
+        driver.transversalVelocityFactorSource = {
+            val pose = limelight.pose
+            if (!limelight.hasTarget()) 0.0 else
+            yOffPid.calculate(pose.x, 0.0).coerceIn(-1.0, 1.0) * 0.8
+        }
+
+//        driver.angularVelocityFactorSource = {
+//            val offset = limelight.getHorizontalOffset()
+//            if (!limelight.hasTarget()) 0.0 else
+//            rOffPid.calculate(offset, 0.0).coerceIn(-1.0, 1.0) * 0.4
+//        }
     }
 
-    fun alignToRightAprilTagTrigger(trigger: Trigger, controller: CompliantXboxController) {
-        trigger.whileTrue(
-            limeLightsController.alignInAllAxis(
-                driver, Units.Degrees.of(0.0), Units.Degrees.of(0.0), Units.Degrees.of(0.0),true, controller))
-            .onFalse(Commands.runOnce({
-                linkControllerSticks(controller)
-                driver.setFieldOriented()
-            }))
+    fun publishToShuffleboard() {
+        val tab = Shuffleboard.getTab("Driver")
+        tab.add("Limelight Right", rightLimelight)
+        tab.add("Limelight Left", leftLimelight)
     }
+
 }

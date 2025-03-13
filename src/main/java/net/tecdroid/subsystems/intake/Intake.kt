@@ -12,8 +12,7 @@ import net.tecdroid.subsystems.util.generic.TdSubsystem
 
 class Intake(private val config: IntakeConfig) : TdSubsystem("Intake") {
     private val motorController = TalonFX(config.motorControllerId.id)
-    private val intakeSensor = DigitalInput(0)
-
+    private val intakeSensor = DigitalInput(4)
 
     override val forwardsRunningCondition = { true }
     override val backwardsRunningCondition = { true }
