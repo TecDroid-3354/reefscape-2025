@@ -41,7 +41,7 @@ val wristConfig = WristConfig(
     limits = SubsystemLimits(
         absoluteMinimum = 0.0.rotations,
         relativeMinimum = 0.021.rotations,
-        relativeMaximum = 0.3504.rotations,
+        relativeMaximum = 0.3704.rotations,
         absoluteMaximum = 0.3748.rotations,
     ),
 

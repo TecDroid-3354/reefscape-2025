@@ -39,50 +39,68 @@ data class ArmOrder(
 )
 
 enum class ArmPoses(val pose: ArmPose) {
-    Passive(
-        ArmPose(
+    Passive(ArmPose(
         wristPosition         = 0.34.rotations,
         elevatorDisplacement  = 0.01.meters,
         elevatorJointPosition = 0.05.rotations,
         targetVoltage = 0.0.volts
-    )
-    ),
+    )),
 
-    L2(
-        ArmPose(
-        wristPosition         = 0.36.rotations,
-        elevatorDisplacement  = 0.01.meters,
-        elevatorJointPosition = 0.26223.rotations,
+    L2(ArmPose(
+        wristPosition         = 0.3528.rotations,
+        elevatorDisplacement  = 0.0367.meters,
+        elevatorJointPosition = 0.2615.rotations,
         targetVoltage = 10.0.volts
-    )
-    ),
+    )),
 
-    L3(
-        ArmPose(
-        wristPosition         = 0.34.rotations,
-        elevatorDisplacement  = 0.3617.meters,
-        elevatorJointPosition = 0.26223.rotations,
+    L3(ArmPose(
+        wristPosition         = 0.3688.rotations,
+        elevatorDisplacement  = 0.4631.meters,
+        elevatorJointPosition = 0.2615.rotations,
         targetVoltage = 10.0.volts
-    )
-    ),
+    )),
 
-    L4(
-        ArmPose(
-        wristPosition         = 0.3261.rotations,
-        elevatorDisplacement  = 1.0055.meters,
-        elevatorJointPosition = 0.26223.rotations,
+    L4(ArmPose(
+        wristPosition         = 0.3390.rotations,
+        elevatorDisplacement  = 1.0233.meters,
+        elevatorJointPosition = 0.2610.rotations,
         targetVoltage = 10.0.volts
-    )
-    ),
+    )),
 
-    CoralStation(
-        ArmPose(
-        wristPosition         = 0.378.rotations, // new 0.386
-        elevatorDisplacement  = 0.01.meters,
-        elevatorJointPosition = 0.188.rotations,
+    CoralStation(ArmPose(
+        wristPosition         = 0.3436.rotations,
+        elevatorDisplacement  = 0.02345.meters,
+        elevatorJointPosition = 0.1891.rotations,
         targetVoltage = 8.0.volts
-    )
-    )
+    )),
+
+    A1(ArmPose(
+        wristPosition         = 0.2798.rotations,
+        elevatorDisplacement  = 0.1457.meters,
+        elevatorJointPosition = 0.1972.rotations,
+        targetVoltage = 12.0.volts
+    )),
+
+    A2(ArmPose(
+        wristPosition         = 0.2628.rotations,
+        elevatorDisplacement  = 0.4920.meters,
+        elevatorJointPosition = 0.2168.rotations,
+        targetVoltage = 12.0.volts
+    )),
+
+    Processor(ArmPose(
+        wristPosition         = 0.3705.rotations,
+        elevatorDisplacement  = 0.0150.meters,
+        elevatorJointPosition = 0.0615.rotations,
+        targetVoltage = 8.0.volts
+    )),
+
+    Barge(ArmPose(
+        wristPosition         = 0.3476.rotations,
+        elevatorDisplacement  = 1.0420.meters,
+        elevatorJointPosition = 0.2549.rotations,
+        targetVoltage = 8.0.volts
+    ))
 }
 
 enum class ArmOrders(val order: ArmOrder) {

@@ -1,6 +1,8 @@
 package net.tecdroid.core
 
+import edu.wpi.first.wpilibj.shuffleboard.Shuffleboard
 import edu.wpi.first.wpilibj2.command.Command
+import edu.wpi.first.wpilibj2.command.Commands
 import net.tecdroid.constants.GenericConstants.driverControllerId
 import net.tecdroid.input.CompliantXboxController
 import net.tecdroid.subsystems.drivetrain.swerveDriveConfiguration
@@ -14,8 +16,17 @@ class RobotContainer {
     private val controller = CompliantXboxController(driverControllerId)
     private val swerve = SwerveSystem(swerveDriveConfiguration)
     private val arm = ArmSystem(wristConfig, elevatorConfig, elevatorJointConfig, intakeConfig)
+    private var isNormalMode = true
+    private val pollNormalMode = { isNormalMode }
+    private var isLow = false
+    private val pollIsLow = { isLow }
+    private val makeLow = { Commands.runOnce({ isLow = true }) }
+    private val makeHigh = { Commands.runOnce({ isLow = false }) }
 
     init {
+        val driverTab = Shuffleboard.getTab("Driver Tab")
+        driverTab.addBoolean("Algae Mode", pollNormalMode)
+
         linkMovement()
         linkPoses()
     }
@@ -23,39 +34,70 @@ class RobotContainer {
     private fun linkMovement() {
         swerve.linkReorientationTrigger(controller.start())
         swerve.linkControllerMovement(controller)
-        swerve.linkLimelightTriggers(controller.leftTrigger(0.5), controller.rightTrigger(0.5), controller)
+        swerve.linkLimelightTriggers(controller.rightTrigger(0.5), controller.leftTrigger(0.5), controller)
     }
 
     private fun linkPoses() {
+        controller.povLeft().onTrue(Commands.runOnce({ isNormalMode = !isNormalMode }))
+
         controller.y().onTrue(
-            arm.setPoseCommand(
-                ArmPoses.L4.pose,
-                ArmOrders.JEW.order
+            Commands.either(
+                arm.setPoseCommand(
+                    ArmPoses.L4.pose,
+                    ArmOrders.JEW.order
+                ),
+                arm.setPoseCommand(
+                    ArmPoses.Barge.pose,
+                    ArmOrders.JEW.order
+                ).andThen(makeHigh()),
+                pollNormalMode
             )
         )
 
         controller.b().onTrue(
-            arm.setPoseCommand(
-                ArmPoses.L3.pose,
-                ArmOrders.JEW.order
+            Commands.either(
+                arm.setPoseCommand(
+                    ArmPoses.L3.pose,
+                    ArmOrders.JEW.order
+                ),
+                arm.setPoseCommand(
+                    ArmPoses.A2.pose,
+                    if (pollIsLow()) ArmOrders.JWE.order else ArmOrders.EWJ.order
+                ).andThen(makeHigh()),
+                pollNormalMode
             )
         )
 
         controller.a().onTrue(
-            arm.setPoseCommand(
-                ArmPoses.L2.pose,
-                ArmOrders.JEW.order
+            Commands.either(
+                arm.setPoseCommand(
+                    ArmPoses.L2.pose,
+                    ArmOrders.EJW.order
+                ),
+                arm.setPoseCommand(
+                    ArmPoses.A1.pose,
+                    if (pollIsLow()) ArmOrders.JWE.order else ArmOrders.EWJ.order
+                ).andThen(makeHigh()),
+                pollNormalMode
             )
         )
 
         controller.x().onTrue(
-            arm.setPoseCommand(
-                ArmPoses.CoralStation.pose,
-                ArmOrders.EJW.order
+            Commands.either(
+                arm.setPoseCommand(
+                    ArmPoses.CoralStation.pose,
+                    ArmOrders.EJW.order
+                ),
+                arm.setPoseCommand(
+                    ArmPoses.Processor.pose,
+                    ArmOrders.EWJ.order
+                ).andThen(makeLow()),
+                pollNormalMode
             )
         )
 
         controller.rightBumper().onTrue(arm.enableIntake()).onFalse(arm.disableIntake())
+        controller.leftBumper().onTrue(arm.enableOuttake()).onFalse(arm.disableIntake())
 
     }
 
