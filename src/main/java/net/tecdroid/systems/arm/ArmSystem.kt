@@ -52,7 +52,7 @@ enum class ArmPoses(val pose: ArmPose) {
     )),
 
     CoralStation(ArmPose(
-        wristPosition         = 0.378.rotations,
+        wristPosition         = 0.378.rotations, // new 0.386
         elevatorDisplacement  = 0.01.meters,
         elevatorJointPosition = 0.188.rotations
     ))
@@ -81,7 +81,7 @@ class ArmSystem(wristConfig: WristConfig, elevatorConfig: ElevatorConfig, elevat
     fun setElevatorDisplacement(displacement: Distance) : Command = elevator.setDisplacementCommand(displacement)
     fun setWristAngle(angle: Angle) : Command = wrist.setAngleCommand(angle)
 
-    fun getCommandFor(pose: ArmPose, member: ArmMember) : Command = when (member) {
+    private fun getCommandFor(pose: ArmPose, member: ArmMember) : Command = when (member) {
         ArmWrist -> wrist.setAngleCommand(pose.wristPosition).andThen(Commands.waitUntil { wrist.getPositionError() < 1.0.rotations })
         ArmElevator -> elevator.setDisplacementCommand(pose.elevatorDisplacement).andThen(Commands.waitUntil { elevator.getPositionError() < 1.0.rotations })
         ArmJoint -> joint.setAngleCommand(pose.elevatorJointPosition).andThen(Commands.waitUntil { joint.getPositionError() < 1.0.rotations })
