@@ -21,6 +21,8 @@ class Limelight(private val config: LimelightConfig) : Sendable {
     val hasTarget: Boolean
         get() = LimelightHelpers.getTV(config.name)
 
+    fun getTargetId(): Int = LimelightHelpers.getFiducialID(config.name).toInt()
+
     override fun initSendable(builder: SendableBuilder) {
         with(builder) {
             builder.addDoubleProperty("X", { offsetFromTarget.x }) {}

@@ -24,9 +24,6 @@ class RobotContainer {
     private val makeHigh = { Commands.runOnce({ isLow = false }) }
 
     init {
-        val driverTab = Shuffleboard.getTab("Driver Tab")
-        driverTab.addBoolean("Algae Mode", pollNormalMode)
-
         linkMovement()
         linkPoses()
     }
@@ -34,7 +31,7 @@ class RobotContainer {
     private fun linkMovement() {
         swerve.linkReorientationTrigger(controller.start())
         swerve.linkControllerMovement(controller)
-        swerve.linkLimelightTriggers(controller.rightTrigger(0.5), controller.leftTrigger(0.5), controller)
+        swerve.linkLimelightTriggers(controller.leftTrigger(0.5), controller.rightTrigger(0.5), controller)
     }
 
     private fun linkPoses() {

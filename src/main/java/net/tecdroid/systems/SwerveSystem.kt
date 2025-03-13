@@ -2,6 +2,10 @@ package net.tecdroid.systems
 
 import edu.wpi.first.math.controller.PIDController
 import edu.wpi.first.units.Units.Degrees
+import edu.wpi.first.units.measure.Angle
+import edu.wpi.first.wpilibj.DriverStation
+import edu.wpi.first.wpilibj.DriverStation.Alliance
+import edu.wpi.first.wpilibj.shuffleboard.Shuffleboard
 import edu.wpi.first.wpilibj2.command.Command
 import edu.wpi.first.wpilibj2.command.Commands
 import edu.wpi.first.wpilibj2.command.button.Trigger
@@ -18,6 +22,7 @@ import net.tecdroid.util.units.seconds
 import net.tecdroid.vision.limelight.Limelight
 import net.tecdroid.vision.limelight.LimelightConfig
 import kotlin.math.absoluteValue
+import kotlin.math.sign
 
 object LimelightAlignmentHandler {
     enum class LimelightChoice {
@@ -33,6 +38,10 @@ object LimelightAlignmentHandler {
     private val rightLimelight = Limelight(LimelightConfig(rightLimelightName))
     private val leftLimelight = Limelight(LimelightConfig(leftLimelightName))
 
+    init {
+        val tab = Shuffleboard.getTab("Tab")
+    }
+
     private val longitudinalGains = ControlGains(
         p = 0.25,
         i = 0.0,
@@ -46,7 +55,7 @@ object LimelightAlignmentHandler {
     )
 
     private val thetaGains = ControlGains(
-        p = 0.001,
+        p = 0.0075,
         i = 0.0,
         d = 0.0
     )
@@ -60,48 +69,66 @@ object LimelightAlignmentHandler {
     private val rightThetaPid = PIDController(thetaGains.p, thetaGains.i, thetaGains.d)
     private val leftThetaPid = PIDController(thetaGains.p, thetaGains.i, thetaGains.d)
 
-    private const val velocityFactor = 1
+    val apriltagAngles = mapOf(
+        6 to 300 - 180,
+        7 to 0,
+        8 to 60 - 180,
+        9 to 120 - 180,
+        10 to 180,
+        11 to 240 - 180,
+        17 to 60 - 180,
+        18 to 0,
+        19 to 300 - 180,
+        20 to 240 - 180,
+        21 to 180,
+        22 to 120 - 180,
+    )
 
-    fun assignLimelightAlignment(choice: LimelightChoice, offset: LimelightOffset, driver: SwerveDriveDriver) {
+    init {
+        rightThetaPid.enableContinuousInput(0.0, 360.0)
+        leftThetaPid.enableContinuousInput(0.0, 360.0)
+    }
+
+    fun assignLimelightAlignment(choice: LimelightChoice, offset: LimelightOffset, driver: SwerveDriveDriver, heading: () -> Angle) {
         val limelight = if (choice == LimelightChoice.Left) leftLimelight else rightLimelight
         val longitudinalPid = if (choice == LimelightChoice.Left) leftLongitudinalPid else rightLongitudinalPid
         val transversalPid = if (choice == LimelightChoice.Left) leftTransversalPid else rightTransversalPid
         val thetaPid = if (choice == LimelightChoice.Left) leftThetaPid else rightThetaPid
 
-        longitudinalPid.setTolerance(0.01)
-        transversalPid.setTolerance(0.01)
-        thetaPid.setTolerance(0.1)
+        driver.setRobotOriented()
 
         driver.longitudinalVelocityFactorSource = {
-            if (!limelight.hasTarget || longitudinalPid.atSetpoint()) {
+            if (!limelight.hasTarget) {
                 0.0
             } else {
-                val currentLongitudinalOffset = -limelight.offsetFromTarget.z
-                longitudinalPid.calculate(currentLongitudinalOffset, offset.longitudinalOffset).coerceIn(pidOutputRange) * velocityFactor
+                val currentLongitudinalOffset = limelight.offsetFromTarget.z.absoluteValue
+                longitudinalPid.calculate(currentLongitudinalOffset, offset.longitudinalOffset).coerceIn(pidOutputRange)
             }
         }
 
         driver.transversalVelocityFactorSource = {
-            if (!limelight.hasTarget || transversalPid.atSetpoint()) {
+            if (!limelight.hasTarget) {
                 0.0
             } else {
                 val currentTransversalOffset = limelight.offsetFromTarget.x
-                transversalPid.calculate(currentTransversalOffset, offset.transversalOffset).coerceIn(pidOutputRange) * velocityFactor
+                transversalPid.calculate(currentTransversalOffset, offset.transversalOffset).coerceIn(pidOutputRange)
             }
         }
 
         driver.angularVelocityFactorSource = {
-            if (!limelight.hasTarget || thetaPid.atSetpoint()) {
+            if (!limelight.hasTarget) {
                 0.0
             } else {
-                val currentOffset = limelight.getHorizontalAngleOffset.`in`(Degrees)
-                thetaPid.calculate(currentOffset, offset.horizontalAngleOffset).coerceIn(pidOutputRange) * velocityFactor
+                val id = limelight.getTargetId()
+                val targetAngle = apriltagAngles[id]
+                if (id in 7..11 || id in 17 .. 22) thetaPid.calculate(heading().`in`(Degrees), targetAngle!!.toDouble()).coerceIn(
+                    pidOutputRange) else 0.0
             }
         }
     }
 
 
-    fun assignLimelightAlignmentCommand(choice: LimelightChoice, offset: LimelightOffset, driver: SwerveDriveDriver) : Command = Commands.runOnce({assignLimelightAlignment(choice, offset, driver)})
+    fun assignLimelightAlignmentCommand(choice: LimelightChoice, offset: LimelightOffset, driver: SwerveDriveDriver, thetaSource: () -> Angle) : Command = Commands.runOnce({assignLimelightAlignment(choice, offset, driver, thetaSource)})
 }
 
 object ControllerMovementHandler {
@@ -143,13 +170,12 @@ class SwerveSystem(swerveDriveConfig: SwerveDriveConfig) {
     }
 
     fun linkLimelightTriggers(leftTrigger: Trigger, rightTrigger: Trigger, controller: CompliantXboxController) {
-        driver.setRobotOriented()
         val controllerCommand = { ControllerMovementHandler.assignControllerMovementCommand(controller, driver) }
-        leftTrigger.onTrue(LimelightAlignmentHandler.assignLimelightAlignmentCommand(LimelightAlignmentHandler.LimelightChoice.Left, LimelightAlignmentHandler.LimelightOffset(0.2000, 0.0, 0.0), driver)).onFalse(controllerCommand())
-        rightTrigger.onTrue(LimelightAlignmentHandler.assignLimelightAlignmentCommand(LimelightAlignmentHandler.LimelightChoice.Right, LimelightAlignmentHandler.LimelightOffset(0.2000, 0.0, 0.0), driver)).onFalse(controllerCommand())
+        leftTrigger.onTrue(LimelightAlignmentHandler.assignLimelightAlignmentCommand(LimelightAlignmentHandler.LimelightChoice.Left, LimelightAlignmentHandler.LimelightOffset(0.2000, 0.0, 0.0), driver, {drive.heading })).onFalse(controllerCommand())
+        rightTrigger.onTrue(LimelightAlignmentHandler.assignLimelightAlignmentCommand(LimelightAlignmentHandler.LimelightChoice.Right, LimelightAlignmentHandler.LimelightOffset(0.2000, 0.0, 0.0), driver, { drive.heading })).onFalse(controllerCommand())
     }
 
     fun linkReorientationTrigger(trigger: Trigger) {
-        trigger.onTrue(drive.setHeadingCommand(0.0.radians).andThen(driver.toggleOrientationCommand()))
+        trigger.onTrue(drive.setHeadingCommand(0.0.radians).andThen(driver.setFieldOrientedCommand()))
     }
 }
