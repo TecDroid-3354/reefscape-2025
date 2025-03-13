@@ -22,11 +22,8 @@ import kotlin.math.PI
 
 class SwerveDrive(private val config: SwerveDriveConfig) : SubsystemBase(), Sendable {
     private val imu = Pigeon2(config.imuId.id)
-
     private val modules = config.moduleConfigs.map { SwerveModule(it.first) }
-
-    private val kinematics =
-        SwerveDriveKinematics(*config.moduleConfigs.map { it.second }.toTypedArray())
+    private val kinematics = SwerveDriveKinematics(*config.moduleConfigs.map { it.second }.toTypedArray())
     private val odometry = SwerveDriveOdometry(kinematics, heading.toRotation2d(), modulePositions.toTypedArray())
 
     init {
@@ -46,12 +43,6 @@ class SwerveDrive(private val config: SwerveDriveConfig) : SubsystemBase(), Send
         }
     }
 
-    private fun setModuleTargetAzimuth(angle: Angle) {
-        for (module in modules) {
-            module.setTargetState(SwerveModuleState(MetersPerSecond.of(0.0), angle.toRotation2d()))
-        }
-    }
-
     fun drive(chassisSpeeds: ChassisSpeeds) {
         val desiredStates = kinematics.toSwerveModuleStates(chassisSpeeds)
         setModuleTargetStates(*desiredStates)
@@ -63,15 +54,11 @@ class SwerveDrive(private val config: SwerveDriveConfig) : SubsystemBase(), Send
         }
     }
 
-    // //////// //
-    // Odometry //
-    // //////// //
-
     private fun updateOdometry() {
         odometry.update(heading.toRotation2d(), modulePositions.toTypedArray())
     }
 
-    public fun resetOdometry(pose: Pose2d) {
+    fun resetOdometry(pose: Pose2d) {
         odometry.resetPosition(heading.toRotation2d(), modulePositions.toTypedArray(), pose)
     }
 
@@ -111,11 +98,6 @@ class SwerveDrive(private val config: SwerveDriveConfig) : SubsystemBase(), Send
             tab.add("Module $i", m)
         }
     }
-
-
-    // ///////////// //
-    // Configuration //
-    // ///////////// //
 
     private fun configureImuInterface() {
         val imuConfiguration = Pigeon2Configuration()

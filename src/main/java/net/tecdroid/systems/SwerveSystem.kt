@@ -1,22 +1,55 @@
 package net.tecdroid.systems
 
 import edu.wpi.first.math.controller.PIDController
-import edu.wpi.first.units.Units
-import edu.wpi.first.units.Units.Radians
 import edu.wpi.first.wpilibj2.command.Commands
 import edu.wpi.first.wpilibj2.command.button.Trigger
+import net.tecdroid.constants.leftLimelightName
+import net.tecdroid.constants.rightLimelightName
 import net.tecdroid.input.CompliantXboxController
 import net.tecdroid.subsystems.drivetrain.SwerveDrive
 import net.tecdroid.subsystems.drivetrain.SwerveDriveConfig
 import net.tecdroid.subsystems.drivetrain.SwerveDriveDriver
-import net.tecdroid.util.units.degrees
+import net.tecdroid.util.ControlGains
 import net.tecdroid.util.units.radians
 import net.tecdroid.util.units.seconds
-import kotlin.math.atan2
+import net.tecdroid.vision.limelight.Limelight
+import net.tecdroid.vision.limelight.LimelightConfig
+
+object LimelightAlignmentHandler {
+    enum class LimelightChoice {
+        Left, Right
+    }
+
+    private val rightLimelight = Limelight(LimelightConfig(rightLimelightName))
+    private val leftLimelight = Limelight(LimelightConfig(leftLimelightName))
+
+    private val longitudinalGains = ControlGains(
+        p = 0.0,
+        i = 0.0,
+        d = 0.0
+    )
+
+    private val transversalGains = ControlGains(
+        p = 0.0,
+        i = 0.0,
+        d = 0.0
+    )
+
+    private val leftLongitudinalPid = PIDController(longitudinalGains.p, longitudinalGains.i, longitudinalGains.d)
+    private val rightLongitudinalPid = PIDController(longitudinalGains.p, longitudinalGains.i, longitudinalGains.d)
+
+    private val leftTransversalPid = PIDController(transversalGains.p, transversalGains.i, transversalGains.d)
+    private val rightTransversalPid = PIDController(transversalGains.p, transversalGains.i, transversalGains.d)
+
+    private val velocityFactor = 0.75
+
+    fun transversalAlignment(limelight: Limelight) {
+
+    }
+}
 
 class SwerveSystem(swerveDriveConfig: SwerveDriveConfig) {
-
-    val drive = SwerveDrive(
+    private val drive = SwerveDrive(
         config = swerveDriveConfig
     )
 
@@ -28,9 +61,6 @@ class SwerveSystem(swerveDriveConfig: SwerveDriveConfig) {
 
     private val heading
         get() = drive.heading
-
-    private val cardinalDirectionAlignmentController = PIDController(0.01, 0.0, 0.01)
-    private var lastCardinalHeading = 0.0.radians
 
     init {
         drive.matchRelativeEncodersToAbsoluteEncoders()
@@ -45,13 +75,6 @@ class SwerveSystem(swerveDriveConfig: SwerveDriveConfig) {
         driver.longitudinalVelocityFactorSource = { controller.leftY * 0.85 }
         driver.transversalVelocityFactorSource = { controller.leftX * 0.85 }
         driver.angularVelocityFactorSource = { controller.rightX * 0.85 }
-    }
-
-    fun linkCardinalDirectionMovement(controller: CompliantXboxController) {
-        driver.angularVelocityFactorSource = {
-            val targetAngle = atan2(controller.rightY, controller.rightX).radians - 90.0.degrees
-            cardinalDirectionAlignmentController.calculate(heading.`in`(Radians), targetAngle.`in`(Radians)) * 0.25
-        }
     }
 
     fun linkReorientationTrigger(trigger: Trigger) {

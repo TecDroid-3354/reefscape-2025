@@ -13,7 +13,7 @@ data class SwerveDriveConfig(
     val imuId: NumericId
 )
 
-fun SquareChassisConfig(convention: SpatialConvention, moduleConfigs: List<SwerveModuleConfig>, geometry: Rectangle, imuId: NumericId): SwerveDriveConfig {
+fun makeSquareChassisConfig(convention: SpatialConvention, moduleConfigs: List<SwerveModuleConfig>, geometry: Rectangle, imuId: NumericId): SwerveDriveConfig {
     val scaledGeometry = geometry.scale(0.5)
 
     return SwerveDriveConfig(
@@ -44,7 +44,7 @@ fun SquareChassisConfig(convention: SpatialConvention, moduleConfigs: List<Swerv
     )
 }
 
-val swerveDriveConfiguration = SquareChassisConfig(
+val swerveDriveConfiguration = makeSquareChassisConfig(
     convention = SpatialConvention(
         longitudinalDirection = LongitudinalDirection.Front,
         transversalDirection = TransversalDirection.Left,

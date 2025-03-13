@@ -1,8 +1,9 @@
-package net.tecdroid.systems.arm
+package net.tecdroid.systems
 
 import edu.wpi.first.units.Units.*
 import edu.wpi.first.units.measure.Angle
 import edu.wpi.first.units.measure.Distance
+import edu.wpi.first.units.measure.Voltage
 import edu.wpi.first.util.sendable.Sendable
 import edu.wpi.first.util.sendable.SendableBuilder
 import edu.wpi.first.wpilibj2.command.Command
@@ -12,50 +13,76 @@ import net.tecdroid.subsystems.elevator.Elevator
 import net.tecdroid.subsystems.elevator.ElevatorConfig
 import net.tecdroid.subsystems.elevatorjoint.ElevatorJoint
 import net.tecdroid.subsystems.elevatorjoint.ElevatorJointConfig
+import net.tecdroid.subsystems.intake.Intake
+import net.tecdroid.subsystems.intake.IntakeConfig
 import net.tecdroid.subsystems.wrist.Wrist
 import net.tecdroid.subsystems.wrist.WristConfig
-import net.tecdroid.systems.arm.ArmMember.*
-import net.tecdroid.util.units.degrees
+import net.tecdroid.systems.ArmMember.*
 import net.tecdroid.util.units.meters
 import net.tecdroid.util.units.rotations
+import net.tecdroid.util.units.volts
 
 enum class ArmMember {
     ArmWrist, ArmElevator, ArmJoint
 }
 
-data class ArmPose(val wristPosition: Angle, val elevatorDisplacement: Distance, val elevatorJointPosition: Angle)
-data class ArmOrder(val first: ArmMember, val second: ArmMember, val third: ArmMember)
+data class ArmPose(
+    val wristPosition: Angle,
+    val elevatorDisplacement: Distance,
+    val elevatorJointPosition: Angle,
+    val targetVoltage: Voltage
+)
+data class ArmOrder(
+    val first: ArmMember,
+    val second: ArmMember,
+    val third: ArmMember
+)
 
 enum class ArmPoses(val pose: ArmPose) {
-    Passive(ArmPose(
+    Passive(
+        ArmPose(
         wristPosition         = 0.34.rotations,
         elevatorDisplacement  = 0.01.meters,
-        elevatorJointPosition = 0.05.rotations
-    )),
+        elevatorJointPosition = 0.05.rotations,
+        targetVoltage = 0.0.volts
+    )
+    ),
 
-    L2(ArmPose(
+    L2(
+        ArmPose(
         wristPosition         = 0.36.rotations,
         elevatorDisplacement  = 0.01.meters,
-        elevatorJointPosition = 0.26223.rotations
-    )),
+        elevatorJointPosition = 0.26223.rotations,
+        targetVoltage = 10.0.volts
+    )
+    ),
 
-    L3(ArmPose(
+    L3(
+        ArmPose(
         wristPosition         = 0.34.rotations,
         elevatorDisplacement  = 0.3617.meters,
-        elevatorJointPosition = 0.26223.rotations
-    )),
+        elevatorJointPosition = 0.26223.rotations,
+        targetVoltage = 10.0.volts
+    )
+    ),
 
-    L4(ArmPose(
+    L4(
+        ArmPose(
         wristPosition         = 0.3261.rotations,
         elevatorDisplacement  = 1.0055.meters,
-        elevatorJointPosition = 0.26223.rotations
-    )),
+        elevatorJointPosition = 0.26223.rotations,
+        targetVoltage = 10.0.volts
+    )
+    ),
 
-    CoralStation(ArmPose(
+    CoralStation(
+        ArmPose(
         wristPosition         = 0.378.rotations, // new 0.386
         elevatorDisplacement  = 0.01.meters,
-        elevatorJointPosition = 0.188.rotations
-    ))
+        elevatorJointPosition = 0.188.rotations,
+        targetVoltage = 8.0.volts
+    )
+    )
 }
 
 enum class ArmOrders(val order: ArmOrder) {
@@ -67,10 +94,12 @@ enum class ArmOrders(val order: ArmOrder) {
     WJE(ArmOrder(ArmWrist, ArmJoint, ArmElevator))
 }
 
-class ArmSystem(wristConfig: WristConfig, elevatorConfig: ElevatorConfig, elevatorJointConfig: ElevatorJointConfig) : Sendable {
-    val wrist = Wrist(wristConfig)
-    val elevator = Elevator(elevatorConfig)
-    val joint = ElevatorJoint(elevatorJointConfig)
+class ArmSystem(wristConfig: WristConfig, elevatorConfig: ElevatorConfig, elevatorJointConfig: ElevatorJointConfig, intakeConfig: IntakeConfig) : Sendable {
+    private val wrist = Wrist(wristConfig)
+    private val elevator = Elevator(elevatorConfig)
+    private val joint = ElevatorJoint(elevatorJointConfig)
+    private val intake = Intake(intakeConfig)
+    private var targetVoltage = 0.0.volts
 
     init {
         wrist.matchRelativeEncodersToAbsoluteEncoders()
@@ -81,17 +110,25 @@ class ArmSystem(wristConfig: WristConfig, elevatorConfig: ElevatorConfig, elevat
     fun setElevatorDisplacement(displacement: Distance) : Command = elevator.setDisplacementCommand(displacement)
     fun setWristAngle(angle: Angle) : Command = wrist.setAngleCommand(angle)
 
+    fun enableIntake() : Command = intake.setVoltageCommand(targetVoltage)
+    fun enableOuttake() : Command = intake.setVoltageCommand(-targetVoltage)
+    fun disableIntake() : Command = intake.setVoltageCommand(0.0.volts)
+
     private fun getCommandFor(pose: ArmPose, member: ArmMember) : Command = when (member) {
         ArmWrist -> wrist.setAngleCommand(pose.wristPosition).andThen(Commands.waitUntil { wrist.getPositionError() < 1.0.rotations })
         ArmElevator -> elevator.setDisplacementCommand(pose.elevatorDisplacement).andThen(Commands.waitUntil { elevator.getPositionError() < 1.0.rotations })
         ArmJoint -> joint.setAngleCommand(pose.elevatorJointPosition).andThen(Commands.waitUntil { joint.getPositionError() < 1.0.rotations })
     }
 
-    fun setPoseCommand(pose: ArmPose, order: ArmOrder) : Command = SequentialCommandGroup(
-        getCommandFor(pose, order.first),
-        getCommandFor(pose, order.second),
-        getCommandFor(pose, order.third),
-    )
+    fun setPoseCommand(pose: ArmPose, order: ArmOrder) : Command {
+        targetVoltage = pose.targetVoltage
+
+        return SequentialCommandGroup(
+            getCommandFor(pose, order.first),
+            getCommandFor(pose, order.second),
+            getCommandFor(pose, order.third),
+        )
+    }
 
     override fun initSendable(builder: SendableBuilder) {
         with(builder) {

@@ -2,27 +2,17 @@ package net.tecdroid.auto;
 
 import choreo.auto.AutoRoutine;
 import choreo.auto.AutoTrajectory;
-import edu.wpi.first.wpilibj.DigitalInput;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import net.tecdroid.subsystems.drivetrain.LimeLightsController;
 import net.tecdroid.subsystems.intake.*;
 //import net.tecdroid.subsystems.limeLight.LimeLightsController;
 import net.tecdroid.subsystems.drivetrain.SwerveDrive;
-import net.tecdroid.subsystems.drivetrain.SwerveDriveDriver;
-import  net.tecdroid.subsystems.wrist.WristConfig;
-import net.tecdroid.subsystems.elevatorjoint.ElevatorJointConfig;
-import net.tecdroid.subsystems.elevator.Elevator;
-import net.tecdroid.systems.arm.ArmOrders;
-import net.tecdroid.systems.arm.ArmPoses;
-import net.tecdroid.systems.arm.ArmSystem;
+import net.tecdroid.systems.ArmOrders;
+import net.tecdroid.systems.ArmPoses;
+import net.tecdroid.systems.ArmSystem;
 
 import static edu.wpi.first.units.Units.*;
-import static net.tecdroid.subsystems.drivetrain.SwerveDriveConfigurationKt.getSwerveDriveConfiguration;
-import static net.tecdroid.subsystems.elevator.ElevatorConfigurationKt.getElevatorConfig;
-import static net.tecdroid.subsystems.elevatorjoint.ElevatorJointConfigurationKt.getElevatorJointConfig;
-import static net.tecdroid.subsystems.intake.IntakeConfigurationKt.getIntakeConfig;
-import static net.tecdroid.subsystems.wrist.WristConfigurationKt.getWristConfig;
 
 public class AutoRoutines {
     private final SwerveDrive swerveSubsystem;

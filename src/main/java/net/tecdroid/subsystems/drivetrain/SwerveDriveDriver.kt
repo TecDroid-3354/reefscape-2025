@@ -20,7 +20,7 @@ class SwerveDriveDriver(
     private val maxAngularVelocity: AngularVelocity,
     accelerationPeriod: Time,
     decelerationPeriod: Time = accelerationPeriod
-): Sendable {
+) {
     var longitudinalVelocityFactorSource = { 0.0 }
     var transversalVelocityFactorSource = { 0.0 }
     var angularVelocityFactorSource = { 0.0 }
@@ -61,32 +61,19 @@ class SwerveDriveDriver(
         }
     }
 
-    fun toggleOrientationCommand() : Command {
-        return Commands.runOnce({
-            toggleOrientation()
-        })
-    }
+    fun toggleOrientationCommand() : Command = Commands.runOnce(::toggleOrientation)
 
     fun setFieldOriented() {
         orientation = DriveOrientation.FieldOriented
     }
 
+    fun setFieldOrientedCommand() : Command = Commands.runOnce(::setFieldOriented)
+
     fun setRobotOriented() {
         orientation = DriveOrientation.RobotOriented
     }
 
-    override fun initSendable(builder: SendableBuilder) {
-        with(builder) {
-            addDoubleProperty("Longitudinal Factor", longitudinalVelocityFactorSource) {}
-            addDoubleProperty("Transversal Factor", longitudinalVelocityFactorSource) {}
-            addDoubleProperty("Angular Factor", longitudinalVelocityFactorSource) {}
-        }
-    }
-
-    fun publishToShuffleboard() {
-        val tab = Shuffleboard.getTab(integratorTabName)
-        tab.add("Swerve Driver", this)
-    }
+    fun setRobotOrientedCommand() : Command = Commands.runOnce(::setRobotOriented)
 
     enum class DriveOrientation {
         FieldOriented,
