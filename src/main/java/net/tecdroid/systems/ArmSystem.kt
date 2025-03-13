@@ -116,7 +116,7 @@ class ArmSystem(wristConfig: WristConfig, elevatorConfig: ElevatorConfig, elevat
     private val wrist = Wrist(wristConfig)
     private val elevator = Elevator(elevatorConfig)
     private val joint = ElevatorJoint(elevatorJointConfig)
-    private val intake = Intake(intakeConfig)
+     val intake = Intake(intakeConfig)
     private var targetVoltage = 0.0.volts
 
     init {

@@ -3,6 +3,7 @@ package net.tecdroid.core
 import edu.wpi.first.wpilibj.shuffleboard.Shuffleboard
 import edu.wpi.first.wpilibj2.command.Command
 import edu.wpi.first.wpilibj2.command.Commands
+import net.tecdroid.auto.AutoRoutines
 import net.tecdroid.constants.GenericConstants.driverControllerId
 import net.tecdroid.input.CompliantXboxController
 import net.tecdroid.subsystems.drivetrain.swerveDriveConfiguration
@@ -22,6 +23,8 @@ class RobotContainer {
     private val pollIsLow = { isLow }
     private val makeLow = { Commands.runOnce({ isLow = true }) }
     private val makeHigh = { Commands.runOnce({ isLow = false }) }
+    private val auto = AutoRoutines(swerve.drive, arm.intake, arm)
+
 
     init {
         linkMovement()
@@ -98,7 +101,9 @@ class RobotContainer {
 
     }
 
+
+
     val autonomousCommand: Command?
-        get() = null
+        get() = auto.leftAutoCMD()
 
 }

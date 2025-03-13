@@ -142,11 +142,11 @@ object ControllerMovementHandler {
 }
 
 class SwerveSystem(swerveDriveConfig: SwerveDriveConfig) {
-    private val drive = SwerveDrive(
+     val drive = SwerveDrive(
         config = swerveDriveConfig
     )
 
-    private val driver = SwerveDriveDriver(
+     val driver = SwerveDriveDriver(
         maxLinearVelocity = drive.maxLinearVelocity,
         maxAngularVelocity = drive.maxAngularVelocity,
         accelerationPeriod = 0.1.seconds
