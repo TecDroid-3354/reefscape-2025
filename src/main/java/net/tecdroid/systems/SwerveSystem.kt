@@ -63,7 +63,7 @@ class SwerveSystem(swerveDriveConfig: SwerveDriveConfig) {
     fun alignToLeftAprilTagTrigger(trigger: Trigger, controller: CompliantXboxController) {
         trigger.whileTrue(
        limeLightsController.alignInAllAxis(
-                driver, Units.Degrees.of(0.0), Units.Degrees.of(0.0), Units.Degrees.of(0.0),false))
+                driver, Units.Degrees.of(0.0), Units.Degrees.of(0.0), Units.Degrees.of(0.0),false, controller))
             .onFalse(Commands.runOnce({
                 linkControllerSticks(controller)
                 driver.setFieldOriented()
@@ -73,7 +73,7 @@ class SwerveSystem(swerveDriveConfig: SwerveDriveConfig) {
     fun alignToRightAprilTagTrigger(trigger: Trigger, controller: CompliantXboxController) {
         trigger.whileTrue(
             limeLightsController.alignInAllAxis(
-                driver, Units.Degrees.of(0.0), Units.Degrees.of(0.0), Units.Degrees.of(0.0),true))
+                driver, Units.Degrees.of(0.0), Units.Degrees.of(0.0), Units.Degrees.of(0.0),true, controller))
             .onFalse(Commands.runOnce({
                 linkControllerSticks(controller)
                 driver.setFieldOriented()
