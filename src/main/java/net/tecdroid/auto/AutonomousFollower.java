@@ -5,6 +5,7 @@ import choreo.trajectory.SwerveSample;
 import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
+import edu.wpi.first.wpilibj.DriverStation;
 import net.tecdroid.subsystems.drivetrain.SwerveDrive;
 
 import static net.tecdroid.auto.AutonomousConstants.*;
@@ -30,7 +31,7 @@ public class AutonomousFollower {
                 this.swerveDrive::getPose,
                 this.swerveDrive::resetOdometry,
                 this::followTrajectory,
-                true,
+                DriverStation.getAlliance().get().equals(DriverStation.Alliance.Red),
                 this.swerveDrive
         );
 

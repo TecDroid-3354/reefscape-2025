@@ -52,7 +52,7 @@ enum class ArmPoses(val pose: ArmPose) {
     )),
 
     CoralStation(ArmPose(
-        wristPosition         = 0.378.rotations,
+        wristPosition         = 0.378.rotations, // new 0.386
         elevatorDisplacement  = 0.01.meters,
         elevatorJointPosition = 0.188.rotations
     ))

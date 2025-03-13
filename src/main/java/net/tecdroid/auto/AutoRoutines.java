@@ -25,58 +25,19 @@ import static net.tecdroid.subsystems.intake.IntakeConfigurationKt.getIntakeConf
 import static net.tecdroid.subsystems.wrist.WristConfigurationKt.getWristConfig;
 
 public class AutoRoutines {
+    private final SwerveDrive swerveSubsystem;
+    private final Intake intake;
+    private final ArmSystem armSystem;
     private final AutonomousFollower follower;
-    private final Intake intake = new Intake(getIntakeConfig());
-    private final DigitalInput intakeSensor = new DigitalInput(4); // digital input --> invertir la señal (cuando detecta algo, retorna false)
-        private final LimeLightsController limelights = new LimeLightsController();
-    private final SwerveDrive swerveDriveSubsystem = new SwerveDrive(getSwerveDriveConfiguration());
-    private final SwerveDriveDriver swerveDriver = new SwerveDriveDriver(
-            swerveDriveSubsystem.getMaxLinearVelocity(),
-            swerveDriveSubsystem.getMaxAngularVelocity(),
-            Seconds.of(0.1),
-            Seconds.of(0.1));
+    public AutoRoutines(SwerveDrive swerveSubsystem, Intake intake, ArmSystem armSystem) {
+        this.swerveSubsystem = swerveSubsystem;
+        this.intake = intake;
+        this.armSystem = armSystem;
 
-    private final ArmSystem arm = new ArmSystem(getWristConfig(), getElevatorConfig(), getElevatorJointConfig());
-
-
-    public AutoRoutines() {
-        follower = new AutonomousFollower(this.swerveDriveSubsystem);
+        follower = new AutonomousFollower(swerveSubsystem);
     }
 
-    /*public AutoRoutine runTwoMeters() {
-        AutoRoutine routine = follower.factory.newRoutine("runTwoMeters");
-        AutoTrajectory twoMeters = routine.trajectory("TwoMeters");
-
-        routine.active().onTrue(
-                Commands.sequence(
-                        twoMeters.resetOdometry(),
-                        twoMeters.cmd()
-                )
-        );
-
-        return routine;
-    }
-
-    public AutoRoutine runMinusTwoMeters() {
-        AutoRoutine routine = follower.factory.newRoutine("runMinusTwoMeters");
-        AutoTrajectory twoMeters = routine.trajectory("NegativeTwoMeters");
-
-        routine.active().onTrue(
-                Commands.sequence(
-                        twoMeters.resetOdometry(),
-                        twoMeters.cmd()
-                )
-        );
-
-        return routine;
-    }
-
-    public Command runTwoMeterCMD() {
-        return runTwoMeters().cmd();
-    }
-    public Command runMinusTwoMeterCMD() {
-        return runMinusTwoMeters().cmd();
-    }
+    /*
 
 
 
@@ -143,6 +104,8 @@ public class AutoRoutines {
 
     // Individual segments
 
+
+    // TEST SEGMENTS
     public AutoRoutine runTwoMeters() {
         AutoRoutine routine = follower.factory.newRoutine("runTwoMeters");
         AutoTrajectory twoMeters = routine.trajectory("TwoMeters");
@@ -157,9 +120,67 @@ public class AutoRoutines {
         return routine;
     }
 
+    public AutoRoutine runMinusTwoMeters() {
+        AutoRoutine routine = follower.factory.newRoutine("runMinusTwoMeters");
+        AutoTrajectory twoMeters = routine.trajectory("NegativeTwoMeters");
+
+        routine.active().onTrue(
+                Commands.sequence(
+                        twoMeters.resetOdometry(),
+                        twoMeters.cmd()
+                )
+        );
+
+        return routine;
+    }
+
     public Command runTwoMetersCMD() {
         return runTwoMeters().cmd();
     }
+    public Command runMinusTwoMetersCMD() {
+        return runMinusTwoMeters().cmd();
+    }
+
+    public AutoRoutine leftToRight() {
+        AutoRoutine routine = follower.factory.newRoutine("leftToRight");
+        AutoTrajectory cycle = routine.trajectory("LEFTTORIGHT90DEGREES");
+
+        routine.active().onTrue(
+                Commands.sequence(
+                        cycle.resetOdometry(),
+                        cycle.cmd()
+                )
+        );
+
+        return routine;
+    }
+
+    public Command leftToRightCMD() {
+        return leftToRight().cmd();
+    }
+
+    public AutoRoutine rightToLeft() {
+        AutoRoutine routine = follower.factory.newRoutine("leftToRight");
+        AutoTrajectory cycle = routine.trajectory("RIGHTTOLEFT90DEGREES");
+
+        routine.active().onTrue(
+                Commands.sequence(
+                        cycle.resetOdometry(),
+                        cycle.cmd()
+                )
+        );
+
+        return routine;
+    }
+
+    public Command rightToLeftCMD() {
+        return rightToLeft().cmd();
+    }
+
+
+
+
+
 
     public AutoRoutine leftAutoFirstCycle() {
         AutoRoutine routine = follower.factory.newRoutine("First cycle");
@@ -237,11 +258,12 @@ public class AutoRoutines {
                 Commands.sequence(
                         firstCycleBargeToReef.resetOdometry(),
                         firstCycleBargeToReef.cmd(),
+                        // TODO: CHECK THE EVENT NAME
+                        Commands.waitUntil(firstCycleBargeToReef.atTime("armPoseEventMarker")).andThen(
+                                armSystem.setPoseCommand(ArmPoses.L4.getPose(), ArmOrders.JEW.getOrder())
+                        )
                         // TODO: Limelight logic
                         //limelights.alignYAxisToAprilTagDetection(swerveDriver, )
-
-                        // ✅ TODO: Arm logic — place arm in L4
-                        arm.setPoseCommand(ArmPoses.L4.getPose(), ArmOrders.JEW.getOrder())
                 )
         );
 
@@ -252,7 +274,7 @@ public class AutoRoutines {
 
         // All reef -> coralStation cycles will automatically set arm to have coral station intake position
         routine.anyActive(secondCycleReefToCoralStation, thirdCycleReefToCoralStation)
-                .whileTrue(arm.setPoseCommand(ArmPoses.CoralStation.getPose(), ArmOrders.EJW.getOrder()));
+                .whileTrue(armSystem.setPoseCommand(ArmPoses.CoralStation.getPose(), ArmOrders.EJW.getOrder()));
                 //.whileTrue(arm.setArmPoseCMD(armPositions.coralStationIntake));
         // is equal to:
         // secondCycleReefToCoralStation.active().onTrue(arm.setArmPoseCMD(armPositions.coralStationIntake));
@@ -260,7 +282,7 @@ public class AutoRoutines {
 
         // All coralStation -> reef cycles will automatically set arm to have reef L4 position
         routine.anyActive(secondCycleCoralStationToReef, thirdCycleCoralStationToReef)
-                .whileTrue(arm.setPoseCommand(ArmPoses.L4.getPose(), ArmOrders.JEW.getOrder()));
+                .whileTrue(armSystem.setPoseCommand(ArmPoses.L4.getPose(), ArmOrders.JEW.getOrder()));
         // is equal to:
         // secondCycleCoralStationToReef.active().onTrue(arm.setArmPoseCMD(armPositions.reefL4));
         // thirdCycleCoralStationToReef.active().onTrue(arm.setArmPoseCMD(armPositions.reefL4));

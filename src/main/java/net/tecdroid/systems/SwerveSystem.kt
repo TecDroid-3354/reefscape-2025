@@ -16,7 +16,7 @@ import kotlin.math.atan2
 
 class SwerveSystem(swerveDriveConfig: SwerveDriveConfig) {
 
-    private val drive = SwerveDrive(
+    val drive = SwerveDrive(
         config = swerveDriveConfig
     )
 
