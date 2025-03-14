@@ -2,25 +2,21 @@ package net.tecdroid.core
 
 import edu.wpi.first.wpilibj.DriverStation
 import edu.wpi.first.wpilibj.TimedRobot
-import edu.wpi.first.wpilibj.shuffleboard.Shuffleboard
-import edu.wpi.first.wpilibj.shuffleboard.ShuffleboardTab
-import edu.wpi.first.wpilibj2.command.Command
+import edu.wpi.first.wpilibj.Timer
 import edu.wpi.first.wpilibj2.command.CommandScheduler
-import frc.robot.LimelightHelpers
+import net.tecdroid.util.units.degrees
 
 class Robot : TimedRobot() {
-    private var autonomousCommand: Command? = null
-
 
     private val container = RobotContainer()
+    val timer = Timer()
 
     override fun robotInit() {
         DriverStation.silenceJoystickConnectionWarning(true)
     }
 
     override fun robotPeriodic() {
-        CommandScheduler.getInstance()
-            .run()
+        CommandScheduler.getInstance().run()
     }
 
     override fun disabledInit() {
@@ -34,24 +30,35 @@ class Robot : TimedRobot() {
     }
 
     override fun autonomousInit() {
-        autonomousCommand = container.autonomousCommand
-
-        if (autonomousCommand != null) {
-            autonomousCommand!!.schedule()
-        }
+        timer.restart()
+        timer.reset()
+        timer.start()
 
     }
 
     override fun autonomousPeriodic() {
+        for (module in container.swerve.drive.modules) {
+            module.setTargetAngle(0.0.degrees)
+        }
+
+        val power = 0.25
+
+        if (timer.get() < 1.5) {
+            container.swerve.drive.modules[0].setPower(power)
+            container.swerve.drive.modules[1].setPower(power)
+            container.swerve.drive.modules[2].setPower(power)
+            container.swerve.drive.modules[3].setPower(-power)
+
+
+        } else {
+            container.swerve.drive.setPower(0.0)
+        }
 
     }
 
     override fun teleopInit() {
-        if (autonomousCommand != null) {
-            autonomousCommand!!.cancel()
-        }
-
         container.swerve.driver.setFieldOriented()
+        container.initial()
     }
 
     override fun teleopPeriodic() {
@@ -59,8 +66,7 @@ class Robot : TimedRobot() {
     }
 
     override fun testInit() {
-        CommandScheduler.getInstance()
-            .cancelAll()
+        CommandScheduler.getInstance().cancelAll()
     }
 
     override fun testPeriodic() {

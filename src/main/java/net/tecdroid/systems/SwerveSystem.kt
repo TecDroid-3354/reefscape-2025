@@ -38,10 +38,6 @@ object LimelightAlignmentHandler {
     private val rightLimelight = Limelight(LimelightConfig(rightLimelightName))
     private val leftLimelight = Limelight(LimelightConfig(leftLimelightName))
 
-    init {
-        val tab = Shuffleboard.getTab("Tab")
-    }
-
     private val longitudinalGains = ControlGains(
         p = 0.25,
         i = 0.0,
@@ -127,7 +123,6 @@ object LimelightAlignmentHandler {
         }
     }
 
-
     fun assignLimelightAlignmentCommand(choice: LimelightChoice, offset: LimelightOffset, driver: SwerveDriveDriver, thetaSource: () -> Angle) : Command = Commands.runOnce({assignLimelightAlignment(choice, offset, driver, thetaSource)})
 }
 
@@ -152,6 +147,8 @@ class SwerveSystem(swerveDriveConfig: SwerveDriveConfig) {
         accelerationPeriod = 0.1.seconds
     )
 
+    var controllerMode = true
+
     private val heading
         get() = drive.heading
 
@@ -164,15 +161,23 @@ class SwerveSystem(swerveDriveConfig: SwerveDriveConfig) {
         }, drive)
     }
 
+    fun always() {
+        if (controllerMode) {
+            driver.setFieldOriented()
+        }
+    }
+
     fun linkControllerMovement(controller: CompliantXboxController) {
         ControllerMovementHandler.assignControllerMovement(controller, driver)
+        controllerMode = true
         driver.setFieldOriented()
     }
 
     fun linkLimelightTriggers(leftTrigger: Trigger, rightTrigger: Trigger, controller: CompliantXboxController) {
         val controllerCommand = { ControllerMovementHandler.assignControllerMovementCommand(controller, driver) }
-        leftTrigger.onTrue(LimelightAlignmentHandler.assignLimelightAlignmentCommand(LimelightAlignmentHandler.LimelightChoice.Left, LimelightAlignmentHandler.LimelightOffset(0.2000, 0.0, 0.0), driver, {drive.heading })).onFalse(controllerCommand())
-        rightTrigger.onTrue(LimelightAlignmentHandler.assignLimelightAlignmentCommand(LimelightAlignmentHandler.LimelightChoice.Right, LimelightAlignmentHandler.LimelightOffset(0.2000, 0.0, 0.0), driver, { drive.heading })).onFalse(controllerCommand())
+        leftTrigger.onTrue(LimelightAlignmentHandler.assignLimelightAlignmentCommand(LimelightAlignmentHandler.LimelightChoice.Left, LimelightAlignmentHandler.LimelightOffset(0.19000, 0.0, 0.0), driver, {drive.heading })).onFalse(controllerCommand())
+        rightTrigger.onTrue(LimelightAlignmentHandler.assignLimelightAlignmentCommand(LimelightAlignmentHandler.LimelightChoice.Right, LimelightAlignmentHandler.LimelightOffset(0.19000, 0.0, 0.0), driver, { drive.heading })).onFalse(controllerCommand())
+        controllerMode = false
     }
 
     fun linkReorientationTrigger(trigger: Trigger) {

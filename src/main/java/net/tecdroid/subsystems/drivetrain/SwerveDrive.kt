@@ -1,9 +1,10 @@
 package net.tecdroid.subsystems.drivetrain
 
+import choreo.trajectory.SwerveSample
 import com.ctre.phoenix6.configs.Pigeon2Configuration
 import com.ctre.phoenix6.hardware.Pigeon2
+import edu.wpi.first.math.controller.PIDController
 import edu.wpi.first.math.geometry.Pose2d
-import edu.wpi.first.math.geometry.Rotation2d
 import edu.wpi.first.math.kinematics.*
 import edu.wpi.first.units.Units.*
 import edu.wpi.first.units.measure.Angle
@@ -11,26 +12,47 @@ import edu.wpi.first.units.measure.AngularVelocity
 import edu.wpi.first.units.measure.LinearVelocity
 import edu.wpi.first.util.sendable.Sendable
 import edu.wpi.first.util.sendable.SendableBuilder
+import edu.wpi.first.wpilibj.DriverStation
+import edu.wpi.first.wpilibj.RobotController
 import edu.wpi.first.wpilibj.shuffleboard.Shuffleboard
 import edu.wpi.first.wpilibj.smartdashboard.Field2d
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard
+import edu.wpi.first.wpilibj2.command.Command
 import edu.wpi.first.wpilibj2.command.Commands
 import edu.wpi.first.wpilibj2.command.SubsystemBase
 import net.tecdroid.constants.subsystemTabName
-import net.tecdroid.subsystems.util.generic.WithThroughBoreAbsoluteEncoder
 import net.tecdroid.util.units.degrees
 import net.tecdroid.util.units.toRotation2d
 import kotlin.math.PI
 
+
 class SwerveDrive(private val config: SwerveDriveConfig) : SubsystemBase(), Sendable {
     private val imu = Pigeon2(config.imuId.id)
-    private val modules = config.moduleConfigs.map { SwerveModule(it.first) }
+     val modules = config.moduleConfigs.map { SwerveModule(it.first) }
     private val kinematics = SwerveDriveKinematics(*config.moduleConfigs.map { it.second }.toTypedArray())
     private val odometry = SwerveDriveOdometry(kinematics, heading.toRotation2d(), modulePositions.toTypedArray())
-    private val field = Field2d();
+     val field = Field2d();
+
+    val forwardsPid = PIDController(0.1, 0.0, 0.0)
+    val sidewaysPid = PIDController(0.1, 0.0, 0.0)
+    val thetaPid = PIDController(0.1, 0.0, 0.0)
 
     init {
         this.configureImuInterface()
         matchRelativeEncodersToAbsoluteEncoders()
+
+        thetaPid.enableContinuousInput(-PI, PI)
+        SmartDashboard.putData("Field", field)
+    }
+
+    fun followTrajectory(sample: SwerveSample) {
+        val speeds = ChassisSpeeds(
+            sample.vx + forwardsPid.calculate(pose.x, sample.x),
+            sample.vy + sidewaysPid.calculate(pose.y, sample.y),
+            sample.omega + thetaPid.calculate(pose.rotation.radians, sample.heading)
+        )
+
+        drive(speeds)
     }
 
     override fun periodic() {
@@ -46,6 +68,7 @@ class SwerveDrive(private val config: SwerveDriveConfig) : SubsystemBase(), Send
     }
 
     fun drive(chassisSpeeds: ChassisSpeeds) {
+        if (DriverStation.isAutonomous()) return
         val desiredStates = kinematics.toSwerveModuleStates(chassisSpeeds)
         setModuleTargetStates(*desiredStates)
     }
@@ -113,6 +136,16 @@ class SwerveDrive(private val config: SwerveDriveConfig) : SubsystemBase(), Send
 
         imu.clearStickyFaults()
         imu.configurator.apply(imuConfiguration)
+    }
+
+    fun setPower(power: Double) {
+        for (module in modules) {
+            module.setPower(power)
+        }
+    }
+
+    fun alignModules(): Command {
+        return Commands.runOnce({ for (module in modules) module.align() })
     }
 
 }

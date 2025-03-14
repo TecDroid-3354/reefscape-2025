@@ -1,15 +1,11 @@
 package net.tecdroid.core
 
+import choreo.auto.AutoChooser
+import choreo.auto.AutoFactory
 import edu.wpi.first.wpilibj.shuffleboard.Shuffleboard
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard
-import edu.wpi.first.wpilibj2.command.button.RobotModeTriggers
-import choreo.auto.AutoChooser
-import edu.wpi.first.math.kinematics.ChassisSpeeds
-import edu.wpi.first.units.Units.MetersPerSecond
-import edu.wpi.first.units.Units.RadiansPerSecond
-import edu.wpi.first.wpilibj2.command.Command
 import edu.wpi.first.wpilibj2.command.Commands
-import net.tecdroid.auto.AutoRoutines
+import edu.wpi.first.wpilibj2.command.button.RobotModeTriggers
 import net.tecdroid.constants.GenericConstants.driverControllerId
 import net.tecdroid.input.CompliantXboxController
 import net.tecdroid.subsystems.drivetrain.swerveDriveConfiguration
@@ -17,9 +13,11 @@ import net.tecdroid.subsystems.elevator.elevatorConfig
 import net.tecdroid.subsystems.elevatorjoint.elevatorJointConfig
 import net.tecdroid.subsystems.intake.intakeConfig
 import net.tecdroid.subsystems.wrist.wristConfig
-import net.tecdroid.systems.*
+import net.tecdroid.systems.ArmOrders
+import net.tecdroid.systems.ArmPoses
+import net.tecdroid.systems.ArmSystem
+import net.tecdroid.systems.SwerveSystem
 import net.tecdroid.util.units.degrees
-import net.tecdroid.util.units.seconds
 
 class RobotContainer {
     private val controller = CompliantXboxController(driverControllerId)
@@ -31,28 +29,35 @@ class RobotContainer {
     private val pollIsLow = { isLow }
     private val makeLow = { Commands.runOnce({ isLow = true }) }
     private val makeHigh = { Commands.runOnce({ isLow = false }) }
-    private val auto = AutoRoutines(swerve.drive, arm.intake, arm)
-    private val autoChooser = AutoChooser()
+    val chooser = AutoChooser()
 
+    val autoFactory = AutoFactory(
+        swerve.drive::pose,
+        swerve.drive::resetOdometry,
+        swerve.drive::followTrajectory,
+        true,
+        swerve.drive
+    )
 
     init {
         linkPoses()
-        autoDashboard()
-
-        linkMovement()
+        loadTrajectories()
         swerve.drive.heading = 0.0.degrees
+    }
+
+    fun initial() {
+        linkMovement()
+
+    }
+
+    fun always() {
+        swerve.always()
     }
 
     private fun linkMovement() {
         swerve.linkReorientationTrigger(controller.start())
         swerve.linkControllerMovement(controller)
         swerve.linkLimelightTriggers(controller.leftTrigger(0.5), controller.rightTrigger(0.5), controller)
-    }
-
-    fun always() {
-        if (controller.rightX > 0.1 || controller.leftX > 0.1 || controller.rightY > 0.1 || controller.leftY > 0.1) {
-            swerve.driver.setFieldOriented()
-        }
     }
 
     private fun linkPoses() {
@@ -116,45 +121,21 @@ class RobotContainer {
 
         controller.rightBumper().onTrue(arm.enableIntake()).onFalse(arm.disableIntake())
         controller.leftBumper().onTrue(arm.enableOuttake()).onFalse(arm.disableIntake())
-
     }
 
-    private fun autoDashboard() {
-        // Test paths made for tuning
-        autoChooser.addRoutine("run two meters forward routine", auto::runTwoMeters);
-        autoChooser.addCmd("run two meters forward cmd", auto::runTwoMetersCMD);
+    fun back2m() = Commands.sequence(
+        Commands.runOnce({
+            autoFactory.resetOdometry("Back2M")
+        }),
+        autoFactory.trajectoryCmd("Back2M")
+    )
 
-        autoChooser.addRoutine("run two meters backward routine", auto::runMinusTwoMeters);
-        autoChooser.addCmd("run two meters backward cmd", auto::runMinusTwoMetersCMD);
+    fun loadTrajectories() {
+        chooser.addCmd("Back 2 m", ::back2m)
 
-        autoChooser.addRoutine("left to right auto routine", auto::leftToRight);
-        autoChooser.addCmd("left to right auto cmd", auto::leftToRightCMD);
+        SmartDashboard.putData("AutoChooser", chooser)
 
-        autoChooser.addRoutine("right to left auto cmd", auto::rightToLeft);
-        autoChooser.addCmd("right to left auto cmd", auto::rightToLeftCMD);
-
-        // Real paths
-        /*autoChooser.addRoutine("left auto routine", auto::leftCompleteAuto);
-        autoChooser.addCmd("left auto cmd", auto::leftAutoCMD);
-
-        autoChooser.addRoutine("center auto routine", auto::centerCompleteAuto);
-        autoChooser.addCmd("center auto cmd", auto::centerAutoCMD);
-
-        autoChooser.addRoutine("right auto routine", auto::rightCompleteAuto);
-        autoChooser.addCmd("right auto cmd", auto::rightAutoCMD);*/
-
-        // hard coded paths
-        autoChooser.addRoutine("left auto hard coded routine", auto::leftHardCodedCompleteAuto);
-        autoChooser.addCmd("left auto hard coded cmd", auto::leftHardCodedAutoCMD);
-
-        SmartDashboard.putData(autoChooser);
-
-        // Schedules the selected auto for autonomous
-        // RobotModeTriggers.autonomous().whileTrue(autoChooser.selectedCommandScheduler());
+        RobotModeTriggers.autonomous().whileTrue(chooser.selectedCommandScheduler());
     }
-
-    val autonomousCommand: Command?
-        get() = auto.runTwoMetersCMD()
-
 
 }

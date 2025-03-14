@@ -23,6 +23,7 @@ import edu.wpi.first.util.sendable.Sendable
 import edu.wpi.first.util.sendable.SendableBuilder
 import net.tecdroid.constants.UnitConstants.halfRotation
 import net.tecdroid.subsystems.util.generic.WithThroughBoreAbsoluteEncoder
+import net.tecdroid.util.units.degrees
 import net.tecdroid.util.units.toRotation2d
 
 /**
@@ -46,6 +47,10 @@ class SwerveModule(private val config: SwerveModuleConfig) : Sendable {
         this.configureAbsoluteEncoderInterface()
     }
 
+    fun setPower(power: Double) {
+        driveInterface.set(power)
+    }
+
     /**
      * Sets the module's target velocity
      *
@@ -61,7 +66,7 @@ class SwerveModule(private val config: SwerveModuleConfig) : Sendable {
      *
      * @param angle The angle
      */
-    private fun setTargetAngle(angle: Angle) {
+     fun setTargetAngle(angle: Angle) {
         val steerShaftAngle = wheelAzimuthToSteerMotorShaftAzimuth(angle)
         steerClosedLoopController.setReference(steerShaftAngle.`in`(Rotations), ControlType.kPosition)
     }
@@ -297,6 +302,10 @@ class SwerveModule(private val config: SwerveModuleConfig) : Sendable {
 
         absoluteEncoder.clearStickyFaults()
         absoluteEncoder.configurator.apply(absoluteEncoderConfig)
+    }
+
+    fun align() {
+        setTargetAngle(0.0.degrees)
     }
 
 }
