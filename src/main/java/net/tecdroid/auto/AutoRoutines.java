@@ -28,8 +28,22 @@ public class AutoRoutines {
 
     // TEST SEGMENTS
     public AutoRoutine runTwoMeters() {
-        AutoRoutine routine = follower.factory.newRoutine("runTwoMeters");
-        AutoTrajectory twoMeters = routine.trajectory("TwoMeters");
+        AutoRoutine routine = follower.factory.newRoutine("TESTPATHS/runTwoMeters");
+        AutoTrajectory twoMeters = routine.trajectory("TESTPATHS/TwoMeters");
+
+        routine.active().onTrue(
+                Commands.sequence(
+                        twoMeters.resetOdometry(),
+                        twoMeters.cmd()
+                )
+        );
+
+        return routine;
+    }
+
+    public AutoRoutine bargeCycleTest() {
+        AutoRoutine routine = follower.factory.newRoutine("TESTPATHS/bargeCycleTest");
+        AutoTrajectory twoMeters = routine.trajectory("TESTPATHS/center-cycle1-bargeToReef");
 
         routine.active().onTrue(
                 Commands.sequence(
@@ -42,8 +56,8 @@ public class AutoRoutines {
     }
 
     public AutoRoutine runMinusTwoMeters() {
-        AutoRoutine routine = follower.factory.newRoutine("runMinusTwoMeters");
-        AutoTrajectory twoMeters = routine.trajectory("NegativeTwoMeters");
+        AutoRoutine routine = follower.factory.newRoutine("TESTPATHS/runMinusTwoMeters");
+        AutoTrajectory twoMeters = routine.trajectory("TESTPATHS/NegativeTwoMeters");
 
         routine.active().onTrue(
                 Commands.sequence(
@@ -129,7 +143,7 @@ public class AutoRoutines {
         routine.active().onTrue(
                 Commands.sequence(
                         firstCycleBargeToReef.resetOdometry(),
-                        Commands.parallel(
+                        Commands.sequence(
                                 firstCycleBargeToReef.cmd(),
                                 armSystem.setPoseCommand(ArmPoses.L4.getPose(), ArmOrders.JEW.getOrder())
                         )
@@ -152,7 +166,7 @@ public class AutoRoutines {
                         Commands.waitUntil(() -> !intake.hasCoral() || Commands.waitTime(Seconds.of(2))
                                 .isFinished()).andThen(
                                 intake.stopCommand(), // step 1: leaving piece from cycle 1 (precharged)
-                                Commands.parallel(
+                                Commands.sequence(
                                         secondCycleReefToCoralStation.cmd(),
                                         armSystem.setPoseCommand(ArmPoses.CoralStation.getPose(), ArmOrders.EJW.getOrder())
                                 )
@@ -166,7 +180,7 @@ public class AutoRoutines {
                         Commands.waitUntil(intake::hasCoral).andThen(
                                 Commands.sequence(
                                         intake.stopCommand(), // step 3: intaking at coral station
-                                        Commands.parallel(
+                                        Commands.sequence(
                                                 secondCycleCoralStationToReef.cmd(), // step 4: going from coral station to reef
                                                 armSystem.setPoseCommand(ArmPoses.L4.getPose(), ArmOrders.JEW.getOrder())
                                         )
@@ -186,7 +200,7 @@ public class AutoRoutines {
                         Commands.waitUntil(() -> !intake.hasCoral() || Commands.waitTime(Seconds.of(2))
                                 .isFinished()).andThen(
                                 intake.stopCommand(),
-                                Commands.parallel(
+                                Commands.sequence(
                                         thirdCycleReefToCoralStation.cmd(),
                                         armSystem.setPoseCommand(ArmPoses.CoralStation.getPose(), ArmOrders.EJW.getOrder())
                                 )
@@ -200,7 +214,7 @@ public class AutoRoutines {
                         Commands.waitUntil(intake::hasCoral).andThen(
                                 Commands.sequence(
                                         intake.stopCommand(),
-                                        Commands.parallel(
+                                        Commands.sequence(
                                                 thirdCycleCoralStationToReef.cmd(), // step 4: going from coral station to reef
                                                 armSystem.setPoseCommand(ArmPoses.L4.getPose(), ArmOrders.JEW.getOrder())
                                         )
@@ -242,7 +256,7 @@ public class AutoRoutines {
         routine.active().onTrue(
                 Commands.sequence(
                         firstCycleBargeToReef.resetOdometry(),
-                        Commands.parallel(
+                        Commands.sequence(
                                 firstCycleBargeToReef.cmd(),
                                 armSystem.setPoseCommand(ArmPoses.L4.getPose(), ArmOrders.JEW.getOrder())
                         )
@@ -265,7 +279,7 @@ public class AutoRoutines {
                         Commands.waitUntil(() -> !intake.hasCoral() || Commands.waitTime(Seconds.of(2))
                                 .isFinished()).andThen(
                                 intake.stopCommand(), // step 1: leaving piece from cycle 1 (precharged)
-                                Commands.parallel(
+                                Commands.sequence(
                                         secondCycleReefToCoralStation.cmd(),
                                         armSystem.setPoseCommand(ArmPoses.CoralStation.getPose(), ArmOrders.EJW.getOrder())
                                 )
@@ -279,7 +293,7 @@ public class AutoRoutines {
                         Commands.waitUntil(intake::hasCoral).andThen(
                                 Commands.sequence(
                                         intake.stopCommand(), // step 3: intaking at coral station
-                                        Commands.parallel(
+                                        Commands.sequence(
                                                 secondCycleCoralStationToReef.cmd(), // step 4: going from coral station to reef
                                                 armSystem.setPoseCommand(ArmPoses.L4.getPose(), ArmOrders.JEW.getOrder())
                                         )
@@ -299,7 +313,7 @@ public class AutoRoutines {
                         Commands.waitUntil(() -> !intake.hasCoral() || Commands.waitTime(Seconds.of(2))
                                 .isFinished()).andThen(
                                 intake.stopCommand(),
-                                Commands.parallel(
+                                Commands.sequence(
                                         thirdCycleReefToCoralStation.cmd(),
                                         armSystem.setPoseCommand(ArmPoses.CoralStation.getPose(), ArmOrders.EJW.getOrder())
                                 )
@@ -313,7 +327,7 @@ public class AutoRoutines {
                         Commands.waitUntil(intake::hasCoral).andThen(
                                 Commands.sequence(
                                         intake.stopCommand(),
-                                        Commands.parallel(
+                                        Commands.sequence(
                                                 thirdCycleCoralStationToReef.cmd(), // step 4: going from coral station to reef
                                                 armSystem.setPoseCommand(ArmPoses.L4.getPose(), ArmOrders.JEW.getOrder())
                                         )

@@ -11,6 +11,7 @@ import frc.robot.LimelightHelpers
 class Robot : TimedRobot() {
     private var autonomousCommand: Command? = null
 
+
     private val container = RobotContainer()
 
     override fun robotInit() {
@@ -38,6 +39,7 @@ class Robot : TimedRobot() {
         if (autonomousCommand != null) {
             autonomousCommand!!.schedule()
         }
+
     }
 
     override fun autonomousPeriodic() {
@@ -48,9 +50,12 @@ class Robot : TimedRobot() {
         if (autonomousCommand != null) {
             autonomousCommand!!.cancel()
         }
+
+        container.swerve.driver.setFieldOriented()
     }
 
     override fun teleopPeriodic() {
+        container.always()
     }
 
     override fun testInit() {

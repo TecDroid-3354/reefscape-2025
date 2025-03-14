@@ -12,6 +12,7 @@ import edu.wpi.first.units.measure.LinearVelocity
 import edu.wpi.first.util.sendable.Sendable
 import edu.wpi.first.util.sendable.SendableBuilder
 import edu.wpi.first.wpilibj.shuffleboard.Shuffleboard
+import edu.wpi.first.wpilibj.smartdashboard.Field2d
 import edu.wpi.first.wpilibj2.command.Commands
 import edu.wpi.first.wpilibj2.command.SubsystemBase
 import net.tecdroid.constants.subsystemTabName
@@ -25,6 +26,7 @@ class SwerveDrive(private val config: SwerveDriveConfig) : SubsystemBase(), Send
     private val modules = config.moduleConfigs.map { SwerveModule(it.first) }
     private val kinematics = SwerveDriveKinematics(*config.moduleConfigs.map { it.second }.toTypedArray())
     private val odometry = SwerveDriveOdometry(kinematics, heading.toRotation2d(), modulePositions.toTypedArray())
+    private val field = Field2d();
 
     init {
         this.configureImuInterface()
@@ -56,6 +58,8 @@ class SwerveDrive(private val config: SwerveDriveConfig) : SubsystemBase(), Send
 
     private fun updateOdometry() {
         odometry.update(heading.toRotation2d(), modulePositions.toTypedArray())
+        pose = odometry.poseMeters
+        field.robotPose = pose
     }
 
     fun resetOdometry(pose: Pose2d) {
@@ -94,6 +98,7 @@ class SwerveDrive(private val config: SwerveDriveConfig) : SubsystemBase(), Send
     fun publishToShuffleboard() {
         val tab = Shuffleboard.getTab(subsystemTabName)
         tab.add("Swerve Drive", this)
+        tab.add("field", field)
         for ((i, m) in modules.withIndex()) {
             tab.add("Module $i", m)
         }

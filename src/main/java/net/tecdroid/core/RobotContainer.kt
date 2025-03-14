@@ -4,6 +4,9 @@ import edu.wpi.first.wpilibj.shuffleboard.Shuffleboard
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard
 import edu.wpi.first.wpilibj2.command.button.RobotModeTriggers
 import choreo.auto.AutoChooser
+import edu.wpi.first.math.kinematics.ChassisSpeeds
+import edu.wpi.first.units.Units.MetersPerSecond
+import edu.wpi.first.units.Units.RadiansPerSecond
 import edu.wpi.first.wpilibj2.command.Command
 import edu.wpi.first.wpilibj2.command.Commands
 import net.tecdroid.auto.AutoRoutines
@@ -15,10 +18,12 @@ import net.tecdroid.subsystems.elevatorjoint.elevatorJointConfig
 import net.tecdroid.subsystems.intake.intakeConfig
 import net.tecdroid.subsystems.wrist.wristConfig
 import net.tecdroid.systems.*
+import net.tecdroid.util.units.degrees
+import net.tecdroid.util.units.seconds
 
 class RobotContainer {
     private val controller = CompliantXboxController(driverControllerId)
-    private val swerve = SwerveSystem(swerveDriveConfiguration)
+    val swerve = SwerveSystem(swerveDriveConfiguration)
     private val arm = ArmSystem(wristConfig, elevatorConfig, elevatorJointConfig, intakeConfig)
     private var isNormalMode = true
     private val pollNormalMode = { isNormalMode }
@@ -31,15 +36,23 @@ class RobotContainer {
 
 
     init {
-        linkMovement()
         linkPoses()
         autoDashboard()
+
+        linkMovement()
+        swerve.drive.heading = 0.0.degrees
     }
 
     private fun linkMovement() {
         swerve.linkReorientationTrigger(controller.start())
         swerve.linkControllerMovement(controller)
         swerve.linkLimelightTriggers(controller.leftTrigger(0.5), controller.rightTrigger(0.5), controller)
+    }
+
+    fun always() {
+        if (controller.rightX > 0.1 || controller.leftX > 0.1 || controller.rightY > 0.1 || controller.leftY > 0.1) {
+            swerve.driver.setFieldOriented()
+        }
     }
 
     private fun linkPoses() {
@@ -137,11 +150,11 @@ class RobotContainer {
         SmartDashboard.putData(autoChooser);
 
         // Schedules the selected auto for autonomous
-        RobotModeTriggers.autonomous().whileTrue(autoChooser.selectedCommandScheduler());
+        // RobotModeTriggers.autonomous().whileTrue(autoChooser.selectedCommandScheduler());
     }
 
     val autonomousCommand: Command?
-        get() = autoChooser.selectedCommand()
+        get() = auto.runTwoMetersCMD()
 
 
 }
