@@ -41,6 +41,7 @@ class Robot : TimedRobot() {
     }
 
     override fun autonomousPeriodic() {
+
     }
 
     override fun teleopInit() {

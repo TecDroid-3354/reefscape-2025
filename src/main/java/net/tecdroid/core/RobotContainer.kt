@@ -1,6 +1,9 @@
 package net.tecdroid.core
 
 import edu.wpi.first.wpilibj.shuffleboard.Shuffleboard
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard
+import edu.wpi.first.wpilibj2.command.button.RobotModeTriggers
+import choreo.auto.AutoChooser
 import edu.wpi.first.wpilibj2.command.Command
 import edu.wpi.first.wpilibj2.command.Commands
 import net.tecdroid.auto.AutoRoutines
@@ -24,11 +27,13 @@ class RobotContainer {
     private val makeLow = { Commands.runOnce({ isLow = true }) }
     private val makeHigh = { Commands.runOnce({ isLow = false }) }
     private val auto = AutoRoutines(swerve.drive, arm.intake, arm)
+    private val autoChooser = AutoChooser()
 
 
     init {
         linkMovement()
         linkPoses()
+        autoDashboard()
     }
 
     private fun linkMovement() {
@@ -101,9 +106,40 @@ class RobotContainer {
 
     }
 
+    private fun autoDashboard() {
+        // Test paths made for tuning
+        autoChooser.addRoutine("run two meters forward routine", auto::runTwoMeters);
+        autoChooser.addCmd("run two meters forward cmd", auto::runTwoMetersCMD);
 
+        autoChooser.addRoutine("run two meters backward routine", auto::runMinusTwoMeters);
+        autoChooser.addCmd("run two meters backward cmd", auto::runMinusTwoMetersCMD);
+
+        autoChooser.addRoutine("left to right auto routine", auto::leftToRight);
+        autoChooser.addCmd("left to right auto cmd", auto::leftToRightCMD);
+
+        autoChooser.addRoutine("right to left auto cmd", auto::rightToLeft);
+        autoChooser.addCmd("right to left auto cmd", auto::rightToLeftCMD);
+
+        // Real paths
+        autoChooser.addRoutine("left auto routine", auto::leftCompleteAuto);
+        autoChooser.addCmd("left auto cmd", auto::leftAutoCMD);
+
+        autoChooser.addRoutine("center auto routine", auto::centerCompleteAuto);
+        autoChooser.addCmd("center auto cmd", auto::centerAutoCMD);
+
+        autoChooser.addRoutine("right auto routine", auto::rightCompleteAuto);
+        autoChooser.addCmd("right auto cmd", auto::rightAutoCMD);
+
+        SmartDashboard.putData(autoChooser);
+
+        // Schedules the selected auto for autonomous
+        RobotModeTriggers.autonomous().whileTrue(autoChooser.selectedCommandScheduler());
+    }
+
+    /*val autonomousCommand: Command?
+        get() = autoChooser.selectedCommand()*/
 
     val autonomousCommand: Command?
-        get() = auto.leftAutoCMD()
+
 
 }

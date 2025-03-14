@@ -42,11 +42,10 @@ public class AutonomousFollower {
     public void followTrajectory(SwerveSample sample) {
         Pose2d pose = swerveDrive.getPose();
 
-        ChassisSpeeds speeds = ChassisSpeeds.fromFieldRelativeSpeeds(
+        ChassisSpeeds speeds = new ChassisSpeeds(
                 sample.vx + xPIDController.calculate(pose.getX(), sample.x) * 0.6,
                 sample.vy + yPIDController.calculate(pose.getY(), sample.y) * 0.6,
-                sample.omega + thetaPIDController.calculate(pose.getRotation().getRadians(), sample.heading) * 0.6,
-                new Rotation2d(swerveDrive.getHeading())
+                sample.omega + thetaPIDController.calculate(pose.getRotation().getRadians(), sample.heading) * 0.6
         );
 
         swerveDrive.drive(speeds);

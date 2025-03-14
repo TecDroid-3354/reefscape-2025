@@ -299,7 +299,7 @@ public class AutoRoutines {
     // Center auto
     public AutoRoutine centerCompleteAuto() {
         AutoRoutine routine = follower.factory.newRoutine("Center Auto: Complete");
-        AutoTrajectory firstCycleBargeToReef = routine.trajectory("ACENTERAUTONOMOUSMOVEMENT/CENTER-CORAL1-BARGETOREEF");
+        AutoTrajectory firstCycleBargeToReef = routine.trajectory("ACENTERAUTONOMAutonomousFollowerOUSMOVEMENT/CENTER-CORAL1-BARGETOREEF");
         AutoTrajectory secondCycleReefToCoralStation = routine.trajectory("ACENTERAUTONOMOUSMOVEMENT/CENTER-CORAL2-BREEFTOCORALSTATION");
         AutoTrajectory secondCycleCoralStationToReef = routine.trajectory("ACENTERAUTONOMOUSMOVEMENT/CENTER-CORAL2-CORALSTATIONTOREEF");
         AutoTrajectory thirdCycleReefToCoralStation = routine.trajectory("ACENTERAUTONOMOUSMOVEMENT/CENTER-CORAL3-BREEFTOCORALSTATION");
@@ -348,6 +348,23 @@ public class AutoRoutines {
         return routineFollower(routine, firstCycleBargeToReef, secondCycleReefToCoralStation, secondCycleCoralStationToReef,
                 thirdCycleReefToCoralStation, thirdCycleCoralStationToReef, fourthCycleReefToCoralStation, fourthCycleCoralStationToReef);
     }
+
+    public Command autoTest() {
+        return Commands.sequence(
+                follower.factory.resetOdometry(""),
+                follower.factory.trajectoryCmd(""),
+                armSystem.setPoseCommand(ArmPoses.L4.getPose(), ArmOrders.JEW.getOrder()),
+                Commands.sequence(
+                        // TODO: LÓGICA DE LIMELIGHTS PARA ALINEARSE CON REEF
+                        intake.setVoltageCommand(Volts.of(10.0)),
+                        Commands.waitUntil(() -> !intake.hasCoral() || Commands.waitTime(Seconds.of(2))
+                                .isFinished()).andThen(
+                                intake.stopCommand() // step 1: leaving piece from cycle 1 (precharged)
+                        )
+                )
+        );
+    }
+
 
     public Command rightAutoCMD() {
         return rightCompleteAuto().cmd();
