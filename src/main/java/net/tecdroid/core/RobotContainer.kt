@@ -121,14 +121,18 @@ class RobotContainer {
         autoChooser.addCmd("right to left auto cmd", auto::rightToLeftCMD);
 
         // Real paths
-        autoChooser.addRoutine("left auto routine", auto::leftCompleteAuto);
+        /*autoChooser.addRoutine("left auto routine", auto::leftCompleteAuto);
         autoChooser.addCmd("left auto cmd", auto::leftAutoCMD);
 
         autoChooser.addRoutine("center auto routine", auto::centerCompleteAuto);
         autoChooser.addCmd("center auto cmd", auto::centerAutoCMD);
 
         autoChooser.addRoutine("right auto routine", auto::rightCompleteAuto);
-        autoChooser.addCmd("right auto cmd", auto::rightAutoCMD);
+        autoChooser.addCmd("right auto cmd", auto::rightAutoCMD);*/
+
+        // hard coded paths
+        autoChooser.addRoutine("left auto hard coded routine", auto::leftHardCodedCompleteAuto);
+        autoChooser.addCmd("left auto hard coded cmd", auto::leftHardCodedAutoCMD);
 
         SmartDashboard.putData(autoChooser);
 
@@ -136,10 +140,8 @@ class RobotContainer {
         RobotModeTriggers.autonomous().whileTrue(autoChooser.selectedCommandScheduler());
     }
 
-    /*val autonomousCommand: Command?
-        get() = autoChooser.selectedCommand()*/
-
     val autonomousCommand: Command?
+        get() = autoChooser.selectedCommand()
 
 
 }

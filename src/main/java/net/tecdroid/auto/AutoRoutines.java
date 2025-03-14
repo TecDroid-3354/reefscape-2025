@@ -299,13 +299,13 @@ public class AutoRoutines {
     // Center auto
     public AutoRoutine centerCompleteAuto() {
         AutoRoutine routine = follower.factory.newRoutine("Center Auto: Complete");
-        AutoTrajectory firstCycleBargeToReef = routine.trajectory("ACENTERAUTONOMAutonomousFollowerOUSMOVEMENT/CENTER-CORAL1-BARGETOREEF");
-        AutoTrajectory secondCycleReefToCoralStation = routine.trajectory("ACENTERAUTONOMOUSMOVEMENT/CENTER-CORAL2-BREEFTOCORALSTATION");
-        AutoTrajectory secondCycleCoralStationToReef = routine.trajectory("ACENTERAUTONOMOUSMOVEMENT/CENTER-CORAL2-CORALSTATIONTOREEF");
-        AutoTrajectory thirdCycleReefToCoralStation = routine.trajectory("ACENTERAUTONOMOUSMOVEMENT/CENTER-CORAL3-BREEFTOCORALSTATION");
-        AutoTrajectory thirdCycleCoralStationToReef = routine.trajectory("ACENTERAUTONOMOUSMOVEMENT/CENTER-CORAL3-CORALSTATIONTOREEF");
-        AutoTrajectory fourthCycleReefToCoralStation = routine.trajectory("ACENTERAUTONOMOUSMOVEMENT/CENTER-CORAL4-BREEFTOCORALSTATION");
-        AutoTrajectory fourthCycleCoralStationToReef = routine.trajectory("ACENTERAUTONOMOUSMOVEMENT/CENTER-CORAL4-CORALSTATIONTOREEF");
+        AutoTrajectory firstCycleBargeToReef = routine.trajectory("CENTER-CORAL1-BARGETOREEF");
+        AutoTrajectory secondCycleReefToCoralStation = routine.trajectory("CENTER-CORAL2-BREEFTOCORALSTATION");
+        AutoTrajectory secondCycleCoralStationToReef = routine.trajectory("CENTER-CORAL2-CORALSTATIONTOREEF");
+        AutoTrajectory thirdCycleReefToCoralStation = routine.trajectory("CENTER-CORAL3-BREEFTOCORALSTATION");
+        AutoTrajectory thirdCycleCoralStationToReef = routine.trajectory("CENTER-CORAL3-CORALSTATIONTOREEF");
+        AutoTrajectory fourthCycleReefToCoralStation = routine.trajectory("CENTER-CORAL4-BREEFTOCORALSTATION");
+        AutoTrajectory fourthCycleCoralStationToReef = routine.trajectory("CENTER-CORAL4-CORALSTATIONTOREEF");
 
         return routineFollower(routine, firstCycleBargeToReef, secondCycleReefToCoralStation, secondCycleCoralStationToReef,
                 thirdCycleReefToCoralStation, thirdCycleCoralStationToReef, fourthCycleReefToCoralStation, fourthCycleCoralStationToReef);
@@ -318,13 +318,13 @@ public class AutoRoutines {
     // Left auto
     public AutoRoutine leftCompleteAuto() {
         AutoRoutine routine = follower.factory.newRoutine("Left Auto: Complete");
-        AutoTrajectory firstCycleBargeToReef = routine.trajectory("BLEFTSIDEMOVEMENTAUTONOMOUS/LEFTAUTO-CORAL1-BARGETOREEF");
-        AutoTrajectory secondCycleReefToCoralStation = routine.trajectory("BLEFTSIDEMOVEMENTAUTONOMOUS/LEFTAUTO-CORAL2-BREEFTOCORALSTATION");
-        AutoTrajectory secondCycleCoralStationToReef = routine.trajectory("BLEFTSIDEMOVEMENTAUTONOMOUS/LEFTAUTO-CORAL2-CORALSTATIONTOREEF");
-        AutoTrajectory thirdCycleReefToCoralStation = routine.trajectory("BLEFTSIDEMOVEMENTAUTONOMOUS/LEFTAUTO-CORAL3-BREEFTOCORALSTATION");
-        AutoTrajectory thirdCycleCoralStationToReef = routine.trajectory("BLEFTSIDEMOVEMENTAUTONOMOUS/LEFTAUTO-CORAL3-CORALSTATIONTOREEF");
-        AutoTrajectory fourthCycleReefToCoralStation = routine.trajectory("BLEFTSIDEMOVEMENTAUTONOMOUS/LEFTAUTO-CORAL4-BREEFTOCORALSTATION");
-        AutoTrajectory fourthCycleCoralStationToReef = routine.trajectory("BLEFTSIDEMOVEMENTAUTONOMOUS/LEFTAUTO-CORAL4-CORALSTATIONTOREEF");
+        AutoTrajectory firstCycleBargeToReef = routine.trajectory("LEFTAUTO-CORAL1-BARGETOREEF");
+        AutoTrajectory secondCycleReefToCoralStation = routine.trajectory("LEFTAUTO-CORAL2-BREEFTOCORALSTATION");
+        AutoTrajectory secondCycleCoralStationToReef = routine.trajectory("LEFTAUTO-CORAL2-CORALSTATIONTOREEF");
+        AutoTrajectory thirdCycleReefToCoralStation = routine.trajectory("LEFTAUTO-CORAL3-BREEFTOCORALSTATION");
+        AutoTrajectory thirdCycleCoralStationToReef = routine.trajectory("LEFTAUTO-CORAL3-CORALSTATIONTOREEF");
+        AutoTrajectory fourthCycleReefToCoralStation = routine.trajectory("LEFTAUTO-CORAL4-BREEFTOCORALSTATION");
+        AutoTrajectory fourthCycleCoralStationToReef = routine.trajectory("LEFTAUTO-CORAL4-CORALSTATIONTOREEF");
 
         return routineFollower(routine, firstCycleBargeToReef, secondCycleReefToCoralStation, secondCycleCoralStationToReef,
                 thirdCycleReefToCoralStation, thirdCycleCoralStationToReef, fourthCycleReefToCoralStation, fourthCycleCoralStationToReef);
@@ -334,21 +334,37 @@ public class AutoRoutines {
         return leftCompleteAuto().cmd();
     }
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
     // Right auto
     public AutoRoutine rightCompleteAuto() {
         AutoRoutine routine = follower.factory.newRoutine("Right Auto: Complete");
-        AutoTrajectory firstCycleBargeToReef = routine.trajectory("CRIGHTSIDEMOVEMENTAUTONOMOUS/RIGHTAUTO-CORAL1-BARGETOREEF");
-        AutoTrajectory secondCycleReefToCoralStation = routine.trajectory("CRIGHTSIDEMOVEMENTAUTONOMOUS/RIGHTAUTO-CORAL2-BREEFTOCORALSTATION");
-        AutoTrajectory secondCycleCoralStationToReef = routine.trajectory("CRIGHTSIDEMOVEMENTAUTONOMOUS/RIGHTAUTO-CORAL2-CORALSTATIONTOREEF");
-        AutoTrajectory thirdCycleReefToCoralStation = routine.trajectory("CRIGHTSIDEMOVEMENTAUTONOMOUS/RIGHTAUTO-CORAL3-BREEFTOCORALSTATION");
-        AutoTrajectory thirdCycleCoralStationToReef = routine.trajectory("CRIGHTSIDEMOVEMENTAUTONOMOUS/RIGHTAUTO-CORAL3-CORALSTATIONTOREEF");
-        AutoTrajectory fourthCycleReefToCoralStation = routine.trajectory("CRIGHTSIDEMOVEMENTAUTONOMOUS/RIGHTAUTO-CORAL4-BREEFTOCORALSTATION");
-        AutoTrajectory fourthCycleCoralStationToReef = routine.trajectory("CRIGHTSIDEMOVEMENTAUTONOMOUS/RIGHTAUTO-CORAL4-CORALSTATIONTOREEF");
+        AutoTrajectory firstCycleBargeToReef = routine.trajectory("RIGHTAUTO-CORAL1-BARGETOREEF");
+        AutoTrajectory secondCycleReefToCoralStation = routine.trajectory("RIGHTAUTO-CORAL2-BREEFTOCORALSTATION");
+        AutoTrajectory secondCycleCoralStationToReef = routine.trajectory("RIGHTAUTO-CORAL2-CORALSTATIONTOREEF");
+        AutoTrajectory thirdCycleReefToCoralStation = routine.trajectory("RIGHTAUTO-CORAL3-BREEFTOCORALSTATION");
+        AutoTrajectory thirdCycleCoralStationToReef = routine.trajectory("RIGHTAUTO-CORAL3-CORALSTATIONTOREEF");
+        AutoTrajectory fourthCycleReefToCoralStation = routine.trajectory("RIGHTAUTO-CORAL4-BREEFTOCORALSTATION");
+        AutoTrajectory fourthCycleCoralStationToReef = routine.trajectory("RIGHTAUTO-CORAL4-CORALSTATIONTOREEF");
 
         return routineFollower(routine, firstCycleBargeToReef, secondCycleReefToCoralStation, secondCycleCoralStationToReef,
                 thirdCycleReefToCoralStation, thirdCycleCoralStationToReef, fourthCycleReefToCoralStation, fourthCycleCoralStationToReef);
     }
-
+    public Command rightAutoCMD() {
+        return rightCompleteAuto().cmd();
+    }
     public Command autoTest() {
         return Commands.sequence(
                 follower.factory.resetOdometry(""),
@@ -366,7 +382,229 @@ public class AutoRoutines {
     }
 
 
-    public Command rightAutoCMD() {
-        return rightCompleteAuto().cmd();
+    public AutoRoutine leftHardCodedCompleteAuto() {
+        AutoRoutine routine = follower.factory.newRoutine("Left Auto: Complete");
+        AutoTrajectory firstCycleBargeToReef = routine.trajectory("LEFTAUTO-CORAL1-BARGETOREEF");
+        AutoTrajectory secondCycleReefToCoralStation = routine.trajectory("LEFTAUTO-CORAL2-BREEFTOCORALSTATION");
+        AutoTrajectory secondCycleCoralStationToReef = routine.trajectory("LEFTAUTO-CORAL2-CORALSTATIONTOREEF");
+        AutoTrajectory thirdCycleReefToCoralStation = routine.trajectory("LEFTAUTO-CORAL3-BREEFTOCORALSTATION");
+        AutoTrajectory thirdCycleCoralStationToReef = routine.trajectory("LEFTAUTO-CORAL3-CORALSTATIONTOREEF");
+
+        // Executes when routine starts
+        routine.active().onTrue(
+                Commands.sequence(
+                        firstCycleBargeToReef.resetOdometry(),
+                        Commands.parallel(
+                                firstCycleBargeToReef.cmd(),
+                                armSystem.setPoseCommand(ArmPoses.L4.getPose(), ArmOrders.JEW.getOrder())
+                        )
+                        // TODO: Limelight logic
+                        //limelights.alignYAxisToAprilTagDetection(swerveDriver, )
+                )
+        );
+
+
+        // ####################
+        // # GENERAL COMMANDS #
+        // ####################
+
+        // ! Cycle #2 : Second coral
+
+        //firstCycleBargeToReef.done().onTrue(intake.setVoltageCommand(Volts.of(10.0))); // ✅
+        firstCycleBargeToReef.done().onTrue(
+                Commands.sequence(
+                        intake.setVoltageCommand(Volts.of(10.0)),
+                        Commands.waitUntil(() -> !intake.hasCoral() || Commands.waitTime(Seconds.of(2))
+                                .isFinished()).andThen(
+                                intake.stopCommand(), // step 1: leaving piece from cycle 1 (precharged)
+                                Commands.parallel(
+                                        secondCycleReefToCoralStation.cmd(),
+                                        armSystem.setPoseCommand(ArmPoses.CoralStation.getPose(), ArmOrders.EJW.getOrder())
+                                )
+                        )
+                )
+        );
+
+        secondCycleReefToCoralStation.done().onTrue(
+                Commands.sequence(
+                        intake.setVoltageCommand(Volts.of(10.0)),
+                        Commands.waitUntil(intake::hasCoral).andThen(
+                                Commands.sequence(
+                                        intake.stopCommand(), // step 3: intaking at coral station
+                                        Commands.parallel(
+                                                secondCycleCoralStationToReef.cmd(), // step 4: going from coral station to reef
+                                                armSystem.setPoseCommand(ArmPoses.L4.getPose(), ArmOrders.JEW.getOrder())
+                                        )
+
+                                )
+                        )
+                )
+        );
+
+        secondCycleCoralStationToReef.done().onTrue(
+                Commands.sequence(
+                        // TODO: AQUÍ PONER LÓGICA DE LIMELIGHTS PARA ALINEARSE CON EL REEF
+                        // limelights.alignInAllAxis(swerveDriver, Degrees.of(0.0), Inches.of(5.0), true),
+                        /*Commands.waitUntil(() -> limelights.isAlignedAtReef(true) || Commands.waitTime(Seconds.of(3))
+                                .isFinished()).andThen(intake.setVoltageCommand(Volts.of(10.0))),*/
+                        intake.setVoltageCommand(Volts.of(10.0)),
+                        Commands.waitUntil(() -> !intake.hasCoral() || Commands.waitTime(Seconds.of(2))
+                                .isFinished()).andThen(
+                                intake.stopCommand(),
+                                Commands.parallel(
+                                        thirdCycleReefToCoralStation.cmd(),
+                                        armSystem.setPoseCommand(ArmPoses.CoralStation.getPose(), ArmOrders.EJW.getOrder())
+                                )
+                        )
+                )
+        );
+
+        thirdCycleReefToCoralStation.done().onTrue(
+                Commands.sequence(
+                        intake.setVoltageCommand(Volts.of(10.0)),
+                        Commands.waitUntil(intake::hasCoral).andThen(
+                                Commands.sequence(
+                                        intake.stopCommand(),
+                                        Commands.parallel(
+                                                thirdCycleCoralStationToReef.cmd(), // step 4: going from coral station to reef
+                                                armSystem.setPoseCommand(ArmPoses.L4.getPose(), ArmOrders.JEW.getOrder())
+                                        )
+                                )
+                        )
+                )
+        );
+
+        thirdCycleCoralStationToReef.done().onTrue(
+                Commands.sequence(
+                        // TODO: AQUÍ PONER LÓGICA DE LIMELIGHTS PARA ALINEARSE CON EL REEF
+                        // limelights.alignInAllAxis(swerveDriver, Degrees.of(0.0), Inches.of(5.0), true),
+                        /*Commands.waitUntil(() -> limelights.isAlignedAtReef(true) || Commands.waitTime(Seconds.of(3))
+                                .isFinished()).andThen(intake.setVoltageCommand(Volts.of(10.0))),*/
+                        intake.setVoltageCommand(Volts.of(10.0)),
+                        Commands.waitUntil(() -> !intake.hasCoral() || Commands.waitTime(Seconds.of(2))
+                                .isFinished()).andThen(
+                                intake.stopCommand()
+                        )
+                )
+        );
+
+        return routine;
+    }
+
+    public Command leftHardCodedAutoCMD() {
+        return leftHardCodedCompleteAuto().cmd();
+    }
+
+    public AutoRoutine centerHardCodedCompleteAuto() {
+        AutoRoutine routine = follower.factory.newRoutine("Center Auto: Complete");
+        AutoTrajectory firstCycleBargeToReef = routine.trajectory("CENTER-CORAL1-BARGETOREEF");
+        AutoTrajectory secondCycleReefToCoralStation = routine.trajectory("CENTER-CORAL2-REEFTOCORALSTATION");
+        AutoTrajectory secondCycleCoralStationToReef = routine.trajectory("CENTER-CORAL2-CORALSTATIONTOREEF");
+        AutoTrajectory thirdCycleReefToCoralStation = routine.trajectory("CENTER-CORAL3-REEFTOCARALSTATION");
+        AutoTrajectory thirdCycleCoralStationToReef = routine.trajectory("LEFTAUTO-CORAL3-CORALSTATIONTOREEF");
+
+        // Executes when routine starts
+        routine.active().onTrue(
+                Commands.sequence(
+                        firstCycleBargeToReef.resetOdometry(),
+                        Commands.parallel(
+                                firstCycleBargeToReef.cmd(),
+                                armSystem.setPoseCommand(ArmPoses.L4.getPose(), ArmOrders.JEW.getOrder())
+                        )
+                        // TODO: Limelight logic
+                        //limelights.alignYAxisToAprilTagDetection(swerveDriver, )
+                )
+        );
+
+
+        // ####################
+        // # GENERAL COMMANDS #
+        // ####################
+
+        // ! Cycle #2 : Second coral
+
+        //firstCycleBargeToReef.done().onTrue(intake.setVoltageCommand(Volts.of(10.0))); // ✅
+        firstCycleBargeToReef.done().onTrue(
+                Commands.sequence(
+                        intake.setVoltageCommand(Volts.of(10.0)),
+                        Commands.waitUntil(() -> !intake.hasCoral() || Commands.waitTime(Seconds.of(2))
+                                .isFinished()).andThen(
+                                intake.stopCommand(), // step 1: leaving piece from cycle 1 (precharged)
+                                Commands.parallel(
+                                        secondCycleReefToCoralStation.cmd(),
+                                        armSystem.setPoseCommand(ArmPoses.CoralStation.getPose(), ArmOrders.EJW.getOrder())
+                                )
+                        )
+                )
+        );
+
+        secondCycleReefToCoralStation.done().onTrue(
+                Commands.sequence(
+                        intake.setVoltageCommand(Volts.of(10.0)),
+                        Commands.waitUntil(intake::hasCoral).andThen(
+                                Commands.sequence(
+                                        intake.stopCommand(), // step 3: intaking at coral station
+                                        Commands.parallel(
+                                                secondCycleCoralStationToReef.cmd(), // step 4: going from coral station to reef
+                                                armSystem.setPoseCommand(ArmPoses.L4.getPose(), ArmOrders.JEW.getOrder())
+                                        )
+
+                                )
+                        )
+                )
+        );
+
+        secondCycleCoralStationToReef.done().onTrue(
+                Commands.sequence(
+                        // TODO: AQUÍ PONER LÓGICA DE LIMELIGHTS PARA ALINEARSE CON EL REEF
+                        // limelights.alignInAllAxis(swerveDriver, Degrees.of(0.0), Inches.of(5.0), true),
+                        /*Commands.waitUntil(() -> limelights.isAlignedAtReef(true) || Commands.waitTime(Seconds.of(3))
+                                .isFinished()).andThen(intake.setVoltageCommand(Volts.of(10.0))),*/
+                        intake.setVoltageCommand(Volts.of(10.0)),
+                        Commands.waitUntil(() -> !intake.hasCoral() || Commands.waitTime(Seconds.of(2))
+                                .isFinished()).andThen(
+                                intake.stopCommand(),
+                                Commands.parallel(
+                                        thirdCycleReefToCoralStation.cmd(),
+                                        armSystem.setPoseCommand(ArmPoses.CoralStation.getPose(), ArmOrders.EJW.getOrder())
+                                )
+                        )
+                )
+        );
+
+        thirdCycleReefToCoralStation.done().onTrue(
+                Commands.sequence(
+                        intake.setVoltageCommand(Volts.of(10.0)),
+                        Commands.waitUntil(intake::hasCoral).andThen(
+                                Commands.sequence(
+                                        intake.stopCommand(),
+                                        Commands.parallel(
+                                                thirdCycleCoralStationToReef.cmd(), // step 4: going from coral station to reef
+                                                armSystem.setPoseCommand(ArmPoses.L4.getPose(), ArmOrders.JEW.getOrder())
+                                        )
+                                )
+                        )
+                )
+        );
+
+        thirdCycleCoralStationToReef.done().onTrue(
+                Commands.sequence(
+                        // TODO: AQUÍ PONER LÓGICA DE LIMELIGHTS PARA ALINEARSE CON EL REEF
+                        // limelights.alignInAllAxis(swerveDriver, Degrees.of(0.0), Inches.of(5.0), true),
+                        /*Commands.waitUntil(() -> limelights.isAlignedAtReef(true) || Commands.waitTime(Seconds.of(3))
+                                .isFinished()).andThen(intake.setVoltageCommand(Volts.of(10.0))),*/
+                        intake.setVoltageCommand(Volts.of(10.0)),
+                        Commands.waitUntil(() -> !intake.hasCoral() || Commands.waitTime(Seconds.of(2))
+                                .isFinished()).andThen(
+                                intake.stopCommand()
+                        )
+                )
+        );
+
+        return routine;
+    }
+
+    public Command centerHardCodedAutoCMD() {
+        return centerHardCodedCompleteAuto().cmd();
     }
 }
