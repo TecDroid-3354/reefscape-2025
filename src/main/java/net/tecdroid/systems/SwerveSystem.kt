@@ -3,9 +3,6 @@ package net.tecdroid.systems
 import edu.wpi.first.math.controller.PIDController
 import edu.wpi.first.units.Units.Degrees
 import edu.wpi.first.units.measure.Angle
-import edu.wpi.first.wpilibj.DriverStation
-import edu.wpi.first.wpilibj.DriverStation.Alliance
-import edu.wpi.first.wpilibj.shuffleboard.Shuffleboard
 import edu.wpi.first.wpilibj2.command.Command
 import edu.wpi.first.wpilibj2.command.Commands
 import edu.wpi.first.wpilibj2.command.button.Trigger
@@ -16,13 +13,12 @@ import net.tecdroid.subsystems.drivetrain.SwerveDrive
 import net.tecdroid.subsystems.drivetrain.SwerveDriveConfig
 import net.tecdroid.subsystems.drivetrain.SwerveDriveDriver
 import net.tecdroid.util.ControlGains
-import net.tecdroid.util.pidOutputRange
+import net.tecdroid.safety.pidOutputRange
 import net.tecdroid.util.units.radians
 import net.tecdroid.util.units.seconds
 import net.tecdroid.vision.limelight.Limelight
 import net.tecdroid.vision.limelight.LimelightConfig
 import kotlin.math.absoluteValue
-import kotlin.math.sign
 
 object LimelightAlignmentHandler {
     enum class LimelightChoice {
@@ -118,7 +114,8 @@ object LimelightAlignmentHandler {
                 val id = limelight.getTargetId()
                 val targetAngle = apriltagAngles[id]
                 if (id in 7..11 || id in 17 .. 22) thetaPid.calculate(heading().`in`(Degrees), targetAngle!!.toDouble()).coerceIn(
-                    pidOutputRange) else 0.0
+                    pidOutputRange
+                ) else 0.0
             }
         }
     }
