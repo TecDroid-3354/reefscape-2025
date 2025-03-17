@@ -1,6 +1,7 @@
 package net.tecdroid.systems
 
 import edu.wpi.first.math.controller.PIDController
+import edu.wpi.first.math.geometry.Translation3d
 import edu.wpi.first.units.Units.Degrees
 import edu.wpi.first.units.measure.Angle
 import edu.wpi.first.wpilibj2.command.Command
@@ -31,8 +32,8 @@ object LimelightAlignmentHandler {
         val horizontalAngleOffset: Double
     )
 
-    private val rightLimelight = Limelight(LimelightConfig(rightLimelightName))
-    private val leftLimelight = Limelight(LimelightConfig(leftLimelightName))
+    private val rightLimelight = Limelight(LimelightConfig(rightLimelightName, Translation3d()))
+    private val leftLimelight = Limelight(LimelightConfig(leftLimelightName, Translation3d()))
 
     private val longitudinalGains = ControlGains(
         p = 0.25,
@@ -111,7 +112,7 @@ object LimelightAlignmentHandler {
             if (!limelight.hasTarget) {
                 0.0
             } else {
-                val id = limelight.getTargetId()
+                val id = limelight.targetId
                 val targetAngle = apriltagAngles[id]
                 if (id in 7..11 || id in 17 .. 22) thetaPid.calculate(heading().`in`(Degrees), targetAngle!!.toDouble()).coerceIn(
                     pidOutputRange
