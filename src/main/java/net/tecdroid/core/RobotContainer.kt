@@ -2,6 +2,9 @@ package net.tecdroid.core
 
 import choreo.auto.AutoChooser
 import choreo.auto.AutoFactory
+import edu.wpi.first.math.filter.SlewRateLimiter
+import edu.wpi.first.math.kinematics.ChassisSpeeds
+import edu.wpi.first.units.Units.Hertz
 import edu.wpi.first.wpilibj.shuffleboard.Shuffleboard
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard
 import edu.wpi.first.wpilibj2.command.Commands
@@ -18,6 +21,7 @@ import net.tecdroid.systems.ArmPoses
 import net.tecdroid.systems.ArmSystem
 import net.tecdroid.systems.SwerveSystem
 import net.tecdroid.util.units.degrees
+import net.tecdroid.util.units.seconds
 
 class RobotContainer {
     private val controller = CompliantXboxController(driverControllerId)
@@ -39,6 +43,29 @@ class RobotContainer {
         swerve.drive
     )
 
+    // Swerve Control
+    private val accelerationPeriod = 0.1.seconds
+    private val decelerationPeriod = accelerationPeriod
+
+    var longitudinalVelocityFactorSource = { controller.leftY * 0.85 }
+    var transversalVelocityFactorSource = { controller.leftX * 0.85 }
+    var angularVelocityFactorSource = { controller.rightX * 0.85 }
+
+    private val da = accelerationPeriod.asFrequency()
+    private val dd = -decelerationPeriod.asFrequency()
+
+    private val longitudinalRateLimiter = SlewRateLimiter(da.`in`(Hertz), dd.`in`(Hertz), 0.0)
+    private val transversalRateLimiter = SlewRateLimiter(da.`in`(Hertz), dd.`in`(Hertz), 0.0)
+    private val angularRateLimiter = SlewRateLimiter(da.`in`(Hertz), dd.`in`(Hertz), 0.0)
+
+    private var xf = longitudinalVelocityFactorSource()
+    private var yf = transversalVelocityFactorSource()
+    private var wf = angularVelocityFactorSource()
+
+    private var vx = { swerve.drive.maxLinearVelocity * longitudinalRateLimiter.calculate(xf) }
+    private var vy = { swerve.drive.maxLinearVelocity * transversalRateLimiter.calculate(yf) }
+    private var vw = { swerve.drive.maxAngularVelocity * angularRateLimiter.calculate(wf) }
+
     init {
         linkPoses()
         loadTrajectories()
@@ -47,17 +74,12 @@ class RobotContainer {
 
     fun initial() {
         linkMovement()
-
-    }
-
-    fun always() {
-        swerve.always()
     }
 
     private fun linkMovement() {
         swerve.linkReorientationTrigger(controller.start())
-        swerve.linkControllerMovement(controller)
-        swerve.linkLimelightTriggers(controller.leftTrigger(0.5), controller.rightTrigger(0.5), controller)
+        swerve.linkLimelightTriggers(controller.leftTrigger(0.5), controller.rightTrigger(0.5), this)
+        swerve.drive.defaultCommand = swerve.drive.driveFieldOrientedCMD(ChassisSpeeds(vx.invoke(), vy.invoke(), vw.invoke()))
     }
 
     private fun linkPoses() {

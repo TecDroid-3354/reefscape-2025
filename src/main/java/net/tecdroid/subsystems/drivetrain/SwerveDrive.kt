@@ -67,10 +67,22 @@ class SwerveDrive(private val config: SwerveDriveConfig) : SubsystemBase(), Send
         }
     }
 
+    fun driveFieldOriented(chassisSpeeds: ChassisSpeeds) {
+        val fieldOrientedSpeeds = ChassisSpeeds.fromRobotRelativeSpeeds(chassisSpeeds, heading.toRotation2d())
+        drive(fieldOrientedSpeeds)
+    }
+
+    fun driveFieldOrientedCMD(chassisSpeeds: ChassisSpeeds) : Command {
+        return Commands.runOnce({ driveFieldOriented(chassisSpeeds) }, this)
+    }
+
     fun drive(chassisSpeeds: ChassisSpeeds) {
-        if (DriverStation.isAutonomous()) return
         val desiredStates = kinematics.toSwerveModuleStates(chassisSpeeds)
         setModuleTargetStates(*desiredStates)
+    }
+
+    fun driveCMD(chassisSpeeds: ChassisSpeeds) : Command {
+        return Commands.runOnce({ drive(chassisSpeeds) }, this)
     }
 
     fun matchRelativeEncodersToAbsoluteEncoders() {
