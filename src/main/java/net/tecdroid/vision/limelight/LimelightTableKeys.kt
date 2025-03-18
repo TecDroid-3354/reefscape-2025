@@ -74,6 +74,12 @@ object LimelightTableKeys {
         val targetSkewDegrees = 16
     }
 
+    object TcIndices {
+        val hue = 0
+        val saturation = 1
+        val value = 2
+    }
+
     object Set {
         const val cameraPositionInRobotSpace = "camerapose_robotspace_set"
         const val priorityId = "priorityid"

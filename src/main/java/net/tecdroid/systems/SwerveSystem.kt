@@ -91,7 +91,7 @@ object LimelightAlignmentHandler {
         driver.setRobotOriented()
 
         driver.longitudinalVelocityFactorSource = {
-            if (!limelight.hasTarget) {
+            if (!limelight.hasMultipleTargets) {
                 0.0
             } else {
                 val currentLongitudinalOffset = limelight.offsetFromTarget.z.absoluteValue
@@ -100,7 +100,7 @@ object LimelightAlignmentHandler {
         }
 
         driver.transversalVelocityFactorSource = {
-            if (!limelight.hasTarget) {
+            if (!limelight.hasMultipleTargets) {
                 0.0
             } else {
                 val currentTransversalOffset = limelight.offsetFromTarget.x
@@ -109,7 +109,7 @@ object LimelightAlignmentHandler {
         }
 
         driver.angularVelocityFactorSource = {
-            if (!limelight.hasTarget) {
+            if (!limelight.hasMultipleTargets) {
                 0.0
             } else {
                 val id = limelight.targetId
