@@ -47,10 +47,6 @@ class RobotContainer {
     private val accelerationPeriod = 0.1.seconds
     private val decelerationPeriod = accelerationPeriod
 
-    var longitudinalVelocityFactorSource = { controller.leftY * 0.85 }
-    var transversalVelocityFactorSource = { controller.leftX * 0.85 }
-    var angularVelocityFactorSource = { controller.rightX * 0.85 }
-
     private val da = accelerationPeriod.asFrequency()
     private val dd = -decelerationPeriod.asFrequency()
 
@@ -58,16 +54,12 @@ class RobotContainer {
     private val transversalRateLimiter = SlewRateLimiter(da.`in`(Hertz), dd.`in`(Hertz), 0.0)
     private val angularRateLimiter = SlewRateLimiter(da.`in`(Hertz), dd.`in`(Hertz), 0.0)
 
-    private var xf = longitudinalVelocityFactorSource()
-    private var yf = transversalVelocityFactorSource()
-    private var wf = angularVelocityFactorSource()
-
-    private var vx = { swerve.drive.maxLinearVelocity * longitudinalRateLimiter.calculate(xf) }
-    private var vy = { swerve.drive.maxLinearVelocity * transversalRateLimiter.calculate(yf) }
-    private var vw = { swerve.drive.maxAngularVelocity * angularRateLimiter.calculate(wf) }
+    var vx = { swerve.drive.maxLinearVelocity * longitudinalRateLimiter.calculate(controller.leftY * 0.85) }
+    var vy = { swerve.drive.maxLinearVelocity * transversalRateLimiter.calculate(controller.leftX * 0.85) }
+    var vw = { swerve.drive.maxAngularVelocity * angularRateLimiter.calculate(controller.rightX * 0.85) }
 
     init {
-        linkPoses()
+        //linkPoses()
         loadTrajectories()
         swerve.drive.heading = 0.0.degrees
     }
@@ -79,7 +71,10 @@ class RobotContainer {
     private fun linkMovement() {
         swerve.linkReorientationTrigger(controller.start())
         swerve.linkLimelightTriggers(controller.leftTrigger(0.5), controller.rightTrigger(0.5), this)
-        swerve.drive.defaultCommand = swerve.drive.driveFieldOrientedCMD(ChassisSpeeds(vx.invoke(), vy.invoke(), vw.invoke()))
+        swerve.drive.defaultCommand = Commands.run(
+            { swerve.drive.driveFieldOriented(ChassisSpeeds(vx(), vy(), vw()))},
+            swerve.drive
+        )
     }
 
     private fun linkPoses() {

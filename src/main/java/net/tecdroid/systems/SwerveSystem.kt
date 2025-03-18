@@ -1,11 +1,15 @@
 package net.tecdroid.systems
 
 import edu.wpi.first.math.controller.PIDController
-import edu.wpi.first.units.Units.Degrees
+import edu.wpi.first.math.kinematics.ChassisSpeeds
+import edu.wpi.first.units.Units.*
 import edu.wpi.first.units.measure.Angle
+import edu.wpi.first.units.measure.AngularVelocity
+import edu.wpi.first.units.measure.LinearVelocity
 import edu.wpi.first.wpilibj.DriverStation
 import edu.wpi.first.wpilibj.DriverStation.Alliance
 import edu.wpi.first.wpilibj.shuffleboard.Shuffleboard
+import net.tecdroid.subsystems.drivetrain.swerveDriveConfiguration
 import edu.wpi.first.wpilibj2.command.Command
 import edu.wpi.first.wpilibj2.command.Commands
 import edu.wpi.first.wpilibj2.command.button.Trigger
@@ -23,6 +27,7 @@ import net.tecdroid.vision.limelight.Limelight
 import net.tecdroid.vision.limelight.LimelightConfig
 import kotlin.math.absoluteValue
 import kotlin.math.sign
+import kotlin.time.times
 
 object LimelightAlignmentHandler {
     enum class LimelightChoice {
@@ -85,49 +90,62 @@ object LimelightAlignmentHandler {
         leftThetaPid.enableContinuousInput(0.0, 360.0)
     }
 
-    fun assignLimelightAlignment(choice: LimelightChoice, offset: LimelightOffset, rc: RobotContainer, heading: () -> Angle) {
+    fun assignLimelightAlignment(choice: LimelightChoice, offset: LimelightOffset, drive: SwerveDrive, heading: () -> Angle) {
         val limelight = if (choice == LimelightChoice.Left) leftLimelight else rightLimelight
         val longitudinalPid = if (choice == LimelightChoice.Left) leftLongitudinalPid else rightLongitudinalPid
         val transversalPid = if (choice == LimelightChoice.Left) leftTransversalPid else rightTransversalPid
         val thetaPid = if (choice == LimelightChoice.Left) leftThetaPid else rightThetaPid
 
-        rc.longitudinalVelocityFactorSource = {
+        val vx: () -> LinearVelocity = {
             if (!limelight.hasTarget) {
-                0.0
+                MetersPerSecond.zero()
             } else {
                 val currentLongitudinalOffset = limelight.offsetFromTarget.z.absoluteValue
-                longitudinalPid.calculate(currentLongitudinalOffset, offset.longitudinalOffset).coerceIn(pidOutputRange)
+                drive.maxLinearVelocity * longitudinalPid.calculate(
+                    currentLongitudinalOffset,
+                    offset.longitudinalOffset
+                ).coerceIn(pidOutputRange)
             }
         }
 
-        rc.transversalVelocityFactorSource = {
+        val vy: () -> LinearVelocity = {
             if (!limelight.hasTarget) {
-                0.0
+                MetersPerSecond.zero()
             } else {
                 val currentTransversalOffset = limelight.offsetFromTarget.x
-                transversalPid.calculate(currentTransversalOffset, offset.transversalOffset).coerceIn(pidOutputRange)
+                drive.maxLinearVelocity * transversalPid.calculate(currentTransversalOffset, offset.transversalOffset)
+                    .coerceIn(pidOutputRange) as Double
             }
         }
 
-        rc.angularVelocityFactorSource = {
+        val vw: () -> AngularVelocity = {
             if (!limelight.hasTarget) {
-                0.0
+                DegreesPerSecond.zero()
             } else {
                 val id = limelight.getTargetId()
                 val targetAngle = apriltagAngles[id]
-                if (id in 7..11 || id in 17 .. 22) thetaPid.calculate(heading().`in`(Degrees), targetAngle!!.toDouble()).coerceIn(
-                    pidOutputRange) else 0.0
+                if (id in 7..11 || id in 17..22) drive.maxAngularVelocity * thetaPid.calculate(
+                    heading().`in`(Degrees),
+                    targetAngle!!.toDouble()
+                ).coerceIn(
+                    pidOutputRange
+                ) else DegreesPerSecond.zero()
             }
         }
+
+        val speeds = ChassisSpeeds(vx(), vy(), vw())
+
+        drive.driveCMD(speeds)
     }
 
-    fun assignLimelightAlignmentCommand(choice: LimelightChoice, offset: LimelightOffset, rc: RobotContainer, thetaSource: () -> Angle) : Command = Commands.runOnce({assignLimelightAlignment(choice, offset, rc, thetaSource)})
+    fun assignLimelightAlignmentCommand(choice: LimelightChoice, offset: LimelightOffset, drive: SwerveDrive, thetaSource: () -> Angle) : Command = Commands.runOnce({assignLimelightAlignment(choice, offset, drive, thetaSource)})
 }
 
 class SwerveSystem(swerveDriveConfig: SwerveDriveConfig) {
      val drive = SwerveDrive(
         config = swerveDriveConfig
     )
+
 
     private val heading
         get() = drive.heading
@@ -138,8 +156,8 @@ class SwerveSystem(swerveDriveConfig: SwerveDriveConfig) {
     }
 
     fun linkLimelightTriggers(leftTrigger: Trigger, rightTrigger: Trigger, rc: RobotContainer) {
-        leftTrigger.onTrue(LimelightAlignmentHandler.assignLimelightAlignmentCommand(LimelightAlignmentHandler.LimelightChoice.Left, LimelightAlignmentHandler.LimelightOffset(0.19000, 0.0, 0.0), rc, {drive.heading }))
-        rightTrigger.onTrue(LimelightAlignmentHandler.assignLimelightAlignmentCommand(LimelightAlignmentHandler.LimelightChoice.Right, LimelightAlignmentHandler.LimelightOffset(0.19000, 0.0, 0.0), rc, { drive.heading }))
+        leftTrigger.onTrue(LimelightAlignmentHandler.assignLimelightAlignmentCommand(LimelightAlignmentHandler.LimelightChoice.Left, LimelightAlignmentHandler.LimelightOffset(0.19000, 0.0, 0.0), drive, {drive.heading }))
+        rightTrigger.onTrue(LimelightAlignmentHandler.assignLimelightAlignmentCommand(LimelightAlignmentHandler.LimelightChoice.Right, LimelightAlignmentHandler.LimelightOffset(0.19000, 0.0, 0.0), drive, { drive.heading }))
     }
 
     fun linkReorientationTrigger(trigger: Trigger) {
