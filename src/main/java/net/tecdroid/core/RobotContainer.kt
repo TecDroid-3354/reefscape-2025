@@ -1,7 +1,11 @@
 package net.tecdroid.core
-
+import edu.wpi.first.wpilibj.DataLogManager;
+import edu.wpi.first.wpilibj.DriverStation;
 import choreo.auto.AutoChooser
 import choreo.auto.AutoFactory
+import edu.wpi.first.util.datalog.BooleanLogEntry
+import edu.wpi.first.util.datalog.DoubleLogEntry
+import edu.wpi.first.util.datalog.StringLogEntry
 import edu.wpi.first.wpilibj.shuffleboard.Shuffleboard
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard
 import edu.wpi.first.wpilibj2.command.Commands
@@ -18,6 +22,7 @@ import net.tecdroid.systems.ArmPoses
 import net.tecdroid.systems.ArmSystem
 import net.tecdroid.systems.SwerveSystem
 import net.tecdroid.util.units.degrees
+
 
 class RobotContainer {
     private val controller = CompliantXboxController(driverControllerId)
@@ -137,5 +142,9 @@ class RobotContainer {
 
         RobotModeTriggers.autonomous().whileTrue(chooser.selectedCommandScheduler());
     }
-
 }
+
+
+
+
+
