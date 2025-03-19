@@ -1,10 +1,16 @@
 package net.tecdroid.subsystems.drivetrain
 
-import choreo.trajectory.SwerveSample
+
 import com.ctre.phoenix6.configs.Pigeon2Configuration
 import com.ctre.phoenix6.hardware.Pigeon2
+import com.pathplanner.lib.auto.AutoBuilder
+import com.pathplanner.lib.config.PIDConstants
+import com.pathplanner.lib.config.RobotConfig
+import com.pathplanner.lib.controllers.PPHolonomicDriveController
+import com.pathplanner.lib.path.PathPlannerPath
 import edu.wpi.first.math.controller.PIDController
 import edu.wpi.first.math.geometry.Pose2d
+import edu.wpi.first.math.geometry.Rotation2d
 import edu.wpi.first.math.kinematics.*
 import edu.wpi.first.units.Units.*
 import edu.wpi.first.units.measure.Angle
@@ -13,9 +19,9 @@ import edu.wpi.first.units.measure.LinearVelocity
 import edu.wpi.first.util.sendable.Sendable
 import edu.wpi.first.util.sendable.SendableBuilder
 import edu.wpi.first.wpilibj.DriverStation
-import edu.wpi.first.wpilibj.RobotController
 import edu.wpi.first.wpilibj.shuffleboard.Shuffleboard
 import edu.wpi.first.wpilibj.smartdashboard.Field2d
+import edu.wpi.first.wpilibj.smartdashboard.SendableChooser
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard
 import edu.wpi.first.wpilibj2.command.Command
 import edu.wpi.first.wpilibj2.command.Commands
@@ -37,6 +43,8 @@ class SwerveDrive(private val config: SwerveDriveConfig) : SubsystemBase(), Send
     val sidewaysPid = PIDController(0.1, 0.0, 0.0)
     val thetaPid = PIDController(0.1, 0.0, 0.0)
 
+    private var autoBuilderConfig: RobotConfig? = null
+
     init {
         this.configureImuInterface()
         matchRelativeEncodersToAbsoluteEncoders()
@@ -45,7 +53,7 @@ class SwerveDrive(private val config: SwerveDriveConfig) : SubsystemBase(), Send
         SmartDashboard.putData("Field", field)
     }
 
-    fun followTrajectory(sample: SwerveSample) {
+    /*fun followTrajectory(sample: SwerveSample) {
         val speeds = ChassisSpeeds(
             sample.vx + forwardsPid.calculate(pose.x, sample.x),
             sample.vy + sidewaysPid.calculate(pose.y, sample.y),
@@ -53,7 +61,7 @@ class SwerveDrive(private val config: SwerveDriveConfig) : SubsystemBase(), Send
         )
 
         drive(speeds)
-    }
+    }*/
 
     override fun periodic() {
         updateOdometry()
@@ -67,6 +75,8 @@ class SwerveDrive(private val config: SwerveDriveConfig) : SubsystemBase(), Send
         }
     }
 
+
+    // ! Drive field oriented
     fun driveFieldOriented(chassisSpeeds: ChassisSpeeds) {
         val fieldOrientedSpeeds = ChassisSpeeds.fromFieldRelativeSpeeds(chassisSpeeds, heading.toRotation2d())
         drive(fieldOrientedSpeeds)
@@ -74,8 +84,10 @@ class SwerveDrive(private val config: SwerveDriveConfig) : SubsystemBase(), Send
 
     fun driveFieldOrientedCMD(chassisSpeeds: ChassisSpeeds) : Command {
         return Commands.runOnce({ driveFieldOriented(chassisSpeeds) })
-    }
+   }
 
+
+    // ! Drive robot oriented
     fun drive(chassisSpeeds: ChassisSpeeds) {
         val desiredStates = kinematics.toSwerveModuleStates(chassisSpeeds)
         setModuleTargetStates(*desiredStates)
@@ -160,4 +172,51 @@ class SwerveDrive(private val config: SwerveDriveConfig) : SubsystemBase(), Send
         return Commands.runOnce({ for (module in modules) module.align() })
     }
 
+    private val currentSpeeds: ChassisSpeeds
+        get() = ChassisSpeedBridge.ktToJavaArrayChassisSpeeds(kinematics, modules.map { it.state })
+
+    /*fun getSpeedsPasaye() {
+        val frontLeftState = SwerveModuleState(23.43, Rotation2d.fromDegrees(-140.19))
+        val frontRightState = SwerveModuleState(23.43, Rotation2d.fromDegrees(-39.81))
+        val backLeftState = SwerveModuleState(54.08, Rotation2d.fromDegrees(-109.44))
+        val backRightState = SwerveModuleState(54.08, Rotation2d.fromDegrees(-70.56))
+
+// Convert to chassis speeds
+        return val chassisSpeeds = kinematics.toChassisSpeeds(
+            arrayOf(frontLeftState, frontRightState, backLeftState, backRightState)
+        )
+    }*/
+
+    fun configurePathPlanner() {
+        try {
+            autoBuilderConfig = RobotConfig.fromGUISettings()
+        } catch (e: Exception) {
+            // Handle exception as needed
+            e.printStackTrace()
+        }
+
+        AutoBuilder.configure(
+            this::pose,  // Robot pose supplier
+            { pose: Pose2d -> this.resetOdometry(pose) },  // Method to reset odometry (will be called if your auto has a starting pose)
+            { currentSpeeds }, // ChassisSpeeds supplier. MUST BE ROBOT RELATIVE
+            { speeds, feedforwards -> this.drive(speeds) }, // Method that will drive the robot given ROBOT RELATIVE ChassisSpeeds. Also optionally outputs individual module feedforwards
+            PPHolonomicDriveController( // PPHolonomicController is the built in path following controller for holonomic drive trains
+                PIDConstants(1.0, 0.0, 0.0),  // Translation PID constants
+                PIDConstants(1.0, 0.0, 0.0) // Rotation PID constants
+            ),
+            autoBuilderConfig,  // The robot configuration
+            {
+                // Boolean supplier that controls when the path will be mirrored for the red alliance
+                // This will flip the path being followed to the red side of the field.
+                // THE ORIGIN WILL REMAIN ON THE BLUE SIDE
+                val alliance = DriverStation.getAlliance()
+                if (alliance.isPresent) {
+                    return@configure alliance.get() == DriverStation.Alliance.Red;
+                }
+                false
+            },
+            this // Reference to this subsystem to set requirements
+        )
+
+    }
 }

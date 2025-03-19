@@ -34,10 +34,7 @@ class Robot : TimedRobot() {
     }
 
     override fun autonomousInit() {
-        timer.restart()
-        timer.reset()
-        timer.start()
-
+        container.setAuto()
     }
 
     override fun autonomousPeriodic() {

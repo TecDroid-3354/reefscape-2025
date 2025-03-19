@@ -308,4 +308,9 @@ class SwerveModule(private val config: SwerveModuleConfig) : Sendable {
         setTargetAngle(0.0.degrees)
     }
 
+    // Creamos una propiedad que devuelve el estado del módulo
+    val state: SwerveModuleState
+        get() = SwerveModuleState(wheelLinearVelocity, wheelAzimuth.toRotation2d())
+
+
 }

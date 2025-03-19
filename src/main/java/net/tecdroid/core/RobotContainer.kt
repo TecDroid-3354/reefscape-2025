@@ -1,14 +1,15 @@
 package net.tecdroid.core
 
-import choreo.auto.AutoChooser
-import choreo.auto.AutoFactory
 import edu.wpi.first.math.filter.SlewRateLimiter
 import edu.wpi.first.math.kinematics.ChassisSpeeds
 import edu.wpi.first.units.Units.Hertz
-import edu.wpi.first.wpilibj.shuffleboard.Shuffleboard
-import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard
+import com.pathplanner.lib.auto.AutoBuilder
+import com.pathplanner.lib.config.PIDConstants
+import com.pathplanner.lib.config.RobotConfig
+import com.pathplanner.lib.controllers.PPHolonomicDriveController
+import com.pathplanner.lib.path.PathPlannerPath
 import edu.wpi.first.wpilibj2.command.Commands
-import edu.wpi.first.wpilibj2.command.button.RobotModeTriggers
+import edu.wpi.first.wpilibj2.command.Command
 import net.tecdroid.constants.GenericConstants.driverControllerId
 import net.tecdroid.input.CompliantXboxController
 import net.tecdroid.subsystems.drivetrain.swerveDriveConfiguration
@@ -22,6 +23,9 @@ import net.tecdroid.systems.ArmSystem
 import net.tecdroid.systems.SwerveSystem
 import net.tecdroid.util.units.degrees
 import net.tecdroid.util.units.seconds
+import edu.wpi.first.wpilibj.smartdashboard.SendableChooser
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard
+
 
 class RobotContainer {
     private val controller = CompliantXboxController(driverControllerId)
@@ -33,15 +37,10 @@ class RobotContainer {
     private val pollIsLow = { isLow }
     private val makeLow = { Commands.runOnce({ isLow = true }) }
     private val makeHigh = { Commands.runOnce({ isLow = false }) }
-    val chooser = AutoChooser()
 
-    val autoFactory = AutoFactory(
-        swerve.drive::pose,
-        swerve.drive::resetOdometry,
-        swerve.drive::followTrajectory,
-        true,
-        swerve.drive
-    )
+    // Autonomous
+    private val autoConfiguration = swerve.drive
+    private var autoChooser: SendableChooser<Command>? = null
 
     // Swerve Control
     private val accelerationPeriod = 0.1.seconds
@@ -60,12 +59,19 @@ class RobotContainer {
 
     init {
         //linkPoses()
-        loadTrajectories()
+        //loadTrajectories()
         swerve.drive.heading = 0.0.degrees
+        autoChooser = AutoBuilder.buildAutoChooser();
+        SmartDashboard.putData("Auto Chooser", autoChooser);
     }
 
     fun initial() {
         linkMovement()
+    }
+
+    fun setAuto() {
+        autoConfiguration.configurePathPlanner();
+        getAutonomousCommand()
     }
 
     private fun linkMovement() {
@@ -140,7 +146,7 @@ class RobotContainer {
         controller.leftBumper().onTrue(arm.enableOuttake()).onFalse(arm.disableIntake())
     }
 
-    fun back2m() = Commands.sequence(
+    /*fun back2m() = Commands.sequence(
         Commands.runOnce({
             autoFactory.resetOdometry("Back2M")
         }),
@@ -153,6 +159,16 @@ class RobotContainer {
         SmartDashboard.putData("AutoChooser", chooser)
 
         RobotModeTriggers.autonomous().whileTrue(chooser.selectedCommandScheduler());
+    }*/
+
+
+
+    fun getAutonomousCommand(): Command {
+        // Load the path you want to follow using its name in the GUI
+        var path = PathPlannerPath.fromPathFile("Straightforward");
+
+        // Create a path following command using AutoBuilder. This will also trigger event markers.
+        return AutoBuilder.followPath(path);
     }
 
 }
