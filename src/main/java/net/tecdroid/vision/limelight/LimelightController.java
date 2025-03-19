@@ -3,12 +3,14 @@ package net.tecdroid.vision.limelight;
 import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.geometry.Translation3d;
+import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.units.Units;
 import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.wpilibj.shuffleboard.Shuffleboard;
 import edu.wpi.first.wpilibj.shuffleboard.ShuffleboardTab;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
+import edu.wpi.first.wpilibj2.command.Subsystem;
 import net.tecdroid.constants.StringConstantsKt;
 import net.tecdroid.util.ControlGains;
 import net.tecdroid.util.LimeLightChoice;
@@ -16,23 +18,30 @@ import net.tecdroid.util.LimeLightChoice;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.function.Consumer;
+import java.util.function.DoubleSupplier;
 
 public class LimelightController {
     private final Limelight leftLimelight = new Limelight(new LimelightConfig(StringConstantsKt.leftLimelightName, new Translation3d()));
     private final Limelight rightLimelight = new Limelight(new LimelightConfig(StringConstantsKt.rightLimelightName, new Translation3d()));
 
+    private final Subsystem requiredSubsystem;
+
     private final ControlGains xGains = new ControlGains(0.25, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0);
-    private final ControlGains yGains = new ControlGains(0.45, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0);
-    private final ControlGains thetaGains = new ControlGains(0.0075, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0);
+    private final ControlGains yGains = new ControlGains(1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0);
+    private final ControlGains thetaGains = new ControlGains(0.1, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0);
 
     private final PIDController xPIDController = new PIDController(xGains.getP(), xGains.getI(), xGains.getD());
     private final PIDController yPIDController = new PIDController(yGains.getP(), yGains.getI(), yGains.getD());
     private final PIDController thetaPIDController = new PIDController(thetaGains.getP(), thetaGains.getI(), thetaGains.getD());
 
-    Map<Integer, Double> alignmentAngles = new HashMap<>();
-    private final Consumer<double[]> drive;
+    private Map<Integer, Double> alignmentAngles = new HashMap<>();
+    private final Consumer<ChassisSpeeds> drive;
+    private final DoubleSupplier yaw;
 
     public void angleDictionaryValues() {
+        // This line is only for solve an error, we must solve it asap
+        alignmentAngles.put(0, 0.0);
+
         // Blue
         alignmentAngles.put(21, 0.0);
         alignmentAngles.put(20, 60.0);
@@ -49,8 +58,12 @@ public class LimelightController {
         alignmentAngles.put(8, 240.0);
         alignmentAngles.put(9, 300.0);
     }
-    public LimelightController(Consumer<double[]> drive) {
+
+    public LimelightController(Subsystem requiredSubsystem, Consumer<ChassisSpeeds> drive, DoubleSupplier yaw) {
+        this.requiredSubsystem = requiredSubsystem;
         this.drive = drive;
+        this.yaw = yaw;
+
         thetaPIDController.enableContinuousInput(0.0, 360.0);
         angleDictionaryValues();
 
@@ -60,6 +73,7 @@ public class LimelightController {
         Limelight limelight = (choice == LimeLightChoice.Right) ? rightLimelight : leftLimelight;
         return limelight.getRobotPositionInTargetSpace();
     }
+
 
     public int getTargetId(LimeLightChoice choice) {
         Limelight limelight = (choice == LimeLightChoice.Right) ? rightLimelight : leftLimelight;
@@ -71,57 +85,62 @@ public class LimelightController {
         return limelight.getHasTarget();
     }
 
+    // Obtain a yaw between the range [0, 360]
+    public double getLimitedYaw() {
+        double limitedYaw = yaw.getAsDouble() % 360;
+        if (limitedYaw < 0) {
+            limitedYaw += 360;
+        }
+        return limitedYaw;
+    }
+
     public Command alignRobotXAxis(LimeLightChoice choice, double setPoint) {
         return Commands.run(() -> {
             Pose3d robotPose = getRobotPositionInTargetSpace(choice);
             double driveXVelocity = xPIDController.calculate(robotPose.getTranslation().getX(), setPoint);
-            double[] velocities = {driveXVelocity, 0.0, 0.0};
-            drive.accept(velocities);
+            drive.accept(new ChassisSpeeds(driveXVelocity, 0.0, 0.0));
 
-        }).onlyIf(() -> hasTarget(choice));
+        }, requiredSubsystem).onlyIf(() -> hasTarget(choice));
     }
 
     public Command alignRobotYAxis(LimeLightChoice choice, double setPoint) {
         return Commands.run(() -> {
             Pose3d robotPose = getRobotPositionInTargetSpace(choice);
+            double driveYVelocity = -yPIDController.calculate(robotPose.getTranslation().getZ(), setPoint);
+            drive.accept(new ChassisSpeeds(driveYVelocity, 0.0, 0.0));
 
-            double driveYVelocity = yPIDController.calculate(robotPose.getTranslation().getY(), setPoint);
-            double[] velocities = {0.0, driveYVelocity, 0.0};
-            drive.accept(velocities);
-
-        }).onlyIf(() -> hasTarget(choice));
+        }, requiredSubsystem).onlyIf(() -> hasTarget(choice));
     }
 
-    public Command alignRobotThetaAxis(LimeLightChoice choice, Angle yaw) {
+    public Command alignRobotThetaAxis(LimeLightChoice choice) {
         return Commands.run(() -> {
             double yawSetPoint = alignmentAngles.get(getTargetId(choice));
+            double driveThetaVelocity = thetaPIDController.calculate(getLimitedYaw(), yawSetPoint);
+            drive.accept(new ChassisSpeeds(0.0, 0.0, driveThetaVelocity));
 
-            double driveThetaVelocity = thetaPIDController.calculate(yaw.in(Units.Degrees), yawSetPoint);
-            double[] velocities = {0.0, 0.0, driveThetaVelocity};
-            drive.accept(velocities);
-
-        }).onlyIf(() -> hasTarget(choice));
+        }, requiredSubsystem).onlyIf(() -> hasTarget(choice));
     }
 
-    public Command alignRobotAllAxis(LimeLightChoice choice, Angle yaw, double xSetPoint, double ySetPoint) {
+    public Command alignRobotAllAxis(LimeLightChoice choice, double xSetPoint, double ySetPoint) {
         return Commands.run(() -> {
             Pose3d robotPose = getRobotPositionInTargetSpace(choice);
             double yawSetPoint = alignmentAngles.get(getTargetId(choice));
 
             double driveXVelocity = xPIDController.calculate(robotPose.getTranslation().getX(), xSetPoint);
             double driveYVelocity = yPIDController.calculate(robotPose.getTranslation().getY(), ySetPoint);
-            double driveThetaVelocity = thetaPIDController.calculate(yaw.in(Units.Degrees), yawSetPoint);
+            double driveThetaVelocity = thetaPIDController.calculate(getLimitedYaw(), yawSetPoint);
 
-            double[] velocities = {driveXVelocity, driveYVelocity, driveThetaVelocity};
-            drive.accept(velocities);
-        }).onlyIf(() -> hasTarget(choice));
+            drive.accept(new ChassisSpeeds(driveYVelocity, driveXVelocity, driveThetaVelocity));
+        }, requiredSubsystem).onlyIf(() -> hasTarget(choice));
     }
 
     public void shuffleboardData() {
         ShuffleboardTab tab = Shuffleboard.getTab("Limelight");
 
-        tab.add("lPosition", getRobotPositionInTargetSpace(LimeLightChoice.Left));
-        tab.add("rPosition", getRobotPositionInTargetSpace(LimeLightChoice.Right));
+        tab.addDoubleArray("rPosition", () -> new double[]{getRobotPositionInTargetSpace(LimeLightChoice.Right).getX(), getRobotPositionInTargetSpace(LimeLightChoice.Right).getY(), getRobotPositionInTargetSpace(LimeLightChoice.Right).getZ()});
+        tab.addDoubleArray("lPosition", () -> new double[]{getRobotPositionInTargetSpace(LimeLightChoice.Left).getX(), getRobotPositionInTargetSpace(LimeLightChoice.Left).getY(), getRobotPositionInTargetSpace(LimeLightChoice.Left).getZ()});
+        tab.addDouble("RobotYaw", this::getLimitedYaw);
+        tab.addInteger("Yaw Objective", rightLimelight::getTargetId);
     }
 
 

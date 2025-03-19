@@ -1,14 +1,11 @@
 package net.tecdroid.core
 
-import choreo.auto.AutoChooser
-import choreo.auto.AutoFactory
 import edu.wpi.first.math.filter.SlewRateLimiter
 import edu.wpi.first.math.kinematics.ChassisSpeeds
+import edu.wpi.first.units.Units
 import edu.wpi.first.units.Units.Hertz
-import edu.wpi.first.wpilibj.shuffleboard.Shuffleboard
-import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard
 import edu.wpi.first.wpilibj2.command.Commands
-import edu.wpi.first.wpilibj2.command.button.RobotModeTriggers
+import edu.wpi.first.wpilibj2.command.button.Trigger
 import net.tecdroid.constants.GenericConstants.driverControllerId
 import net.tecdroid.input.CompliantXboxController
 import net.tecdroid.subsystems.drivetrain.swerveDriveConfiguration
@@ -20,28 +17,27 @@ import net.tecdroid.systems.ArmOrders
 import net.tecdroid.systems.ArmPoses
 import net.tecdroid.systems.ArmSystem
 import net.tecdroid.systems.SwerveSystem
+import net.tecdroid.util.LimeLightChoice
 import net.tecdroid.util.units.degrees
 import net.tecdroid.util.units.seconds
+import net.tecdroid.vision.limelight.LimelightController
+import java.util.function.Consumer
 
 class RobotContainer {
     private val controller = CompliantXboxController(driverControllerId)
     val swerve = SwerveSystem(swerveDriveConfiguration)
-    private val arm = ArmSystem(wristConfig, elevatorConfig, elevatorJointConfig, intakeConfig)
+    //private val arm = ArmSystem(wristConfig, elevatorConfig, elevatorJointConfig, intakeConfig)
+    private val limelightController = LimelightController(
+        swerve.drive,
+        Consumer { chassisSpeeds -> swerve.drive.drive(chassisSpeeds) },
+        { swerve.drive.heading.`in`(Units.Degrees) })
+
     private var isNormalMode = true
     private val pollNormalMode = { isNormalMode }
     private var isLow = false
     private val pollIsLow = { isLow }
     private val makeLow = { Commands.runOnce({ isLow = true }) }
     private val makeHigh = { Commands.runOnce({ isLow = false }) }
-    val chooser = AutoChooser()
-
-    val autoFactory = AutoFactory(
-        swerve.drive::pose,
-        swerve.drive::resetOdometry,
-        swerve.drive::followTrajectory,
-        true,
-        swerve.drive
-    )
 
     // Swerve Control
     private val accelerationPeriod = 0.1.seconds
@@ -59,9 +55,8 @@ class RobotContainer {
     var vw = { swerve.drive.maxAngularVelocity * angularRateLimiter.calculate(controller.rightX * 0.85) }
 
     init {
-        //linkPoses()
-        loadTrajectories()
         swerve.drive.heading = 0.0.degrees
+        limelightController.shuffleboardData()
     }
 
     fun initial() {
@@ -70,14 +65,19 @@ class RobotContainer {
 
     private fun linkMovement() {
         swerve.linkReorientationTrigger(controller.start())
-        swerve.linkLimelightTriggers(controller.leftTrigger(0.5), controller.rightTrigger(0.5), this)
         swerve.drive.defaultCommand = Commands.run(
             { swerve.drive.driveFieldOriented(ChassisSpeeds(vx(), vy(), vw()))},
             swerve.drive
         )
+
+        //controller.leftTrigger().whileTrue(limelightController.alignRobotYAxis(LimeLightChoice.Right, -0.75))
+        //controller.rightTrigger().whileTrue(limelightController.alignRobotYAxis(LimeLightChoice.Left, -0.75))
+
+        controller.leftTrigger().whileTrue(limelightController.alignRobotThetaAxis(LimeLightChoice.Right))
+        controller.rightTrigger().whileTrue(limelightController.alignRobotThetaAxis(LimeLightChoice.Left))
     }
 
-    private fun linkPoses() {
+    /*private fun linkPoses() {
         controller.povLeft().onTrue(Commands.runOnce({ isNormalMode = !isNormalMode }))
 
         controller.y().onTrue(
@@ -138,21 +138,7 @@ class RobotContainer {
 
         controller.rightBumper().onTrue(arm.enableIntake()).onFalse(arm.disableIntake())
         controller.leftBumper().onTrue(arm.enableOuttake()).onFalse(arm.disableIntake())
-    }
 
-    fun back2m() = Commands.sequence(
-        Commands.runOnce({
-            autoFactory.resetOdometry("Back2M")
-        }),
-        autoFactory.trajectoryCmd("Back2M")
-    )
-
-    fun loadTrajectories() {
-        chooser.addCmd("Back 2 m", ::back2m)
-
-        SmartDashboard.putData("AutoChooser", chooser)
-
-        RobotModeTriggers.autonomous().whileTrue(chooser.selectedCommandScheduler());
-    }
+    }*/
 
 }

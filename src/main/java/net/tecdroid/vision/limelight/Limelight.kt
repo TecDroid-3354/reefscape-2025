@@ -136,7 +136,7 @@ class Limelight(private val config: LimelightConfig) : Sendable {
     val robotPositionInRedFieldSpaceMt2: Pose3d
         get() = rawDataToPose3d(rawRobotPositionInRedFieldSpaceMt2)
 
-    private val rawRobotPositionInTargetSpace: DoubleArray
+    public val rawRobotPositionInTargetSpace: DoubleArray
         get() = getDoubleArray(LimelightTableKeys.Get.robotPositionInTargetSpace)
 
     val robotPositionInTargetSpace: Pose3d

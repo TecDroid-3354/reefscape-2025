@@ -13,7 +13,7 @@ object LimelightTableKeys {
 
     object Get {
         const val hasValidTarget = "tv"
-        const val targetId = "id"
+        const val targetId = "tid"
         const val horizontalOffsetDegrees = "tx"
         const val verticalOffsetDegrees = "ty"
         const val horizontalOffsetPixels = "txnc"
