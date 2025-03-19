@@ -135,7 +135,7 @@ object LimelightAlignmentHandler {
 
         val speeds = ChassisSpeeds(vx(), vy(), vw())
 
-        drive.driveCMD(speeds)
+        drive.driveRobotOriented(speeds)
     }
 
     fun assignLimelightAlignmentCommand(choice: LimelightChoice, offset: LimelightOffset, drive: SwerveDrive, thetaSource: () -> Angle) : Command = Commands.runOnce({assignLimelightAlignment(choice, offset, drive, thetaSource)})
@@ -145,7 +145,6 @@ class SwerveSystem(swerveDriveConfig: SwerveDriveConfig) {
      val drive = SwerveDrive(
         config = swerveDriveConfig
     )
-
 
     private val heading
         get() = drive.heading
@@ -161,6 +160,6 @@ class SwerveSystem(swerveDriveConfig: SwerveDriveConfig) {
     }
 
     fun linkReorientationTrigger(trigger: Trigger) {
-        trigger.onTrue(drive.setHeadingCommand(0.0.radians))
+        trigger.onTrue(Commands.runOnce({drive.heading = 0.0.radians}))
     }
 }
