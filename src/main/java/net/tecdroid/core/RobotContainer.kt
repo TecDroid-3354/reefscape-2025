@@ -1,20 +1,13 @@
 package net.tecdroid.core
-import edu.wpi.first.wpilibj.DataLogManager;
-import edu.wpi.first.wpilibj.DriverStation;
-import choreo.auto.AutoChooser
-import choreo.auto.AutoFactory
+
 import edu.wpi.first.math.filter.SlewRateLimiter
 import edu.wpi.first.math.kinematics.ChassisSpeeds
 import edu.wpi.first.units.Units.Hertz
-import edu.wpi.first.util.datalog.BooleanLogEntry
-import edu.wpi.first.util.datalog.DoubleLogEntry
-import edu.wpi.first.util.datalog.StringLogEntry
-import edu.wpi.first.wpilibj.shuffleboard.Shuffleboard
-import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard
+import edu.wpi.first.wpilibj2.command.Command
 import edu.wpi.first.wpilibj2.command.Commands
-import edu.wpi.first.wpilibj2.command.button.RobotModeTriggers
 import net.tecdroid.constants.GenericConstants.driverControllerId
 import net.tecdroid.input.CompliantXboxController
+import net.tecdroid.subsystems.drivetrain.SwerveDrive
 import net.tecdroid.subsystems.drivetrain.swerveDriveConfiguration
 import net.tecdroid.subsystems.elevator.elevatorConfig
 import net.tecdroid.subsystems.elevatorjoint.elevatorJointConfig
@@ -23,14 +16,13 @@ import net.tecdroid.subsystems.wrist.wristConfig
 import net.tecdroid.systems.ArmOrders
 import net.tecdroid.systems.ArmPoses
 import net.tecdroid.systems.ArmSystem
-import net.tecdroid.systems.SwerveSystem
 import net.tecdroid.util.units.degrees
 import net.tecdroid.util.units.seconds
 
 
 class RobotContainer {
     private val controller = CompliantXboxController(driverControllerId)
-    val swerve = SwerveSystem(swerveDriveConfiguration)
+    private val swerve = SwerveDrive(swerveDriveConfiguration)
     private val arm = ArmSystem(wristConfig, elevatorConfig, elevatorJointConfig, intakeConfig)
     private var isNormalMode = true
     private val pollNormalMode = { isNormalMode }
@@ -50,26 +42,26 @@ class RobotContainer {
     private val transversalRateLimiter = SlewRateLimiter(da.`in`(Hertz), dd.`in`(Hertz), 0.0)
     private val angularRateLimiter = SlewRateLimiter(da.`in`(Hertz), dd.`in`(Hertz), 0.0)
 
-    var vx = { swerve.drive.maxLinearVelocity * longitudinalRateLimiter.calculate(controller.leftY * 0.85) }
-    var vy = { swerve.drive.maxLinearVelocity * transversalRateLimiter.calculate(controller.leftX * 0.85) }
-    var vw = { swerve.drive.maxAngularVelocity * angularRateLimiter.calculate(controller.rightX * 0.85) }
+    var vx = { swerve.maxLinearVelocity * longitudinalRateLimiter.calculate(controller.leftY * 0.85) }
+    var vy = { swerve.maxLinearVelocity * transversalRateLimiter.calculate(controller.leftX * 0.85) }
+    var vw = { swerve.maxAngularVelocity * angularRateLimiter.calculate(controller.rightX * 0.85) }
 
     init {
         //linkPoses()
-        swerve.drive.heading = 0.0.degrees
+        swerve.heading = 0.0.degrees
     }
 
-    fun initial() {
+    fun autonomousInit() {
+
+    }
+
+    fun teleopInit() {
         linkMovement()
     }
 
     private fun linkMovement() {
-        swerve.linkReorientationTrigger(controller.start())
-        swerve.linkLimelightTriggers(controller.leftTrigger(0.5), controller.rightTrigger(0.5), this)
-        swerve.drive.defaultCommand = Commands.run(
-            { swerve.drive.driveFieldOriented(ChassisSpeeds(vx(), vy(), vw()))},
-            swerve.drive
-        )
+        controller.start().onTrue(swerve.setHeadingCommand(0.0.degrees))
+        swerve.defaultCommand = Commands.run({ swerve.driveFieldOriented(ChassisSpeeds(vx(), vy(), vw()))}, swerve)
     }
 
     private fun linkPoses() {
@@ -134,6 +126,8 @@ class RobotContainer {
         controller.rightBumper().onTrue(arm.enableIntake()).onFalse(arm.disableIntake())
         controller.leftBumper().onTrue(arm.enableOuttake()).onFalse(arm.disableIntake())
     }
+
+    val autonomousCommand: Command = Commands.none()
 }
 
 
