@@ -57,13 +57,10 @@ class Robot : TimedRobot() {
     }
 
     override fun teleopInit() {
-        container.swerve.driver.setFieldOriented()
         container.initial()
     }
 
-    override fun teleopPeriodic() {
-        container.always()
-    }
+    override fun teleopPeriodic() { }
 
     override fun testInit() {
         CommandScheduler.getInstance().cancelAll()
