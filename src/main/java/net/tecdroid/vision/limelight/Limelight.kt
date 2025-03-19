@@ -2,6 +2,7 @@
 
 package net.tecdroid.vision.limelight
 
+import edu.wpi.first.math.Num
 import edu.wpi.first.math.geometry.*
 import edu.wpi.first.networktables.NetworkTableInstance
 import edu.wpi.first.networktables.NetworkTableEntry
@@ -68,6 +69,11 @@ abstract class LimelightBase(private val config: LimelightConfig) {
     protected fun setDouble(name: String, value: Double) = getTableEntry(name).setDouble(value)
 
     /**
+     * Sets [name] in the associated [NetworkTable] to [value] as a [Number]
+     */
+    protected fun setNumber(name: String, value: Number) = getTableEntry(name).setNumber(value)
+
+    /**
      * Fetches [name] from the associated [NetworkTable] as a [String]
      */
     protected fun getString(name: String): String = getTableEntry(name).getString("")
@@ -86,6 +92,11 @@ abstract class LimelightBase(private val config: LimelightConfig) {
      * Sets [name] in the associated [NetworkTable] to [value] as a [DoubleArray]
      */
     protected fun setDoubleArray(name: String, value: DoubleArray) = getTableEntry(name).setDoubleArray(value)
+
+    /**
+     * Sets [name] in the associated [NetworkTable] to [value] as an [Array] of [Number]
+     */
+    protected fun setNumberArray(name: String, value: Array<Number>) = getTableEntry(name).setNumberArray(value)
 
     /**
      * Fetches [name] from the associated [NetworkTable] as an [Array] of [String]
@@ -192,7 +203,10 @@ open class Limelight(config: LimelightConfig) : LimelightBase(config) {
      */
     var pipelineIndex: Int
         get() = getDouble(LimelightTableKeys.Get.pipelineIndex).toInt()
-        set(value) { setDouble(LimelightTableKeys.Set.pipelineIndex, value.toDouble()) }
+        set(value) {
+            require(value in 0..9) { "Limelight Pipeline index must be anywhere between 0 and 9" }
+            setNumber(LimelightTableKeys.Set.pipelineIndex, value.toDouble())
+        }
 
     // TODO: Convert to enumeration
     /**
@@ -216,6 +230,28 @@ open class Limelight(config: LimelightConfig) : LimelightBase(config) {
      */
     val colorAtCrosshair: Color
         get() = rawDataToColor(getDoubleArray(LimelightTableKeys.Get.hsvAtCrosshair))
+
+    //
+    // Setters only
+    //
+
+    var ledMode: LimelightLedMode = LimelightLedMode.Pipeline
+        set(value) {
+            setNumber(LimelightTableKeys.Set.ledMode, value.mode.toDouble())
+            field = value
+        }
+
+    var streamingMode: LimelightStreamMode = LimelightStreamMode.Main
+        set(value) {
+            setNumber(LimelightTableKeys.Set.streamingMode, value.mode.toDouble())
+            field = value
+        }
+
+    var crop: LimelightCrop = LimelightCrop(0.0, 0.0, 0.0, 0.0)
+        set(value) {
+            setNumberArray(LimelightTableKeys.Set.cropParameters, value.array)
+            field = value
+        }
 
     //
     // Uncategorized
@@ -260,7 +296,6 @@ open class Limelight(config: LimelightConfig) : LimelightBase(config) {
      */
     val rawDetections: Array<LimelightRawDetection2d>
         get() = LimelightRawDetection2d.fromRawData(getDoubleArray(LimelightTableKeys.Get.Raw.detectionData))
-
 
 }
 
@@ -741,4 +776,28 @@ data class LimelightHardwareMetrics(
                 temperature = value[3].degreesCelsius
             )
     }
+}
+
+enum class LimelightLedMode(val mode: Number) {
+    Pipeline(0),
+    Off(1),
+    Blink(2),
+    On(3)
+}
+
+enum class LimelightStreamMode(val mode: Number) {
+    Standard(0),
+    Main(1),
+    Secondary(2)
+}
+
+data class LimelightCrop(
+    val x0: Double,
+    val y0: Double,
+    val x1: Double,
+    val y1: Double,
+) {
+    val array: Array<Number> = arrayOf(
+        x0, x1, y0, y1
+    )
 }

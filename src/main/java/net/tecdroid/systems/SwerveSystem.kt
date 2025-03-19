@@ -1,6 +1,7 @@
 package net.tecdroid.systems
 
 import edu.wpi.first.math.controller.PIDController
+import edu.wpi.first.math.geometry.Pose3d
 import edu.wpi.first.math.geometry.Translation3d
 import edu.wpi.first.units.Units.Degrees
 import edu.wpi.first.units.measure.Angle
@@ -18,6 +19,7 @@ import net.tecdroid.safety.pidOutputRange
 import net.tecdroid.util.units.radians
 import net.tecdroid.util.units.seconds
 import net.tecdroid.vision.limelight.Limelight
+import net.tecdroid.vision.limelight.LimelightAprilTagDetector
 import net.tecdroid.vision.limelight.LimelightConfig
 import kotlin.math.absoluteValue
 
@@ -32,8 +34,8 @@ object LimelightAlignmentHandler {
         val horizontalAngleOffset: Double
     )
 
-    private val rightLimelight = Limelight(LimelightConfig(rightLimelightName, Translation3d()))
-    private val leftLimelight = Limelight(LimelightConfig(leftLimelightName, Translation3d()))
+    private val rightLimelight = LimelightAprilTagDetector(LimelightConfig(rightLimelightName, Pose3d()))
+    private val leftLimelight = LimelightAprilTagDetector(LimelightConfig(leftLimelightName, Pose3d()))
 
     private val longitudinalGains = ControlGains(
         p = 0.25,
@@ -94,7 +96,7 @@ object LimelightAlignmentHandler {
             if (!limelight.hasMultipleTargets) {
                 0.0
             } else {
-                val currentLongitudinalOffset = limelight.offsetFromTarget.z.absoluteValue
+                val currentLongitudinalOffset = limelight.targetPositionInRobotSpace.pose3d.z.absoluteValue
                 longitudinalPid.calculate(currentLongitudinalOffset, offset.longitudinalOffset).coerceIn(pidOutputRange)
             }
         }
@@ -103,7 +105,7 @@ object LimelightAlignmentHandler {
             if (!limelight.hasMultipleTargets) {
                 0.0
             } else {
-                val currentTransversalOffset = limelight.offsetFromTarget.x
+                val currentTransversalOffset = limelight.targetPositionInRobotSpace.pose3d.x
                 transversalPid.calculate(currentTransversalOffset, offset.transversalOffset).coerceIn(pidOutputRange)
             }
         }

@@ -18,8 +18,8 @@ import java.util.Map;
 import java.util.function.Consumer;
 
 public class LimelightController {
-    private final Limelight leftLimelight = new Limelight(new LimelightConfig(StringConstantsKt.leftLimelightName, new Translation3d()));
-    private final Limelight rightLimelight = new Limelight(new LimelightConfig(StringConstantsKt.rightLimelightName, new Translation3d()));
+    private final LimelightAprilTagDetector leftLimelight = new LimelightAprilTagDetector(new LimelightConfig(StringConstantsKt.leftLimelightName, new Pose3d()));
+    private final LimelightAprilTagDetector rightLimelight = new LimelightAprilTagDetector(new LimelightConfig(StringConstantsKt.rightLimelightName, new Pose3d()));
 
     private final ControlGains xGains = new ControlGains(0.25, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0);
     private final ControlGains yGains = new ControlGains(0.45, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0);
@@ -57,17 +57,17 @@ public class LimelightController {
     }
 
     public Pose3d getRobotPositionInTargetSpace(LimeLightChoice choice) {
-        Limelight limelight = (choice == LimeLightChoice.Right) ? rightLimelight : leftLimelight;
-        return limelight.getRobotPositionInTargetSpace();
+        LimelightAprilTagDetector limelight = (choice == LimeLightChoice.Right) ? rightLimelight : leftLimelight;
+        return limelight.getRobotPositionInTargetSpace().getPose3d();
     }
 
     public int getTargetId(LimeLightChoice choice) {
-        Limelight limelight = (choice == LimeLightChoice.Right) ? rightLimelight : leftLimelight;
+        LimelightAprilTagDetector limelight = (choice == LimeLightChoice.Right) ? rightLimelight : leftLimelight;
         return limelight.getTargetId();
     }
 
     public boolean hasTarget(LimeLightChoice choice) {
-        Limelight limelight = (choice == LimeLightChoice.Right) ? rightLimelight : leftLimelight;
+        LimelightAprilTagDetector limelight = (choice == LimeLightChoice.Right) ? rightLimelight : leftLimelight;
         return limelight.getHasTarget();
     }
 
