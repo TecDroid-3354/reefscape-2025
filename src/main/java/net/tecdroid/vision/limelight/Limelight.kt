@@ -2,6 +2,8 @@ package net.tecdroid.vision.limelight
 
 import edu.wpi.first.math.geometry.*
 import edu.wpi.first.networktables.NetworkTableInstance
+import edu.wpi.first.networktables.NetworkTableEntry
+import edu.wpi.first.networktables.NetworkTable
 import edu.wpi.first.units.measure.Angle
 import edu.wpi.first.units.measure.Frequency
 import edu.wpi.first.units.measure.Temperature
@@ -9,26 +11,62 @@ import edu.wpi.first.units.measure.Time
 import edu.wpi.first.wpilibj.util.Color
 import net.tecdroid.util.units.*
 
+/**
+ * Represents [Limelight] configuration parameters
+ *
+ * @param name The name of the limelight
+ * @param offset The limelight's offset from the center of the robot
+ */
 data class LimelightConfig(
     val name: String,
     val offset: Translation3d,
 )
 
+/**
+ * Base class for declaring a basic [Limelight]
+ */
 abstract class LimelightBase(private val config: LimelightConfig) {
     private val table = NetworkTableInstance.getDefault().getTable(config.name)
 
-    private fun getTableEntry(name: String) = table.getEntry(name)
+    /**
+     * Returns a [NetworkTableEntry] from this [Limelight]'s [NetworkTable]
+     */
+    private fun getTableEntry(name: String): NetworkTableEntry = table.getEntry(name)
 
-    protected fun getDouble(name: String) = getTableEntry(name).getDouble(0.0)
+    /**
+     * Fetches [name] from the associated [NetworkTable] as a [Double]
+     */
+    protected fun getDouble(name: String): Double = getTableEntry(name).getDouble(0.0)
+
+    /**
+     * Sets [name] in the associated [NetworkTable] to [value] as a [Double]
+     */
     protected fun setDouble(name: String, value: Double) = getTableEntry(name).setDouble(value)
 
-    protected fun getString(name: String) = getTableEntry(name).getString("")
+    /**
+     * Fetches [name] from the associated [NetworkTable] as a [String]
+     */
+    protected fun getString(name: String): String = getTableEntry(name).getString("")
+
+    /**
+     * Sets [name] in the associated [NetworkTable] to [value] as a [String]
+     */
     protected fun setString(name: String, value: String) = getTableEntry(name).setString(value)
 
-    protected fun getDoubleArray(name: String) = getTableEntry(name).getDoubleArray(DoubleArray(0))
+    /**
+     * Fetches [name] from the associated [NetworkTable] as a [DoubleArray]
+     */
+    protected fun getDoubleArray(name: String): DoubleArray = getTableEntry(name).getDoubleArray(DoubleArray(0))
+
+    /**
+     * Sets [name] in the associated [NetworkTable] to [value] as a [DoubleArray]
+     */
     protected fun setDoubleArray(name: String, value: DoubleArray) = getTableEntry(name).setDoubleArray(value)
 
-    protected fun getStringArray(name: String) = getTableEntry(name).getStringArray(Array(0) { "" })
+    /**
+     * Fetches [name] from the associated [NetworkTable] as an [Array] of [String]
+     */
+    protected fun getStringArray(name: String): Array<String> = getTableEntry(name).getStringArray(Array(0) { "" })
 }
 
 open class Limelight(config: LimelightConfig) : LimelightBase(config) {
@@ -42,17 +80,17 @@ open class Limelight(config: LimelightConfig) : LimelightBase(config) {
     val hasTarget: Boolean
         get() = getDouble(LimelightTableKeys.Get.hasValidTarget) == 1.0
 
-//    /**
-//     * Determines if more than one valid target is in sight
-//     */
-//    val hasMultipleTargets: Boolean
-//        get() = targetCount > 1
+    /**
+     * Determines if more than one valid target is in sight
+     */
+    val hasMultipleTargets: Boolean
+        get() = targetCount > 1
 
-//    /**
-//     * Returns the amount of targets currently in the camera's view
-//     */
-//    val targetCount: Int
-//        get() = detectionState.count
+    /**
+     * Returns the amount of targets currently in the camera's view
+     */
+    val targetCount: Int
+        get() = getDoubleArray(LimelightTableKeys.Get.targetingDataR2)[LimelightTableKeys.T2dIndices.targetCount].toInt()
 
     //
     // Basic Vision Data
@@ -65,16 +103,16 @@ open class Limelight(config: LimelightConfig) : LimelightBase(config) {
         get() = getDouble(LimelightTableKeys.Get.horizontalOffsetPixels).toInt().pixels
 
     /**
-     * Obtains the horizontal angular offset from the center of the target
-     */
-    val horizontalOffset: Angle
-        get() = getDouble(LimelightTableKeys.Get.horizontalOffsetDegrees).degrees
-
-    /**
      * Obtains the vertical pixel offset from the center of the target
      */
     val verticalPixelOffset: Pixels
         get() = getDouble(LimelightTableKeys.Get.verticalOffsetPixels).toInt().pixels
+
+    /**
+     * Obtains the horizontal angular offset from the center of the target
+     */
+    val horizontalOffset: Angle
+        get() = getDouble(LimelightTableKeys.Get.horizontalOffsetDegrees).degrees
 
     /**
      * Obtains the vertical angular offset from the center of the target
@@ -93,7 +131,7 @@ open class Limelight(config: LimelightConfig) : LimelightBase(config) {
     //
 
     /**
-     * The pipeline latency
+     * The pipeline's latency
      */
     val pipelineLatency: Time
         get() = getDouble(LimelightTableKeys.Get.pipelineLatency).milliseconds
