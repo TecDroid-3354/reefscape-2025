@@ -7,13 +7,16 @@ import edu.wpi.first.wpilibj.TimedRobot
 import edu.wpi.first.wpilibj.Timer
 import edu.wpi.first.wpilibj.shuffleboard.Shuffleboard
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard
+import edu.wpi.first.wpilibj2.command.Command
 import edu.wpi.first.wpilibj2.command.CommandScheduler
 import net.tecdroid.util.units.degrees
 
 class Robot : TimedRobot() {
 
     private val container = RobotContainer()
-    val timer = Timer()
+
+    val autonomousCommand: Command
+        get() = container.getAutonomousCommand()
 
     override fun robotInit() {
         DriverStation.silenceJoystickConnectionWarning(true)
@@ -35,26 +38,10 @@ class Robot : TimedRobot() {
 
     override fun autonomousInit() {
         container.setAuto()
+        autonomousCommand.schedule()
     }
 
     override fun autonomousPeriodic() {
-        for (module in container.swerve.drive.modules) {
-            module.setTargetAngle(0.0.degrees)
-        }
-
-        val power = 0.25
-
-        if (timer.get() < 1.5) {
-            container.swerve.drive.modules[0].setPower(power)
-            container.swerve.drive.modules[1].setPower(power)
-            container.swerve.drive.modules[2].setPower(power)
-            container.swerve.drive.modules[3].setPower(-power)
-
-
-        } else {
-            container.swerve.drive.setPower(0.0)
-        }
-
     }
 
     override fun teleopInit() {
@@ -62,6 +49,8 @@ class Robot : TimedRobot() {
         SmartDashboard.putData("VX: ") { container.vx() }
         SmartDashboard.putData("VY: ") { container.vy() }
         SmartDashboard.putData("VW: ") { container.vw() }
+
+        if (autonomousCommand.isScheduled) autonomousCommand.cancel()
     }
 
     override fun teleopPeriodic() { }

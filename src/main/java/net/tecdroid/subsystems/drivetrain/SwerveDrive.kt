@@ -7,10 +7,8 @@ import com.pathplanner.lib.auto.AutoBuilder
 import com.pathplanner.lib.config.PIDConstants
 import com.pathplanner.lib.config.RobotConfig
 import com.pathplanner.lib.controllers.PPHolonomicDriveController
-import com.pathplanner.lib.path.PathPlannerPath
 import edu.wpi.first.math.controller.PIDController
 import edu.wpi.first.math.geometry.Pose2d
-import edu.wpi.first.math.geometry.Rotation2d
 import edu.wpi.first.math.kinematics.*
 import edu.wpi.first.units.Units.*
 import edu.wpi.first.units.measure.Angle
@@ -21,7 +19,6 @@ import edu.wpi.first.util.sendable.SendableBuilder
 import edu.wpi.first.wpilibj.DriverStation
 import edu.wpi.first.wpilibj.shuffleboard.Shuffleboard
 import edu.wpi.first.wpilibj.smartdashboard.Field2d
-import edu.wpi.first.wpilibj.smartdashboard.SendableChooser
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard
 import edu.wpi.first.wpilibj2.command.Command
 import edu.wpi.first.wpilibj2.command.Commands
@@ -53,16 +50,6 @@ class SwerveDrive(private val config: SwerveDriveConfig) : SubsystemBase(), Send
         SmartDashboard.putData("Field", field)
     }
 
-    /*fun followTrajectory(sample: SwerveSample) {
-        val speeds = ChassisSpeeds(
-            sample.vx + forwardsPid.calculate(pose.x, sample.x),
-            sample.vy + sidewaysPid.calculate(pose.y, sample.y),
-            sample.omega + thetaPid.calculate(pose.rotation.radians, sample.heading)
-        )
-
-        drive(speeds)
-    }*/
-
     override fun periodic() {
         updateOdometry()
     }
@@ -75,7 +62,6 @@ class SwerveDrive(private val config: SwerveDriveConfig) : SubsystemBase(), Send
         }
     }
 
-
     // ! Drive field oriented
     fun driveFieldOriented(chassisSpeeds: ChassisSpeeds) {
         val fieldOrientedSpeeds = ChassisSpeeds.fromFieldRelativeSpeeds(chassisSpeeds, heading.toRotation2d())
@@ -85,7 +71,6 @@ class SwerveDrive(private val config: SwerveDriveConfig) : SubsystemBase(), Send
     fun driveFieldOrientedCMD(chassisSpeeds: ChassisSpeeds) : Command {
         return Commands.runOnce({ driveFieldOriented(chassisSpeeds) })
    }
-
 
     // ! Drive robot oriented
     fun drive(chassisSpeeds: ChassisSpeeds) {
@@ -118,6 +103,8 @@ class SwerveDrive(private val config: SwerveDriveConfig) : SubsystemBase(), Send
         set(newPose) {
             odometry.resetPosition(heading.toRotation2d(), modulePositions.toTypedArray(), newPose)
         }
+
+    val poseSupplier: () -> Pose2d = { odometry.poseMeters }
 
     var heading: Angle
         get() = imu.yaw.value
@@ -175,17 +162,6 @@ class SwerveDrive(private val config: SwerveDriveConfig) : SubsystemBase(), Send
     private val currentSpeeds: ChassisSpeeds
         get() = ChassisSpeedBridge.ktToJavaArrayChassisSpeeds(kinematics, modules.map { it.state })
 
-    /*fun getSpeedsPasaye() {
-        val frontLeftState = SwerveModuleState(23.43, Rotation2d.fromDegrees(-140.19))
-        val frontRightState = SwerveModuleState(23.43, Rotation2d.fromDegrees(-39.81))
-        val backLeftState = SwerveModuleState(54.08, Rotation2d.fromDegrees(-109.44))
-        val backRightState = SwerveModuleState(54.08, Rotation2d.fromDegrees(-70.56))
-
-// Convert to chassis speeds
-        return val chassisSpeeds = kinematics.toChassisSpeeds(
-            arrayOf(frontLeftState, frontRightState, backLeftState, backRightState)
-        )
-    }*/
 
     fun configurePathPlanner() {
         try {
@@ -196,7 +172,7 @@ class SwerveDrive(private val config: SwerveDriveConfig) : SubsystemBase(), Send
         }
 
         AutoBuilder.configure(
-            this::pose,  // Robot pose supplier
+            this.poseSupplier,  // Robot pose supplier
             { pose: Pose2d -> this.resetOdometry(pose) },  // Method to reset odometry (will be called if your auto has a starting pose)
             { currentSpeeds }, // ChassisSpeeds supplier. MUST BE ROBOT RELATIVE
             { speeds, feedforwards -> this.drive(speeds) }, // Method that will drive the robot given ROBOT RELATIVE ChassisSpeeds. Also optionally outputs individual module feedforwards

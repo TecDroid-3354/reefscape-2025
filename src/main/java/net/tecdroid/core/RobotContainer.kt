@@ -4,9 +4,7 @@ import edu.wpi.first.math.filter.SlewRateLimiter
 import edu.wpi.first.math.kinematics.ChassisSpeeds
 import edu.wpi.first.units.Units.Hertz
 import com.pathplanner.lib.auto.AutoBuilder
-import com.pathplanner.lib.config.PIDConstants
-import com.pathplanner.lib.config.RobotConfig
-import com.pathplanner.lib.controllers.PPHolonomicDriveController
+import com.pathplanner.lib.commands.PathPlannerAuto
 import com.pathplanner.lib.path.PathPlannerPath
 import edu.wpi.first.wpilibj2.command.Commands
 import edu.wpi.first.wpilibj2.command.Command
@@ -59,10 +57,7 @@ class RobotContainer {
 
     init {
         //linkPoses()
-        //loadTrajectories()
         swerve.drive.heading = 0.0.degrees
-        autoChooser = AutoBuilder.buildAutoChooser();
-        SmartDashboard.putData("Auto Chooser", autoChooser);
     }
 
     fun initial() {
@@ -70,8 +65,11 @@ class RobotContainer {
     }
 
     fun setAuto() {
+        // TODO: check this code
+        autoChooser = AutoBuilder.buildAutoChooser();
+        SmartDashboard.putData("Auto Chooser", autoChooser);
+        SmartDashboard.putData("Example Auto", PathPlannerAuto("Example Auto"));
         autoConfiguration.configurePathPlanner();
-        getAutonomousCommand()
     }
 
     private fun linkMovement() {
@@ -146,29 +144,16 @@ class RobotContainer {
         controller.leftBumper().onTrue(arm.enableOuttake()).onFalse(arm.disableIntake())
     }
 
-    /*fun back2m() = Commands.sequence(
-        Commands.runOnce({
-            autoFactory.resetOdometry("Back2M")
-        }),
-        autoFactory.trajectoryCmd("Back2M")
-    )
-
-    fun loadTrajectories() {
-        chooser.addCmd("Back 2 m", ::back2m)
-
-        SmartDashboard.putData("AutoChooser", chooser)
-
-        RobotModeTriggers.autonomous().whileTrue(chooser.selectedCommandScheduler());
-    }*/
-
-
-
     fun getAutonomousCommand(): Command {
         // Load the path you want to follow using its name in the GUI
         var path = PathPlannerPath.fromPathFile("Straightforward");
 
         // Create a path following command using AutoBuilder. This will also trigger event markers.
-        return AutoBuilder.followPath(path);
+        return AutoBuilder.followPath(path)
+        //return autoChooser.getSelected();
+
+        // return new PathPlannerAuto("Example Auto");
+        // return autoChooser.getSelected();
     }
 
 }
