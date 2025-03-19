@@ -33,15 +33,6 @@ class RobotContainer {
     private val pollIsLow = { isLow }
     private val makeLow = { Commands.runOnce({ isLow = true }) }
     private val makeHigh = { Commands.runOnce({ isLow = false }) }
-    val chooser = AutoChooser()
-
-    val autoFactory = AutoFactory(
-        swerve.drive::pose,
-        swerve.drive::resetOdometry,
-        swerve.drive::followTrajectory,
-        true,
-        swerve.drive
-    )
 
     // Swerve Control
     private val accelerationPeriod = 0.1.seconds
@@ -60,7 +51,6 @@ class RobotContainer {
 
     init {
         //linkPoses()
-        loadTrajectories()
         swerve.drive.heading = 0.0.degrees
     }
 
@@ -139,20 +129,4 @@ class RobotContainer {
         controller.rightBumper().onTrue(arm.enableIntake()).onFalse(arm.disableIntake())
         controller.leftBumper().onTrue(arm.enableOuttake()).onFalse(arm.disableIntake())
     }
-
-    fun back2m() = Commands.sequence(
-        Commands.runOnce({
-            autoFactory.resetOdometry("Back2M")
-        }),
-        autoFactory.trajectoryCmd("Back2M")
-    )
-
-    fun loadTrajectories() {
-        chooser.addCmd("Back 2 m", ::back2m)
-
-        SmartDashboard.putData("AutoChooser", chooser)
-
-        RobotModeTriggers.autonomous().whileTrue(chooser.selectedCommandScheduler());
-    }
-
 }

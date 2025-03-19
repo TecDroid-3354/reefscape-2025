@@ -3,13 +3,18 @@ package net.tecdroid.subsystems.drivetrain
 import choreo.trajectory.SwerveSample
 import com.ctre.phoenix6.configs.Pigeon2Configuration
 import com.ctre.phoenix6.hardware.Pigeon2
+import edu.wpi.first.math.VecBuilder
 import edu.wpi.first.math.controller.PIDController
+import edu.wpi.first.math.estimator.SwerveDrivePoseEstimator
+import edu.wpi.first.math.estimator.SwerveDrivePoseEstimator3d
 import edu.wpi.first.math.geometry.Pose2d
 import edu.wpi.first.math.kinematics.*
+import edu.wpi.first.math.util.Units
 import edu.wpi.first.units.Units.*
 import edu.wpi.first.units.measure.Angle
 import edu.wpi.first.units.measure.AngularVelocity
 import edu.wpi.first.units.measure.LinearVelocity
+import edu.wpi.first.units.measure.Time
 import edu.wpi.first.util.sendable.Sendable
 import edu.wpi.first.util.sendable.SendableBuilder
 import edu.wpi.first.wpilibj.DriverStation
@@ -20,9 +25,12 @@ import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard
 import edu.wpi.first.wpilibj2.command.Command
 import edu.wpi.first.wpilibj2.command.Commands
 import edu.wpi.first.wpilibj2.command.SubsystemBase
+import frc.robot.LimelightHelpers
 import net.tecdroid.constants.subsystemTabName
+import net.tecdroid.systems.LimelightAlignmentHandler
 import net.tecdroid.util.units.degrees
 import net.tecdroid.util.units.toRotation2d
+import net.tecdroid.vision.limelight.Limelight
 import kotlin.math.PI
 
 
@@ -30,8 +38,13 @@ class SwerveDrive(private val config: SwerveDriveConfig) : SubsystemBase(), Send
     private val imu = Pigeon2(config.imuId.id)
      val modules = config.moduleConfigs.map { SwerveModule(it.first) }
     private val kinematics = SwerveDriveKinematics(*config.moduleConfigs.map { it.second }.toTypedArray())
-    private val odometry = SwerveDriveOdometry(kinematics, heading.toRotation2d(), modulePositions.toTypedArray())
-     val field = Field2d();
+    //private val odometry = SwerveDriveOdometry(kinematics, heading.toRotation2d(), modulePositions.toTypedArray())
+    private val stateStandardDeviations = VecBuilder.fill(0.005, 0.005, Units.degreesToRadians(2.0))
+    private val visionMesurementStandardDeviations = VecBuilder.fill(0.005, 0.005, Units.degreesToRadians(2.0))
+    private val swervePoseEstimator = SwerveDrivePoseEstimator(
+        kinematics, heading.toRotation2d(), modulePositions.toTypedArray(), Pose2d(),
+        stateStandardDeviations, visionMesurementStandardDeviations)
+    val field = Field2d();
 
     val forwardsPid = PIDController(0.1, 0.0, 0.0)
     val sidewaysPid = PIDController(0.1, 0.0, 0.0)
@@ -47,16 +60,17 @@ class SwerveDrive(private val config: SwerveDriveConfig) : SubsystemBase(), Send
 
     fun followTrajectory(sample: SwerveSample) {
         val speeds = ChassisSpeeds(
-            sample.vx + forwardsPid.calculate(pose.x, sample.x),
-            sample.vy + sidewaysPid.calculate(pose.y, sample.y),
-            sample.omega + thetaPid.calculate(pose.rotation.radians, sample.heading)
+            sample.vx + forwardsPid.calculate(getPoseEstimation().x, sample.x),
+            sample.vy + sidewaysPid.calculate(getPoseEstimation().y, sample.y),
+            sample.omega + thetaPid.calculate(getPoseEstimation().rotation.radians, sample.heading)
         )
-
         drive(speeds)
     }
 
     override fun periodic() {
-        updateOdometry()
+        swervePoseEstimator.update(heading.toRotation2d(), modulePositions.toTypedArray())
+        field.robotPose = swervePoseEstimator.estimatedPosition
+        //updateOdometry()
     }
 
     private fun setModuleTargetStates(vararg states: SwerveModuleState) {
@@ -91,21 +105,36 @@ class SwerveDrive(private val config: SwerveDriveConfig) : SubsystemBase(), Send
         }
     }
 
-    private fun updateOdometry() {
-        odometry.update(heading.toRotation2d(), modulePositions.toTypedArray())
-        pose = odometry.poseMeters
-        field.robotPose = pose
+//    private fun updateOdometry() {
+//        odometry.update(heading.toRotation2d(), modulePositions.toTypedArray())
+//        pose = odometry.poseMeters
+//        field.robotPose = pose
+//    }
+
+//    fun resetOdometry(pose: Pose2d) {
+//        odometry.resetPosition(heading.toRotation2d(), modulePositions.toTypedArray(), pose)
+//    }
+
+    fun updatePoseEstimationWithLimelight(limelight: Limelight, visionMeasurementPose: Pose2d, visionTimeStamp: Double, currentTimeSeconds: Time) {
+        swervePoseEstimator.addVisionMeasurement(visionMeasurementPose, visionTimeStamp)
+        swervePoseEstimator.updateWithTime(
+            currentTimeSeconds.`in`(Seconds), heading.toRotation2d(), modulePositions.toTypedArray())
+        field.robotPose = swervePoseEstimator.estimatedPosition
     }
 
-    fun resetOdometry(pose: Pose2d) {
-        odometry.resetPosition(heading.toRotation2d(), modulePositions.toTypedArray(), pose)
+    fun setPoseEstimation(newPose: Pose2d) {
+        swervePoseEstimator.resetPosition(heading.toRotation2d(), modulePositions.toTypedArray(), newPose)
     }
 
-    var pose: Pose2d
-        get() = odometry.poseMeters
-        set(newPose) {
-            odometry.resetPosition(heading.toRotation2d(), modulePositions.toTypedArray(), newPose)
-        }
+    fun getPoseEstimation() : Pose2d {
+        return swervePoseEstimator.estimatedPosition
+    }
+
+//    var pose: Pose2d
+//        get() = odometry.poseMeters
+//        set(newPose) {
+//            odometry.resetPosition(heading.toRotation2d(), modulePositions.toTypedArray(), newPose)
+//        }
 
     var heading: Angle
         get() = imu.yaw.value
