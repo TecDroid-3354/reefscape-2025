@@ -21,8 +21,8 @@ import java.util.function.Consumer;
 import java.util.function.DoubleSupplier;
 
 public class LimelightController {
-    private final Limelight leftLimelight = new Limelight(new LimelightConfig(StringConstantsKt.leftLimelightName, new Translation3d()));
-    private final Limelight rightLimelight = new Limelight(new LimelightConfig(StringConstantsKt.rightLimelightName, new Translation3d()));
+    private final LimelightAprilTagDetector leftLimelight = new LimelightAprilTagDetector(new LimelightConfig(StringConstantsKt.leftLimelightName, new Pose3d()));
+    private final LimelightAprilTagDetector rightLimelight = new LimelightAprilTagDetector(new LimelightConfig(StringConstantsKt.rightLimelightName, new Pose3d()));
 
     private final Subsystem requiredSubsystem;
 
@@ -67,18 +67,18 @@ public class LimelightController {
     }
 
     public Pose3d getRobotPositionInTargetSpace(LimeLightChoice choice) {
-        Limelight limelight = (choice == LimeLightChoice.Right) ? rightLimelight : leftLimelight;
-        return limelight.getRobotPositionInTargetSpace();
+        LimelightAprilTagDetector limelight = (choice == LimeLightChoice.Right) ? rightLimelight : leftLimelight;
+        return limelight.getRobotPositionInTargetSpace().getPose3d();
     }
 
 
     public int getTargetId(LimeLightChoice choice) {
-        Limelight limelight = (choice == LimeLightChoice.Right) ? rightLimelight : leftLimelight;
+        LimelightAprilTagDetector limelight = (choice == LimeLightChoice.Right) ? rightLimelight : leftLimelight;
         return limelight.getTargetId();
     }
 
     public boolean hasTarget(LimeLightChoice choice) {
-        Limelight limelight = (choice == LimeLightChoice.Right) ? rightLimelight : leftLimelight;
+        LimelightAprilTagDetector limelight = (choice == LimeLightChoice.Right) ? rightLimelight : leftLimelight;
         return limelight.getHasTarget();
     }
 
