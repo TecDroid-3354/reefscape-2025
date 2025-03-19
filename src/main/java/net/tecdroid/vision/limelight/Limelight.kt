@@ -244,10 +244,24 @@ open class Limelight(config: LimelightConfig) : LimelightBase(config) {
         get() = getDouble(LimelightTableKeys.Get.Raw.verticalOffsetPixels).toInt().pixels
 
     /**
-     * Obtains the corner data of the detections in sight
+     * Obtains the raw corner data of the detections in sight
       */
     val rawCorners: Array<LimelightRawCornerDetection>
         get() = LimelightRawCornerDetection.fromRawData(getDoubleArray(LimelightTableKeys.Get.Raw.cornerData))
+
+    /**
+     * Obtains the raw fiducial data of the detections in sight
+     */
+    val rawFiducials: Array<LimelightRawFiducials>
+        get() = LimelightRawFiducials.fromRawData(getDoubleArray(LimelightTableKeys.Get.Raw.fiducialData))
+
+    /**
+     * Obtains the raw detection data of the detections in sight
+     */
+    val rawDetections: Array<LimelightRawDetection2d>
+        get() = LimelightRawDetection2d.fromRawData(getDoubleArray(LimelightTableKeys.Get.Raw.detectionData))
+
+
 }
 
 /**
@@ -524,15 +538,15 @@ data class LimelightRawCornerDetection(
  * **From Limelight Documentation:** Enable "send contours" in the "Output" tab to stream corner coordinates
  */
 class LimelightRawTarget(
-    val horizontalOffset: Pixels,
-    val verticalOffset: Pixels,
+    val normalizedHorizontalOffset: Double,
+    val normalizedVerticalOffset: Double,
     val coverage: Percentage
 ) {
     companion object {
         fun fromRawData(data: DoubleArray) = Array(data.size / LimelightIndices.RawTargets.entriesPerDetection) {
             LimelightRawTarget(
-                horizontalOffset = data[LimelightIndices.RawTargets.txnc + (it * LimelightIndices.RawTargets.entriesPerDetection)].toInt().pixels,
-                verticalOffset = data[LimelightIndices.RawTargets.tync + (it * LimelightIndices.RawTargets.entriesPerDetection)].toInt().pixels,
+                normalizedHorizontalOffset = data[LimelightIndices.RawTargets.txnc + (it * LimelightIndices.RawTargets.entriesPerDetection)],
+                normalizedVerticalOffset = data[LimelightIndices.RawTargets.tync + (it * LimelightIndices.RawTargets.entriesPerDetection)],
                 coverage = data[LimelightIndices.RawTargets.ta + (it * LimelightIndices.RawTargets.entriesPerDetection)].percent
             )
         }
