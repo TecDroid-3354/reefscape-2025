@@ -160,6 +160,6 @@ class SwerveSystem(swerveDriveConfig: SwerveDriveConfig) {
     }
 
     fun linkReorientationTrigger(trigger: Trigger) {
-        trigger.onTrue(Commands.runOnce({drive.heading = 0.0.radians}))
+        trigger.onTrue(Commands.runOnce({ drive.heading = 0.0.radians }))
     }
 }

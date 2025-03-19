@@ -58,7 +58,7 @@ class PathPlannerAutonomous(val drive: SwerveDrive) {
 
     fun getPath(name: String) = try {
         val path = PathPlannerPath.fromPathFile(name)
-        AutoBuilder.followPath(path)
+        Commands.runOnce({ drive.pose = path.pathPoses.first() }).andThen(AutoBuilder.followPath(path))
     } catch (e: Exception) {
         DriverStation.reportError(">>>>> Path Planner Autonomous Error\n" + e.message, false)
         Commands.none()

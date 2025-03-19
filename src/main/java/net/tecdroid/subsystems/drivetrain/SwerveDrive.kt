@@ -7,6 +7,7 @@ import com.pathplanner.lib.auto.AutoBuilder
 import com.pathplanner.lib.config.PIDConstants
 import com.pathplanner.lib.config.RobotConfig
 import com.pathplanner.lib.controllers.PPHolonomicDriveController
+import edu.wpi.first.math.estimator.SwerveDrivePoseEstimator
 import edu.wpi.first.math.geometry.Pose2d
 import edu.wpi.first.math.kinematics.*
 import edu.wpi.first.units.Units.*
@@ -30,12 +31,19 @@ class SwerveDrive(private val config: SwerveDriveConfig) : SubsystemBase(), Send
     private val imu = Pigeon2(config.imuId.id)
     private val modules = config.moduleConfigs.map { SwerveModule(it.first) }
     private val kinematics = SwerveDriveKinematics(*config.moduleConfigs.map { it.second }.toTypedArray())
-    private val odometry = SwerveDriveOdometry(kinematics, heading.toRotation2d(), modulePositions.toTypedArray())
+
+    // TODO: Introduce Limelight stddevs
+    private val poseEstimator = SwerveDrivePoseEstimator(
+        kinematics,
+        heading.toRotation2d(),
+        modulePositions.toTypedArray(),
+        Pose2d()
+    )
 
     var pose: Pose2d
-        get() = odometry.poseMeters
+        get() = poseEstimator.estimatedPosition
         set(newPose) {
-            odometry.resetPosition(heading.toRotation2d(), modulePositions.toTypedArray(), newPose)
+            poseEstimator.resetPose(newPose)
         }
 
     var heading: Angle
@@ -90,8 +98,7 @@ class SwerveDrive(private val config: SwerveDriveConfig) : SubsystemBase(), Send
     }
 
     private fun updateOdometry() {
-        odometry.update(heading.toRotation2d(), modulePositions.toTypedArray())
-        pose = odometry.poseMeters
+        poseEstimator.update(heading.toRotation2d(), modulePositions.toTypedArray())
     }
 
     override fun initSendable(builder: SendableBuilder) {
