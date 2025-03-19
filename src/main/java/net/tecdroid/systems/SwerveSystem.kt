@@ -1,6 +1,15 @@
 package net.tecdroid.systems
 
 import edu.wpi.first.math.controller.PIDController
+import edu.wpi.first.math.kinematics.ChassisSpeeds
+import edu.wpi.first.units.Units.*
+import edu.wpi.first.units.measure.Angle
+import edu.wpi.first.units.measure.AngularVelocity
+import edu.wpi.first.units.measure.LinearVelocity
+import edu.wpi.first.wpilibj.DriverStation
+import edu.wpi.first.wpilibj.DriverStation.Alliance
+import edu.wpi.first.wpilibj.shuffleboard.Shuffleboard
+import net.tecdroid.subsystems.drivetrain.swerveDriveConfiguration
 import edu.wpi.first.math.geometry.Pose3d
 import edu.wpi.first.math.geometry.Translation3d
 import edu.wpi.first.units.Units.Degrees
@@ -10,10 +19,10 @@ import edu.wpi.first.wpilibj2.command.Commands
 import edu.wpi.first.wpilibj2.command.button.Trigger
 import net.tecdroid.constants.leftLimelightName
 import net.tecdroid.constants.rightLimelightName
+import net.tecdroid.core.RobotContainer
 import net.tecdroid.input.CompliantXboxController
 import net.tecdroid.subsystems.drivetrain.SwerveDrive
 import net.tecdroid.subsystems.drivetrain.SwerveDriveConfig
-import net.tecdroid.subsystems.drivetrain.SwerveDriveDriver
 import net.tecdroid.util.ControlGains
 import net.tecdroid.safety.pidOutputRange
 import net.tecdroid.util.units.radians
@@ -22,6 +31,8 @@ import net.tecdroid.vision.limelight.Limelight
 import net.tecdroid.vision.limelight.LimelightAprilTagDetector
 import net.tecdroid.vision.limelight.LimelightConfig
 import kotlin.math.absoluteValue
+import kotlin.math.sign
+import kotlin.time.times
 
 object LimelightAlignmentHandler {
     enum class LimelightChoice {
@@ -84,35 +95,38 @@ object LimelightAlignmentHandler {
         leftThetaPid.enableContinuousInput(0.0, 360.0)
     }
 
-    fun assignLimelightAlignment(choice: LimelightChoice, offset: LimelightOffset, driver: SwerveDriveDriver, heading: () -> Angle) {
+    fun assignLimelightAlignment(choice: LimelightChoice, offset: LimelightOffset, drive: SwerveDrive, heading: () -> Angle) {
         val limelight = if (choice == LimelightChoice.Left) leftLimelight else rightLimelight
         val longitudinalPid = if (choice == LimelightChoice.Left) leftLongitudinalPid else rightLongitudinalPid
         val transversalPid = if (choice == LimelightChoice.Left) leftTransversalPid else rightTransversalPid
         val thetaPid = if (choice == LimelightChoice.Left) leftThetaPid else rightThetaPid
 
-        driver.setRobotOriented()
-
-        driver.longitudinalVelocityFactorSource = {
-            if (!limelight.hasMultipleTargets) {
-                0.0
+        val vx: () -> LinearVelocity = {
+            if (!limelight.hasTarget) {
+                MetersPerSecond.zero()
             } else {
-                val currentLongitudinalOffset = limelight.targetPositionInRobotSpace.pose3d.z.absoluteValue
-                longitudinalPid.calculate(currentLongitudinalOffset, offset.longitudinalOffset).coerceIn(pidOutputRange)
+                val currentLongitudinalOffset = limelight.offsetFromTarget.z.absoluteValue
+                drive.maxLinearVelocity * longitudinalPid.calculate(
+                    currentLongitudinalOffset,
+                    offset.longitudinalOffset
+                ).coerceIn(pidOutputRange)
             }
         }
 
-        driver.transversalVelocityFactorSource = {
-            if (!limelight.hasMultipleTargets) {
-                0.0
+        val vy: () -> LinearVelocity = {
+            if (!limelight.hasTarget) {
+                MetersPerSecond.zero()
             } else {
-                val currentTransversalOffset = limelight.targetPositionInRobotSpace.pose3d.x
-                transversalPid.calculate(currentTransversalOffset, offset.transversalOffset).coerceIn(pidOutputRange)
+                val currentTransversalOffset = limelight.offsetFromTarget.x
+                drive.maxLinearVelocity * transversalPid.calculate(currentTransversalOffset, offset.transversalOffset)
+                    .coerceIn(pidOutputRange) as Double
             }
         }
 
-        driver.angularVelocityFactorSource = {
-            if (!limelight.hasMultipleTargets) {
-                0.0
+        val vw: () -> AngularVelocity = {
+            if (!limelight.hasTarget) {
+                DegreesPerSecond.zero()
+
             } else {
                 val id = limelight.targetId
                 val targetAngle = apriltagAngles[id]
@@ -121,19 +135,13 @@ object LimelightAlignmentHandler {
                 ) else 0.0
             }
         }
+
+        val speeds = ChassisSpeeds(vx(), vy(), vw())
+
+        drive.driveCMD(speeds)
     }
 
-    fun assignLimelightAlignmentCommand(choice: LimelightChoice, offset: LimelightOffset, driver: SwerveDriveDriver, thetaSource: () -> Angle) : Command = Commands.runOnce({assignLimelightAlignment(choice, offset, driver, thetaSource)})
-}
-
-object ControllerMovementHandler {
-    fun assignControllerMovement(controller: CompliantXboxController, driver: SwerveDriveDriver) {
-        driver.longitudinalVelocityFactorSource = { controller.leftY * 0.85 }
-        driver.transversalVelocityFactorSource = { controller.leftX * 0.85 }
-        driver.angularVelocityFactorSource = { controller.rightX * 0.85 }
-    }
-
-    fun assignControllerMovementCommand(controller: CompliantXboxController, driver: SwerveDriveDriver) : Command = Commands.runOnce({assignControllerMovement(controller, driver)})
+    fun assignLimelightAlignmentCommand(choice: LimelightChoice, offset: LimelightOffset, drive: SwerveDrive, thetaSource: () -> Angle) : Command = Commands.runOnce({assignLimelightAlignment(choice, offset, drive, thetaSource)})
 }
 
 class SwerveSystem(swerveDriveConfig: SwerveDriveConfig) {
@@ -141,13 +149,6 @@ class SwerveSystem(swerveDriveConfig: SwerveDriveConfig) {
         config = swerveDriveConfig
     )
 
-     val driver = SwerveDriveDriver(
-        maxLinearVelocity = drive.maxLinearVelocity,
-        maxAngularVelocity = drive.maxAngularVelocity,
-        accelerationPeriod = 0.1.seconds
-    )
-
-    var controllerMode = true
 
     private val heading
         get() = drive.heading
@@ -155,32 +156,14 @@ class SwerveSystem(swerveDriveConfig: SwerveDriveConfig) {
     init {
         drive.matchRelativeEncodersToAbsoluteEncoders()
         drive.publishToShuffleboard()
-
-        drive.defaultCommand = Commands.run({
-            drive.drive(driver.obtainTargetSpeeds(heading))
-        }, drive)
     }
 
-    fun always() {
-        if (controllerMode) {
-            driver.setFieldOriented()
-        }
-    }
-
-    fun linkControllerMovement(controller: CompliantXboxController) {
-        ControllerMovementHandler.assignControllerMovement(controller, driver)
-        controllerMode = true
-        driver.setFieldOriented()
-    }
-
-    fun linkLimelightTriggers(leftTrigger: Trigger, rightTrigger: Trigger, controller: CompliantXboxController) {
-        val controllerCommand = { ControllerMovementHandler.assignControllerMovementCommand(controller, driver) }
-        leftTrigger.onTrue(LimelightAlignmentHandler.assignLimelightAlignmentCommand(LimelightAlignmentHandler.LimelightChoice.Left, LimelightAlignmentHandler.LimelightOffset(0.19000, 0.0, 0.0), driver, {drive.heading })).onFalse(controllerCommand())
-        rightTrigger.onTrue(LimelightAlignmentHandler.assignLimelightAlignmentCommand(LimelightAlignmentHandler.LimelightChoice.Right, LimelightAlignmentHandler.LimelightOffset(0.19000, 0.0, 0.0), driver, { drive.heading })).onFalse(controllerCommand())
-        controllerMode = false
+    fun linkLimelightTriggers(leftTrigger: Trigger, rightTrigger: Trigger, rc: RobotContainer) {
+        leftTrigger.onTrue(LimelightAlignmentHandler.assignLimelightAlignmentCommand(LimelightAlignmentHandler.LimelightChoice.Left, LimelightAlignmentHandler.LimelightOffset(0.19000, 0.0, 0.0), drive, {drive.heading }))
+        rightTrigger.onTrue(LimelightAlignmentHandler.assignLimelightAlignmentCommand(LimelightAlignmentHandler.LimelightChoice.Right, LimelightAlignmentHandler.LimelightOffset(0.19000, 0.0, 0.0), drive, { drive.heading }))
     }
 
     fun linkReorientationTrigger(trigger: Trigger) {
-        trigger.onTrue(drive.setHeadingCommand(0.0.radians).andThen(driver.setFieldOrientedCommand()))
+        trigger.onTrue(drive.setHeadingCommand(0.0.radians))
     }
 }

@@ -3,6 +3,9 @@ import edu.wpi.first.wpilibj.DataLogManager;
 import edu.wpi.first.wpilibj.DriverStation;
 import choreo.auto.AutoChooser
 import choreo.auto.AutoFactory
+import edu.wpi.first.math.filter.SlewRateLimiter
+import edu.wpi.first.math.kinematics.ChassisSpeeds
+import edu.wpi.first.units.Units.Hertz
 import edu.wpi.first.util.datalog.BooleanLogEntry
 import edu.wpi.first.util.datalog.DoubleLogEntry
 import edu.wpi.first.util.datalog.StringLogEntry
@@ -22,6 +25,7 @@ import net.tecdroid.systems.ArmPoses
 import net.tecdroid.systems.ArmSystem
 import net.tecdroid.systems.SwerveSystem
 import net.tecdroid.util.units.degrees
+import net.tecdroid.util.units.seconds
 
 
 class RobotContainer {
@@ -34,35 +38,38 @@ class RobotContainer {
     private val pollIsLow = { isLow }
     private val makeLow = { Commands.runOnce({ isLow = true }) }
     private val makeHigh = { Commands.runOnce({ isLow = false }) }
-    val chooser = AutoChooser()
 
-    val autoFactory = AutoFactory(
-        swerve.drive::pose,
-        swerve.drive::resetOdometry,
-        swerve.drive::followTrajectory,
-        true,
-        swerve.drive
-    )
+    // Swerve Control
+    private val accelerationPeriod = 0.1.seconds
+    private val decelerationPeriod = accelerationPeriod
+
+    private val da = accelerationPeriod.asFrequency()
+    private val dd = -decelerationPeriod.asFrequency()
+
+    private val longitudinalRateLimiter = SlewRateLimiter(da.`in`(Hertz), dd.`in`(Hertz), 0.0)
+    private val transversalRateLimiter = SlewRateLimiter(da.`in`(Hertz), dd.`in`(Hertz), 0.0)
+    private val angularRateLimiter = SlewRateLimiter(da.`in`(Hertz), dd.`in`(Hertz), 0.0)
+
+    var vx = { swerve.drive.maxLinearVelocity * longitudinalRateLimiter.calculate(controller.leftY * 0.85) }
+    var vy = { swerve.drive.maxLinearVelocity * transversalRateLimiter.calculate(controller.leftX * 0.85) }
+    var vw = { swerve.drive.maxAngularVelocity * angularRateLimiter.calculate(controller.rightX * 0.85) }
 
     init {
-        linkPoses()
-        loadTrajectories()
+        //linkPoses()
         swerve.drive.heading = 0.0.degrees
     }
 
     fun initial() {
         linkMovement()
-
-    }
-
-    fun always() {
-        swerve.always()
     }
 
     private fun linkMovement() {
         swerve.linkReorientationTrigger(controller.start())
-        swerve.linkControllerMovement(controller)
-        swerve.linkLimelightTriggers(controller.leftTrigger(0.5), controller.rightTrigger(0.5), controller)
+        swerve.linkLimelightTriggers(controller.leftTrigger(0.5), controller.rightTrigger(0.5), this)
+        swerve.drive.defaultCommand = Commands.run(
+            { swerve.drive.driveFieldOriented(ChassisSpeeds(vx(), vy(), vw()))},
+            swerve.drive
+        )
     }
 
     private fun linkPoses() {
@@ -126,21 +133,6 @@ class RobotContainer {
 
         controller.rightBumper().onTrue(arm.enableIntake()).onFalse(arm.disableIntake())
         controller.leftBumper().onTrue(arm.enableOuttake()).onFalse(arm.disableIntake())
-    }
-
-    fun back2m() = Commands.sequence(
-        Commands.runOnce({
-            autoFactory.resetOdometry("Back2M")
-        }),
-        autoFactory.trajectoryCmd("Back2M")
-    )
-
-    fun loadTrajectories() {
-        chooser.addCmd("Back 2 m", ::back2m)
-
-        SmartDashboard.putData("AutoChooser", chooser)
-
-        RobotModeTriggers.autonomous().whileTrue(chooser.selectedCommandScheduler());
     }
 }
 
