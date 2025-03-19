@@ -39,9 +39,6 @@ public class LimelightController {
     private final DoubleSupplier yaw;
 
     public void angleDictionaryValues() {
-        // This line is only for solve an error, we must solve it asap
-        alignmentAngles.put(0, 0.0);
-
         // Blue
         alignmentAngles.put(21, 0.0);
         alignmentAngles.put(20, 60.0);
@@ -114,23 +111,28 @@ public class LimelightController {
 
     public Command alignRobotThetaAxis(LimeLightChoice choice) {
         return Commands.run(() -> {
-            double yawSetPoint = alignmentAngles.get(getTargetId(choice));
-            double driveThetaVelocity = thetaPIDController.calculate(getLimitedYaw(), yawSetPoint);
-            drive.accept(new ChassisSpeeds(0.0, 0.0, driveThetaVelocity));
-
+            if (alignmentAngles.containsKey(getTargetId(choice))) {
+                double yawSetPoint = alignmentAngles.get(getTargetId(choice));
+                double driveThetaVelocity = thetaPIDController.calculate(getLimitedYaw(), yawSetPoint);
+                drive.accept(new ChassisSpeeds(0.0, 0.0, driveThetaVelocity));
+            }
         }, requiredSubsystem).onlyIf(() -> hasTarget(choice));
     }
 
     public Command alignRobotAllAxis(LimeLightChoice choice, double xSetPoint, double ySetPoint) {
         return Commands.run(() -> {
             Pose3d robotPose = getRobotPositionInTargetSpace(choice);
-            double yawSetPoint = alignmentAngles.get(getTargetId(choice));
 
             double driveXVelocity = xPIDController.calculate(robotPose.getTranslation().getX(), xSetPoint);
             double driveYVelocity = yPIDController.calculate(robotPose.getTranslation().getY(), ySetPoint);
-            double driveThetaVelocity = thetaPIDController.calculate(getLimitedYaw(), yawSetPoint);
 
-            drive.accept(new ChassisSpeeds(driveYVelocity, driveXVelocity, driveThetaVelocity));
+            if (alignmentAngles.containsKey(getTargetId(choice))) {
+                double yawSetPoint = alignmentAngles.get(getTargetId(choice));
+                double driveThetaVelocity = thetaPIDController.calculate(getLimitedYaw(), yawSetPoint);
+                drive.accept(new ChassisSpeeds(driveYVelocity, driveXVelocity, driveThetaVelocity));
+            } else {
+                drive.accept(new ChassisSpeeds(driveYVelocity, driveXVelocity, 0.0));
+            }
         }, requiredSubsystem).onlyIf(() -> hasTarget(choice));
     }
 
