@@ -8,8 +8,6 @@ object LimelightTableKeys {
         const val targetId = "tid"
         const val horizontalOffsetDegrees = "tx"
         const val verticalOffsetDegrees = "ty"
-        const val horizontalOffsetPixels = "txnc"
-        const val verticalOffsetPixels = "tync"
         const val targetAreaOccupancyPercentage = "ta"
         const val targetingDataR2 = "t2d"
         const val pipelineLatency = "tl"
@@ -38,6 +36,8 @@ object LimelightTableKeys {
         const val cameraPositionInRobotSpace = "camerapose_robotspace"
 
         object Raw {
+            const val horizontalOffsetPixels = "txnc"
+            const val verticalOffsetPixels = "tync"
             const val cornerData = "tcornxy"
             const val targetData = "rawtargets"
             const val fiducialData = "rawfiducials"
@@ -102,5 +102,50 @@ object LimelightIndices {
         val hue = 0
         val saturation = 1
         val value = 2
+    }
+
+    object TCornXY {
+        val entriesPerCorner = 4
+        val x0 = 0
+        val y0 = 1
+        val x1 = 2
+        val y1 = 3
+        val x2 = 4
+        val y2 = 5
+        val x3 = 6
+        val y3 = 7
+    }
+
+    object RawTargets {
+        val entriesPerDetection = 3
+        val txnc = 0
+        val tync = 1
+        val ta = 2
+    }
+
+    object RawFiducials {
+        val entriesPerDetection = 7
+        val id = 0
+        val txnc = 1
+        val tync = 2
+        val ta = 3
+        val distToCamera = 4
+        val distToRobot = 5
+        val ambiguity = 6
+    }
+    object RawDetections {
+        val entriesPerDetection = 12
+        val id = 0
+        val txnc = 1
+        val tync = 2
+        val ta = 3
+        val x0 = 4
+        val y0 = 5
+        val x1 = 6
+        val y1 = 7
+        val x2 = 8
+        val y2 = 9
+        val x3 = 10
+        val y3 = 11
     }
 }

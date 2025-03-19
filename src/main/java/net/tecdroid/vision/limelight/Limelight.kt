@@ -9,6 +9,7 @@ import edu.wpi.first.networktables.NetworkTable
 import edu.wpi.first.units.Units.Degrees
 import edu.wpi.first.units.Units.Meters
 import edu.wpi.first.units.measure.Angle
+import edu.wpi.first.units.measure.Distance
 import edu.wpi.first.units.measure.Frequency
 import edu.wpi.first.units.measure.Temperature
 import edu.wpi.first.units.measure.Time
@@ -131,18 +132,6 @@ open class Limelight(config: LimelightConfig) : LimelightBase(config) {
     //
 
     /**
-     * Obtains the horizontal pixel offset from the center of the target
-     */
-    val horizontalPixelOffset: Pixels
-        get() = getDouble(LimelightTableKeys.Get.horizontalOffsetPixels).toInt().pixels
-
-    /**
-     * Obtains the vertical pixel offset from the center of the target
-     */
-    val verticalPixelOffset: Pixels
-        get() = getDouble(LimelightTableKeys.Get.verticalOffsetPixels).toInt().pixels
-
-    /**
      * Obtains the horizontal angular offset from the center of the target
      */
     val horizontalOffset: Angle
@@ -237,6 +226,28 @@ open class Limelight(config: LimelightConfig) : LimelightBase(config) {
      */
     val json: String
         get() = getString(LimelightTableKeys.Get.jsonOutput)
+
+    //
+    // Raw Stuff
+    //
+
+    /**
+     * Obtains the horizontal pixel offset from the center of the target
+     */
+    val rawHorizontalOffset: Pixels
+        get() = getDouble(LimelightTableKeys.Get.Raw.horizontalOffsetPixels).toInt().pixels
+
+    /**
+     * Obtains the vertical pixel offset from the center of the target
+     */
+    val rawVerticalOffset: Pixels
+        get() = getDouble(LimelightTableKeys.Get.Raw.verticalOffsetPixels).toInt().pixels
+
+    /**
+     * Obtains the corner data of the detections in sight
+      */
+    val rawCorners: Array<LimelightRawCornerDetection>
+        get() = LimelightRawCornerDetection.fromRawData(getDoubleArray(LimelightTableKeys.Get.Raw.cornerData))
 }
 
 /**
@@ -475,6 +486,124 @@ data class LimelightCrosshairs(
             positionOne = Translation2d(data[0], data[1]),
             positionTwo = Translation2d(data[2], data[3])
         )
+    }
+}
+
+data class LimelightRawCornerDetection(
+    val first: Translation2d,
+    val second: Translation2d,
+    val third: Translation2d,
+    val fourth: Translation2d
+) {
+    companion object {
+        fun fromRawData(data: DoubleArray) = Array(data.size / LimelightIndices.TCornXY.entriesPerCorner) {
+            LimelightRawCornerDetection(
+                first = Translation2d(
+                    data[LimelightIndices.TCornXY.x0 + (it * LimelightIndices.TCornXY.entriesPerCorner)],
+                    data[LimelightIndices.TCornXY.y0 + (it * LimelightIndices.TCornXY.entriesPerCorner)]
+                ),
+                second = Translation2d(
+                    data[LimelightIndices.TCornXY.x1 + (it * LimelightIndices.TCornXY.entriesPerCorner)],
+                    data[LimelightIndices.TCornXY.y1 + (it * LimelightIndices.TCornXY.entriesPerCorner)]
+                ),
+                third = Translation2d(
+                    data[LimelightIndices.TCornXY.x2 + (it * LimelightIndices.TCornXY.entriesPerCorner)],
+                    data[LimelightIndices.TCornXY.y2 + (it * LimelightIndices.TCornXY.entriesPerCorner)]
+                ),
+                fourth = Translation2d(
+                    data[LimelightIndices.TCornXY.x3 + (it * LimelightIndices.TCornXY.entriesPerCorner)],
+                    data[LimelightIndices.TCornXY.y3 + (it * LimelightIndices.TCornXY.entriesPerCorner)]
+                )
+            )
+        }
+    }
+}
+
+/**
+ * Stores a snapshot of raw 2-dimensional target data
+ * **From Limelight Documentation:** Enable "send contours" in the "Output" tab to stream corner coordinates
+ */
+class LimelightRawTarget(
+    val horizontalOffset: Pixels,
+    val verticalOffset: Pixels,
+    val coverage: Percentage
+) {
+    companion object {
+        fun fromRawData(data: DoubleArray) = Array(data.size / LimelightIndices.RawTargets.entriesPerDetection) {
+            LimelightRawTarget(
+                horizontalOffset = data[LimelightIndices.RawTargets.txnc + (it * LimelightIndices.RawTargets.entriesPerDetection)].toInt().pixels,
+                verticalOffset = data[LimelightIndices.RawTargets.tync + (it * LimelightIndices.RawTargets.entriesPerDetection)].toInt().pixels,
+                coverage = data[LimelightIndices.RawTargets.ta + (it * LimelightIndices.RawTargets.entriesPerDetection)].percent
+            )
+        }
+    }
+}
+
+/**
+ * Stores a snapshot of raw 2-dimensional fiducial data
+ */
+data class LimelightRawFiducials(
+    val id: Int,
+    val horizontalOffset: Pixels,
+    val verticalOffset: Pixels,
+    val coverage: Percentage,
+    val distanceToCamera: Distance,
+    val distanceToRobot: Distance,
+    val ambiguity: Double
+) {
+    companion object {
+        fun fromRawData(data: DoubleArray) = Array(data.size / LimelightIndices.RawFiducials.entriesPerDetection) {
+            LimelightRawFiducials(
+                id = data[LimelightIndices.RawFiducials.id + (it * LimelightIndices.RawFiducials.entriesPerDetection)].toInt(),
+                horizontalOffset = data[LimelightIndices.RawFiducials.txnc + (it * LimelightIndices.RawFiducials.entriesPerDetection)].toInt().pixels,
+                verticalOffset = data[LimelightIndices.RawFiducials.tync + (it * LimelightIndices.RawFiducials.entriesPerDetection)].toInt().pixels,
+                coverage = data[LimelightIndices.RawFiducials.ta + (it * LimelightIndices.RawFiducials.entriesPerDetection)].percent,
+                distanceToCamera = data[LimelightIndices.RawFiducials.distToCamera + (it * LimelightIndices.RawFiducials.entriesPerDetection)].meters,
+                distanceToRobot = data[LimelightIndices.RawFiducials.distToRobot + (it * LimelightIndices.RawFiducials.entriesPerDetection)].meters,
+                ambiguity =  data[LimelightIndices.RawFiducials.ambiguity + (it * LimelightIndices.RawFiducials.entriesPerDetection)],
+            )
+        }
+    }
+}
+
+/**
+ * Stores a snapshot of raw 2-dimensional detection data
+ * **From Limelight Documentation:** Enable "send contours" in the "Output" tab to stream corner coordinates
+ */
+data class LimelightRawDetection2d(
+    val id: Int,
+    val horizontalOffset: Pixels,
+    val verticalOffset: Pixels,
+    val coverage: Percentage,
+    val corners: LimelightRawCornerDetection
+) {
+    companion object {
+        fun fromRawData(data: DoubleArray) = Array(data.size / LimelightIndices.RawFiducials.entriesPerDetection) {
+            LimelightRawDetection2d(
+                id                 = data[LimelightIndices.RawDetections.id + (it * LimelightIndices.RawDetections.entriesPerDetection)].toInt(),
+                horizontalOffset = data[LimelightIndices.RawDetections.txnc + (it * LimelightIndices.RawDetections.entriesPerDetection)].toInt().pixels,
+                verticalOffset   = data[LimelightIndices.RawDetections.tync + (it * LimelightIndices.RawDetections.entriesPerDetection)].toInt().pixels,
+                coverage           = data[LimelightIndices.RawDetections.ta + (it * LimelightIndices.RawDetections.entriesPerDetection)].percent,
+                corners = LimelightRawCornerDetection(
+                    first = Translation2d(
+                        data[LimelightIndices.RawDetections.x0 + (it * LimelightIndices.RawDetections.entriesPerDetection)],
+                        data[LimelightIndices.RawDetections.y0 + (it * LimelightIndices.RawDetections.entriesPerDetection)]
+                    ),
+                    second = Translation2d(
+                        data[LimelightIndices.RawDetections.x1 + (it * LimelightIndices.RawDetections.entriesPerDetection)],
+                        data[LimelightIndices.RawDetections.y1 + (it * LimelightIndices.RawDetections.entriesPerDetection)]
+                    ),
+                    third = Translation2d(
+                        data[LimelightIndices.RawDetections.x2 + (it * LimelightIndices.RawDetections.entriesPerDetection)],
+                        data[LimelightIndices.RawDetections.y2 + (it * LimelightIndices.RawDetections.entriesPerDetection)]
+                    ),
+                    fourth = Translation2d(
+                        data[LimelightIndices.RawDetections.x3 + (it * LimelightIndices.RawDetections.entriesPerDetection)],
+                        data[LimelightIndices.RawDetections.y3 + (it * LimelightIndices.RawDetections.entriesPerDetection)]
+                    )
+                )
+            )
+        }
     }
 }
 
