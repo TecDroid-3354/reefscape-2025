@@ -1,13 +1,5 @@
 package net.tecdroid.vision.limelight
 
-import edu.wpi.first.math.geometry.Pose2d
-import edu.wpi.first.math.geometry.Pose3d
-import edu.wpi.first.units.measure.Angle
-import edu.wpi.first.units.measure.Frequency
-import edu.wpi.first.units.measure.Temperature
-import edu.wpi.first.units.measure.Time
-import net.tecdroid.util.units.*
-
 
 object LimelightTableKeys {
 
@@ -54,7 +46,25 @@ object LimelightTableKeys {
         }
     }
 
-    object T2dIndices {
+    object Set {
+        const val cameraPositionInRobotSpace = "camerapose_robotspace_set"
+        const val priorityId = "priorityid"
+        const val robotOrientation = "robot_orientation_set"
+        const val idFilter = "fiducial_id_filters_set"
+        const val pointOfInterestOffset = "fiducial_offset_set"
+        const val ledMode = "ledMode"
+        const val pipelineIndex = "pipeline"
+        const val streamingMode = "stream"
+        const val cropParameters = "crop"
+        const val throttle = "throttle_set"
+        const val imuMode = "imumode_set"
+        const val imuAssistAlpha = "imuassistalpha_set"
+    }
+
+}
+
+object LimelightIndices {
+    object T2d {
         val targetValid = 0
         val targetCount = 1
         val targetLatency = 2
@@ -74,25 +84,23 @@ object LimelightTableKeys {
         val targetSkewDegrees = 16
     }
 
-    object TcIndices {
+    object T3d {
+        val x = 0
+        val y = 1
+        val z = 2
+        val roll = 3
+        val pitch = 4
+        val yaw = 5
+        val latency = 6
+        val tagCount = 7
+        val tagSpan = 8
+        val averageTagDistanceFromCamera = 9
+        val averageTagCoverage = 10
+    }
+
+    object Tc {
         val hue = 0
         val saturation = 1
         val value = 2
     }
-
-    object Set {
-        const val cameraPositionInRobotSpace = "camerapose_robotspace_set"
-        const val priorityId = "priorityid"
-        const val robotOrientation = "robot_orientation_set"
-        const val idFilter = "fiducial_id_filters_set"
-        const val pointOfInterestOffset = "fiducial_offset_set"
-        const val ledMode = "ledMode"
-        const val pipelineIndex = "pipeline"
-        const val streamingMode = "stream"
-        const val cropParameters = "crop"
-        const val throttle = "throttle_set"
-        const val imuMode = "imumode_set"
-        const val imuAssistAlpha = "imuassistalpha_set"
-    }
-
 }
