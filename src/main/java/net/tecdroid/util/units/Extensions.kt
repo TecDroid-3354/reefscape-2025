@@ -6,6 +6,12 @@ import edu.wpi.first.units.measure.*
 
 fun Angle.toRotation2d() = Rotation2d(this)
 
+val Int.pixels
+    get() = Pixels.of(this)
+
+val Double.percent
+    get() = Percentage(this)
+
 val Double.meters: Distance
     get() = Meters.of(this)
 
@@ -18,11 +24,20 @@ val Double.degrees: Angle
 val Double.radians : Angle
     get() = Radians.of(this)
 
+val Double.hertz: Frequency
+    get() = Hertz.of(this)
+
 val Double.seconds: Time
     get() = Seconds.of(this)
+
+val Double.milliseconds: Time
+    get() = Milliseconds.of(this)
 
 val Double.volts: Voltage
     get() = Volts.of(this)
 
 val Double.amps: Current
     get() = Amps.of(this)
+
+val Double.degreesCelsius: Temperature
+    get() = Celsius.of(this)

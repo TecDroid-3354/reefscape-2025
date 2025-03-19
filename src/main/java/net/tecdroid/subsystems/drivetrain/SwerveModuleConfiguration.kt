@@ -4,6 +4,7 @@ import edu.wpi.first.units.Units.Amps
 import edu.wpi.first.units.Units.Inches
 import edu.wpi.first.units.measure.Angle
 import edu.wpi.first.units.measure.Current
+import net.tecdroid.mechanical.Reduction
 import net.tecdroid.util.units.rotations
 import net.tecdroid.util.*
 import net.tecdroid.util.RotationalDirection.*
@@ -27,12 +28,12 @@ data class SwerveModuleConfig(
     val steerControlGains: ControlGains
 )
 
-fun makeConfig(moduleNumber: DigitId, magnetOffset: Angle) = SwerveModuleConfig(
+fun makeConfig(moduleNumber: SymbolidId, magnetOffset: Angle) = SwerveModuleConfig(
     driveMotorProperties = Motors.krakenX60,
     steerMotorProperties = Motors.neo,
-    driveControllerId = joinDigits(moduleNumber, DigitId(1)),
-    steerControllerId = joinDigits(moduleNumber, DigitId(2)),
-    absoluteEncoderId = joinDigits(moduleNumber, DigitId(3)),
+    driveControllerId = moduleNumber * 10 + NumericId(1),
+    steerControllerId = moduleNumber * 10 + NumericId(2),
+    absoluteEncoderId = moduleNumber * 10 + NumericId(3),
     driveGearRatio =  Reduction(6.12),
     steerGearRatio = Reduction(150.0 / 7.0),
     wheel =  Wheel.fromRadius(Inches.of(2.0)),
@@ -45,7 +46,7 @@ fun makeConfig(moduleNumber: DigitId, magnetOffset: Angle) = SwerveModuleConfig(
     steerControlGains = ControlGains(p = 0.1, d = 0.01)
 )
 
-val frontRightModuleConfig= makeConfig(DigitId(1), (-0.09130859375).rotations)
-val frontLeftModuleConfig = makeConfig(DigitId(2), (-0.38982578125).rotations)
-val backLeftModuleConfig  = makeConfig(DigitId(3), (-0.345458984375).rotations)
-val backRightModuleConfig = makeConfig(DigitId(4), (+0.138427734375).rotations)
+val frontRightModuleConfig= makeConfig(SymbolidId(1), (-0.09130859375).rotations)
+val frontLeftModuleConfig = makeConfig(SymbolidId(2), (-0.38982578125).rotations)
+val backLeftModuleConfig  = makeConfig(SymbolidId(3), (-0.345458984375).rotations)
+val backRightModuleConfig = makeConfig(SymbolidId(4), (+0.138427734375).rotations)
