@@ -1,5 +1,6 @@
 package net.tecdroid.core
 
+import com.pathplanner.lib.commands.PathPlannerAuto
 import edu.wpi.first.math.filter.SlewRateLimiter
 import edu.wpi.first.math.kinematics.ChassisSpeeds
 import edu.wpi.first.units.Units.Hertz
@@ -44,6 +45,7 @@ class RobotContainer {
 
     fun autonomousInit() {
         swerve.drive.removeDefaultCommand()
+        pathPlannerAuto.publishToShuffleboard("Auto")
     }
 
     fun teleopInit() {
@@ -57,7 +59,8 @@ class RobotContainer {
 
     val autonomousCommand: Command
         get() {
-            return pathPlannerAuto.getPath("Straightforward")
+            return pathPlannerAuto.getAuto("90 deg to right")
+            //return pathPlannerAuto.getAuto("Left auto")
         }
 
 }

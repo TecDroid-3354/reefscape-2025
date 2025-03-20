@@ -64,7 +64,7 @@ class PathPlannerAutonomous(val drive: SwerveDrive) {
         Commands.none()
     }
 
-    fun getAuto(name: String): Command = PathPlannerAuto(name)
+    fun getAuto(name: String): Command = PathPlannerAuto(autoChooser.selected.name)
 
     fun publishToShuffleboard(tabName: String) {
         val tab = Shuffleboard.getTab(tabName)
