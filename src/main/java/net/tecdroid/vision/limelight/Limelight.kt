@@ -57,6 +57,22 @@ class Limelight(private val config: LimelightConfig) : Sendable {
         )
     }
 
+    fun setIDFilters(validIds : IntArray) {
+        LimelightHelpers.SetFiducialIDFiltersOverride(config.name, validIds)
+    }
+
+    fun setCameraPose(forward : Double, right : Double, up : Double, roll : Double, pitch : Double, yaw : Double) {
+        LimelightHelpers.setCameraPose_RobotSpace(
+            config.name, // Nombre de la cámara Limelight
+            forward,               // Desplazamiento hacia adelante en metros desde el centro del robot
+            right,                  // Desplazamiento lateral en metros (positivo a la derecha)
+            up,                    // Altura en metros desde el suelo
+            roll,                  // Ángulo de rotación en el eje X en grados
+            pitch,                 // Ángulo de rotación en el eje Y en grados
+            yaw                    // Ángulo de rotación en el eje Z en grados
+        );
+    }
+
     val hasTarget: Boolean
         get() = getDouble(LimelightTableKeys.Get.hasValidTarget) == 1.0
 

@@ -38,7 +38,7 @@ public class LimelightController {
     private final Consumer<ChassisSpeeds> drive;
     private final DoubleSupplier yaw;
 
-    public void angleDictionaryValues() {
+    private void angleDictionaryValues() {
         // Blue
         alignmentAngles.put(21, 0.0);
         alignmentAngles.put(20, 60.0);
@@ -56,34 +56,60 @@ public class LimelightController {
         alignmentAngles.put(9, 300.0);
     }
 
+    private void limelightConfiguration() {
+        thetaPIDController.enableContinuousInput(0.0, 360.0);
+
+        int[] validIDs = { 21,20,19,18,17,22,10,11,6,7,8,9 };
+        rightLimelight.setIDFilters(validIDs);
+        leftLimelight.setIDFilters(validIDs);
+
+        // Camera pose according to robot center
+        rightLimelight.setCameraPose(
+                -0.3461,
+                0.1533,
+                0.354,
+                0.0,
+                -15.0,
+                180
+        );
+
+        leftLimelight.setCameraPose(
+                -0.3461,
+                -0.1533,
+                0.354,
+                0.0,
+                -15.0,
+                180
+        );
+    }
+
     public LimelightController(Subsystem requiredSubsystem, Consumer<ChassisSpeeds> drive, DoubleSupplier yaw) {
         this.requiredSubsystem = requiredSubsystem;
         this.drive = drive;
         this.yaw = yaw;
 
-        thetaPIDController.enableContinuousInput(0.0, 360.0);
         angleDictionaryValues();
-
+        limelightConfiguration();
     }
 
-    public Pose3d getRobotPositionInTargetSpace(LimeLightChoice choice) {
+    private Pose3d getRobotPositionInTargetSpace(LimeLightChoice choice) {
         Limelight limelight = (choice == LimeLightChoice.Right) ? rightLimelight : leftLimelight;
         return limelight.getRobotPositionInTargetSpace();
     }
 
 
-    public int getTargetId(LimeLightChoice choice) {
+    private int getTargetId(LimeLightChoice choice) {
         Limelight limelight = (choice == LimeLightChoice.Right) ? rightLimelight : leftLimelight;
         return limelight.getTargetId();
     }
 
-    public boolean hasTarget(LimeLightChoice choice) {
+    private boolean hasTarget(LimeLightChoice choice) {
         Limelight limelight = (choice == LimeLightChoice.Right) ? rightLimelight : leftLimelight;
         return limelight.getHasTarget();
     }
 
     // Obtain a yaw between the range [0, 360]
-    public double getLimitedYaw() {
+    private double getLimitedYaw() {
         double limitedYaw = yaw.getAsDouble() % 360;
         if (limitedYaw < 0) {
             limitedYaw += 360;
