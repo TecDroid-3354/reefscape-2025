@@ -14,7 +14,6 @@ import edu.wpi.first.units.Units.*
 import edu.wpi.first.units.measure.Angle
 import edu.wpi.first.units.measure.AngularVelocity
 import edu.wpi.first.units.measure.LinearVelocity
-import edu.wpi.first.units.measure.Time
 import edu.wpi.first.wpilibj.smartdashboard.Field2d
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard
 import edu.wpi.first.wpilibj2.command.Command
@@ -22,18 +21,17 @@ import edu.wpi.first.wpilibj2.command.Commands
 import edu.wpi.first.wpilibj2.command.SubsystemBase
 import net.tecdroid.util.units.degrees
 import net.tecdroid.util.units.toRotation2d
-import net.tecdroid.vision.limelight.Limelight
 import kotlin.math.PI
 
 class SwerveDrive(private val config: SwerveDriveConfig) : SubsystemBase() {
-    private val imu = Pigeon2(config.imuId.id)
+    val imu = Pigeon2(config.imuId.id)
     private val modules = config.moduleConfigs.map { SwerveModule(it.first) }
     private val kinematics = SwerveDriveKinematics(*config.moduleConfigs.map { it.second }.toTypedArray())
 
     private val stateStdDevs = VecBuilder.fill(0.005, 0.005, Units.degreesToRadians(2.0))
     private val visionStdDevs = VecBuilder.fill(0.005, 0.005, Units.degreesToRadians(2.0))
 
-    private val poseEstimator = SwerveDrivePoseEstimator(
+    val poseEstimator = SwerveDrivePoseEstimator(
         kinematics, heading.toRotation2d(), modulePositions.toTypedArray(), Pose2d(),
         stateStdDevs, visionStdDevs
     )
@@ -95,10 +93,10 @@ class SwerveDrive(private val config: SwerveDriveConfig) : SubsystemBase() {
         heading = 0.0.degrees
     }
 
-    fun updatePoseEstimationWithLimelight(limelight: Limelight, visionMeasurementPose: Pose2d, visionTimeStamp: Double, currentTimeSeconds: Time) {
+    /*fun updatePoseEstimationWithLimelight(limelight: Limelight, visionMeasurementPose: Pose2d, visionTimeStamp: Double, currentTimeSeconds: Time) {
         poseEstimator.addVisionMeasurement(visionMeasurementPose, visionTimeStamp)
         poseEstimator.updateWithTime(currentTimeSeconds.`in`(Seconds), heading.toRotation2d(), modulePositions.toTypedArray())
-    }
+    }*/
 
     // Misc //
 

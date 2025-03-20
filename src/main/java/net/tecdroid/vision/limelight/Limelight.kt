@@ -1,7 +1,6 @@
 package net.tecdroid.vision.limelight
 
 import edu.wpi.first.math.geometry.*
-import edu.wpi.first.networktables.NetworkTable
 import edu.wpi.first.networktables.NetworkTableInstance
 import edu.wpi.first.units.measure.Angle
 import edu.wpi.first.units.measure.Frequency
@@ -45,6 +44,18 @@ class Limelight(private val config: LimelightConfig) : Sendable {
             Translation3d(data[0].meters, data[1].meters, data[2].meters),
             Rotation3d(data[3].degrees, data[4].degrees, data[5].degrees)
         )
+
+    fun setRobotOrientation(robotRotation: Double) {
+        LimelightHelpers.SetRobotOrientation(
+            config.name,
+            robotRotation,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0
+        )
+    }
 
     val hasTarget: Boolean
         get() = getDouble(LimelightTableKeys.Get.hasValidTarget) == 1.0
@@ -117,6 +128,12 @@ class Limelight(private val config: LimelightConfig) : Sendable {
 
     private val rawRobotPositionInBlueFieldSpaceMt2: DoubleArray
         get() = getDoubleArray(LimelightTableKeys.Get.robotPositionInBlueFieldSpaceMt2)
+
+    val botPoseEstimate_wpiBlue_MegaTag2: LimelightHelpers.PoseEstimate
+        get() = LimelightHelpers.getBotPoseEstimate_wpiBlue_MegaTag2(config.name)
+
+    val botPoseEstimate_wpiRed_MegaTag2: LimelightHelpers.PoseEstimate
+        get() = LimelightHelpers.getBotPoseEstimate_wpiRed_MegaTag2(config.name)
 
     val robotPositionInBlueFieldSpace: Pose3d
         get() = rawDataToPose3d(rawRobotPositionInBlueFieldSpace)
