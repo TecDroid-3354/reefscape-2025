@@ -208,6 +208,15 @@ class SwerveModule(private val config: SwerveModuleConfig) : Sendable {
             "Target Azimuth (deg)",
             { tst.angle.degrees },
             { })
+
+        sendableBuilder.addDoubleProperty(
+            "Velocity (m/s)",
+            { wheelLinearVelocity.`in`(MetersPerSecond) },
+            { })
+        sendableBuilder.addIntegerProperty(
+            "Integer",
+            { config.driveControllerId.id.toLong() },
+            { })
     }
 
     // //// //
