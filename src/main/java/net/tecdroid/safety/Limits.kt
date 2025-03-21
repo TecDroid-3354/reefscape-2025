@@ -1,4 +1,4 @@
-package net.tecdroid.util
+package net.tecdroid.safety
 
 import edu.wpi.first.units.Measure
 import edu.wpi.first.units.Unit

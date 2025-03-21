@@ -4,6 +4,8 @@ import edu.wpi.first.units.AngleUnit
 import edu.wpi.first.units.Units.Second
 import edu.wpi.first.units.measure.Angle
 import edu.wpi.first.units.measure.Current
+import net.tecdroid.mechanical.Reduction
+import net.tecdroid.safety.SubsystemLimits
 import net.tecdroid.util.*
 import net.tecdroid.util.RotationalDirection.Counterclockwise
 import net.tecdroid.util.units.amps

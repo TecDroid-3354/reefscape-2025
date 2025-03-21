@@ -1,50 +1,46 @@
 package net.tecdroid.subsystems.drivetrain
 
-
 import com.ctre.phoenix6.configs.Pigeon2Configuration
 import com.ctre.phoenix6.hardware.Pigeon2
-import com.pathplanner.lib.auto.AutoBuilder
-import com.pathplanner.lib.config.PIDConstants
-import com.pathplanner.lib.config.RobotConfig
-import com.pathplanner.lib.controllers.PPHolonomicDriveController
+import edu.wpi.first.math.VecBuilder
 import edu.wpi.first.math.estimator.SwerveDrivePoseEstimator
 import edu.wpi.first.math.geometry.Pose2d
-import edu.wpi.first.math.kinematics.*
+import edu.wpi.first.math.kinematics.ChassisSpeeds
+import edu.wpi.first.math.kinematics.SwerveDriveKinematics
+import edu.wpi.first.math.kinematics.SwerveModulePosition
+import edu.wpi.first.math.kinematics.SwerveModuleState
+import edu.wpi.first.math.util.Units
 import edu.wpi.first.units.Units.*
 import edu.wpi.first.units.measure.Angle
 import edu.wpi.first.units.measure.AngularVelocity
 import edu.wpi.first.units.measure.LinearVelocity
-import edu.wpi.first.util.sendable.Sendable
-import edu.wpi.first.util.sendable.SendableBuilder
-import edu.wpi.first.wpilibj.DriverStation
-import edu.wpi.first.wpilibj.shuffleboard.Shuffleboard
+import edu.wpi.first.wpilibj.smartdashboard.Field2d
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard
 import edu.wpi.first.wpilibj2.command.Command
 import edu.wpi.first.wpilibj2.command.Commands
 import edu.wpi.first.wpilibj2.command.SubsystemBase
-import net.tecdroid.constants.subsystemTabName
 import net.tecdroid.util.units.degrees
 import net.tecdroid.util.units.toRotation2d
 import kotlin.math.PI
 
-
-class SwerveDrive(private val config: SwerveDriveConfig) : SubsystemBase(), Sendable {
-    private val imu = Pigeon2(config.imuId.id)
+class SwerveDrive(private val config: SwerveDriveConfig) : SubsystemBase() {
+    val imu = Pigeon2(config.imuId.id)
     private val modules = config.moduleConfigs.map { SwerveModule(it.first) }
     private val kinematics = SwerveDriveKinematics(*config.moduleConfigs.map { it.second }.toTypedArray())
 
-    // TODO: Introduce Limelight stddevs
-    private val poseEstimator = SwerveDrivePoseEstimator(
-        kinematics,
-        heading.toRotation2d(),
-        modulePositions.toTypedArray(),
-        Pose2d()
+    private val stateStdDevs = VecBuilder.fill(0.005, 0.005, Units.degreesToRadians(2.0))
+    private val visionStdDevs = VecBuilder.fill(0.005, 0.005, Units.degreesToRadians(2.0))
+
+    val poseEstimator = SwerveDrivePoseEstimator(
+        kinematics, heading.toRotation2d(), modulePositions.toTypedArray(), Pose2d(),
+        stateStdDevs, visionStdDevs
     )
+
+    private val field = Field2d()
 
     var pose: Pose2d
         get() = poseEstimator.estimatedPosition
-        set(newPose) {
-            poseEstimator.resetPose(newPose)
-        }
+        set(value) { poseEstimator.resetPosition(heading.toRotation2d(), modulePositions.toTypedArray(), value) }
 
     var heading: Angle
         get() = imu.yaw.value
@@ -52,18 +48,18 @@ class SwerveDrive(private val config: SwerveDriveConfig) : SubsystemBase(), Send
             imu.setYaw(angle)
         }
 
-
-    val currentSpeeds: ChassisSpeeds
-        get() = ChassisSpeedBridge.ktToJavaArrayChassisSpeeds(kinematics, modules.map { it.state })
-
     init {
         this.configureImuInterface()
         matchRelativeEncodersToAbsoluteEncoders()
+        SmartDashboard.putData("Field", field)
     }
 
     override fun periodic() {
-        updateOdometry()
+        poseEstimator.update(heading.toRotation2d(), modulePositions.toTypedArray())
+        field.robotPose = pose
     }
+
+     // Core //
 
     private fun setModuleTargetStates(vararg states: SwerveModuleState) {
         require(states.size == modules.size) { "You must provide as many states as there are modules" }
@@ -73,47 +69,45 @@ class SwerveDrive(private val config: SwerveDriveConfig) : SubsystemBase(), Send
         }
     }
 
+    // Drive //
+
     fun driveFieldOriented(chassisSpeeds: ChassisSpeeds) {
         val fieldOrientedSpeeds = ChassisSpeeds.fromFieldRelativeSpeeds(chassisSpeeds, heading.toRotation2d())
-        driveRobotOriented(fieldOrientedSpeeds)
+        driveRobotRelative(fieldOrientedSpeeds)
     }
 
-    fun driveFieldOrientedCommand(chassisSpeeds: ChassisSpeeds) : Command {
-        return Commands.runOnce({ driveFieldOriented(chassisSpeeds) })
-   }
-
-    fun driveRobotOriented(chassisSpeeds: ChassisSpeeds) {
+    fun driveRobotRelative(chassisSpeeds: ChassisSpeeds) {
         val desiredStates = kinematics.toSwerveModuleStates(chassisSpeeds)
         setModuleTargetStates(*desiredStates)
     }
 
-    fun driveRobotOrientedCommand(chassisSpeeds: ChassisSpeeds) : Command {
-        return Commands.runOnce({ driveRobotOriented(chassisSpeeds) })
-    }
+    // Utilities //
 
-    fun matchRelativeEncodersToAbsoluteEncoders() {
+    private fun matchRelativeEncodersToAbsoluteEncoders() {
         for (module in modules) {
             module.matchRelativeEncodersToAbsoluteEncoders()
         }
     }
 
-    private fun updateOdometry() {
-        poseEstimator.update(heading.toRotation2d(), modulePositions.toTypedArray())
+    fun zeroHeading() {
+        heading = 0.0.degrees
     }
 
-    override fun initSendable(builder: SendableBuilder) {
-        with(builder) {
-            addDoubleProperty("Heading (Degrees)", { heading.`in`(Degrees) }) {}
-        }
-    }
+    /*fun updatePoseEstimationWithLimelight(limelight: Limelight, visionMeasurementPose: Pose2d, visionTimeStamp: Double, currentTimeSeconds: Time) {
+        poseEstimator.addVisionMeasurement(visionMeasurementPose, visionTimeStamp)
+        poseEstimator.updateWithTime(currentTimeSeconds.`in`(Seconds), heading.toRotation2d(), modulePositions.toTypedArray())
+    }*/
 
-    fun publishToShuffleboard() {
-        val tab = Shuffleboard.getTab(subsystemTabName)
-        tab.add("Swerve Drive", this)
-        for ((i, m) in modules.withIndex()) {
-            tab.add("Module $i", m)
-        }
-    }
+    // Misc //
+
+    val modulePositions: List<SwerveModulePosition>
+        get() = modules.map { SwerveModulePosition(it.wheelLinearDisplacement, it.wheelAzimuth.toRotation2d()) }
+
+    val maxLinearVelocity: LinearVelocity = modules.map { it.wheelMaxLinearVelocity }.minByOrNull { it.`in`(MetersPerSecond) }!!
+    val maxAngularVelocity: AngularVelocity = Rotations.one().div((config.longestDiagonal * PI) / maxLinearVelocity);
+    val maxChassisSpeeds = ChassisSpeeds(maxLinearVelocity, maxLinearVelocity, maxAngularVelocity)
+
+    // Configuration //
 
     private fun configureImuInterface() {
         val imuConfiguration = Pigeon2Configuration()
@@ -126,17 +120,18 @@ class SwerveDrive(private val config: SwerveDriveConfig) : SubsystemBase(), Send
         imu.configurator.apply(imuConfiguration)
     }
 
-    // Helpers
+    // Commands //
 
-    val modulePositions: List<SwerveModulePosition>
-        get() = modules.map { SwerveModulePosition(it.wheelLinearDisplacement, it.wheelAzimuth.toRotation2d()) }
+    fun driveRobotRelativeCommand(chassisSpeeds: ChassisSpeeds) : Command {
+        return Commands.runOnce({ driveRobotRelative(chassisSpeeds) })
+    }
 
-    val maxLinearVelocity: LinearVelocity =
-        modules.map { it.wheelMaxLinearVelocity }.minByOrNull { it.`in`(MetersPerSecond) }!!
+    fun driveFieldOrientedCommand(chassisSpeeds: ChassisSpeeds) : Command {
+        return Commands.runOnce({ driveFieldOriented(chassisSpeeds) })
+    }
 
-    val maxAngularVelocity: AngularVelocity =
-        Rotations.one().div((config.longestDiagonal * PI) / maxLinearVelocity);
+    fun setHeadingCommand(angle: Angle) = Commands.runOnce({ heading = angle })
 
-    val maxChassisSpeeds = ChassisSpeeds(maxLinearVelocity, maxLinearVelocity, maxAngularVelocity)
+    fun zeroHeadingCommand() = Commands.runOnce({ zeroHeading() })
 
 }
