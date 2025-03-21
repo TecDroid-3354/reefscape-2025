@@ -1,5 +1,5 @@
 package net.tecdroid.codegen
 
 @Target(AnnotationTarget.FUNCTION)
-@Retention(AnnotationRetention.BINARY)
-annotation class Commandize()
+@Retention(AnnotationRetention.RUNTIME)
+annotation class Commandize(val x: Int)

@@ -10,7 +10,7 @@ import net.tecdroid.util.RotationalDirection.Clockwise
 import net.tecdroid.util.units.amps
 import net.tecdroid.util.units.rotations
 import net.tecdroid.util.units.seconds
-import net.tecdroid.safety.SubsystemLimits
+import net.tecdroid.safety.MeasureLimits
 
 data class WristConfig(
     val motorControllerId: NumericId,
@@ -22,7 +22,7 @@ data class WristConfig(
     val absoluteEncoderOffset: Angle,
 
     val reduction: Reduction,
-    val limits: SubsystemLimits<AngleUnit>,
+    val measureLimits: MeasureLimits<AngleUnit>,
     val controlGains: ControlGains,
     val motionTargets: AngularMotionTargets,
 )
@@ -38,7 +38,7 @@ val wristConfig = WristConfig(
 
     reduction = Reduction(214.285714),
 
-    limits = SubsystemLimits(
+    measureLimits = MeasureLimits(
         absoluteMinimum = 0.0.rotations,
         relativeMinimum = 0.021.rotations,
         relativeMaximum = 0.3704.rotations,

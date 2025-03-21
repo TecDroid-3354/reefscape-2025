@@ -11,9 +11,7 @@ import edu.wpi.first.units.measure.AngularVelocity
 import edu.wpi.first.units.measure.Voltage
 import edu.wpi.first.util.sendable.SendableBuilder
 import net.tecdroid.subsystems.util.generic.*
-import net.tecdroid.util.units.abs
 import net.tecdroid.wrappers.ThroughBoreAbsoluteEncoder
-import kotlin.math.absoluteValue
 
 class Wrist(private val config: WristConfig) :
     TdSubsystem("Wrist"),
@@ -29,8 +27,8 @@ class Wrist(private val config: WristConfig) :
         inverted = config.absoluteEncoderIsInverted
     )
 
-    override val forwardsRunningCondition  = { angle < config.limits.relativeMaximum }
-    override val backwardsRunningCondition = { angle > config.limits.relativeMinimum }
+    override val forwardsRunningCondition  = { angle < config.measureLimits.relativeMaximum }
+    override val backwardsRunningCondition = { angle > config.measureLimits.relativeMinimum }
 
     init {
         configureMotorInterface()
@@ -45,7 +43,7 @@ class Wrist(private val config: WristConfig) :
     }
 
     override fun setAngle(targetAngle: Angle) {
-        val clampedAngle = config.limits.coerceIn(targetAngle) as Angle
+        val clampedAngle = config.measureLimits.coerceIn(targetAngle) as Angle
         val transformedAngle = config.reduction.unapply(clampedAngle)
         val request = MotionMagicVoltage(transformedAngle).withSlot(0)
 

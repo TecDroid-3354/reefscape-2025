@@ -5,7 +5,7 @@ import edu.wpi.first.units.Units.Inches
 import edu.wpi.first.units.Units.Second
 import edu.wpi.first.units.measure.Current
 import net.tecdroid.mechanical.Reduction
-import net.tecdroid.safety.SubsystemLimits
+import net.tecdroid.safety.MeasureLimits
 import net.tecdroid.util.*
 import net.tecdroid.util.RotationalDirection.Clockwise
 import net.tecdroid.util.geometry.Sprocket
@@ -22,7 +22,7 @@ data class ElevatorConfig(
     val reduction: Reduction,
     val sprocket: Sprocket,
 
-    val limits: SubsystemLimits<DistanceUnit>,
+    val measureLimits: MeasureLimits<DistanceUnit>,
     val controlGains: ControlGains,
     val motionTargets: LinearMotionTargets,
 )
@@ -36,7 +36,7 @@ val elevatorConfig = ElevatorConfig(
     reduction = Reduction(8.9285),
     sprocket = Sprocket.fromRadius(Inches.of(1 + 1.0 / 8.0)),
 
-    limits = SubsystemLimits(
+    measureLimits = MeasureLimits(
         absoluteMinimum = 0.0.meters,
         relativeMinimum = 0.02.meters,
         relativeMaximum = 1.030.meters,

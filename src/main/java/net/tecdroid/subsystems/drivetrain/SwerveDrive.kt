@@ -76,10 +76,10 @@ class SwerveDrive(private val config: SwerveDriveConfig) : SubsystemBase() {
 
     fun driveFieldOriented(chassisSpeeds: ChassisSpeeds) {
         val fieldOrientedSpeeds = ChassisSpeeds.fromFieldRelativeSpeeds(chassisSpeeds, heading.toRotation2d())
-        driveRobotRelative(fieldOrientedSpeeds)
+        driveRobotOriented(fieldOrientedSpeeds)
     }
 
-    fun driveRobotRelative(chassisSpeeds: ChassisSpeeds) {
+    fun driveRobotOriented(chassisSpeeds: ChassisSpeeds) {
         val desiredStates = kinematics.toSwerveModuleStates(chassisSpeeds)
         setModuleTargetStates(*desiredStates)
     }
@@ -126,7 +126,7 @@ class SwerveDrive(private val config: SwerveDriveConfig) : SubsystemBase() {
     // Commands //
 
     fun driveRobotRelativeCommand(chassisSpeeds: ChassisSpeeds) : Command {
-        return Commands.runOnce({ driveRobotRelative(chassisSpeeds) })
+        return Commands.runOnce({ driveRobotOriented(chassisSpeeds) })
     }
 
     fun driveFieldOrientedCommand(chassisSpeeds: ChassisSpeeds) : Command {

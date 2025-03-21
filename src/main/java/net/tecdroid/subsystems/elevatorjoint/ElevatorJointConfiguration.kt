@@ -5,7 +5,7 @@ import edu.wpi.first.units.Units.Second
 import edu.wpi.first.units.measure.Angle
 import edu.wpi.first.units.measure.Current
 import net.tecdroid.mechanical.Reduction
-import net.tecdroid.safety.SubsystemLimits
+import net.tecdroid.safety.MeasureLimits
 import net.tecdroid.util.*
 import net.tecdroid.util.RotationalDirection.Counterclockwise
 import net.tecdroid.util.units.amps
@@ -20,7 +20,7 @@ data class ElevatorJointConfig(
     val motorDirection: RotationalDirection,
     val motorCurrentLimit: Current,
     val reduction: Reduction,
-    val limits: SubsystemLimits<AngleUnit>,
+    val measureLimits: MeasureLimits<AngleUnit>,
     val controlGains: ControlGains,
     val motionTargets: AngularMotionTargets,
     val absoluteEncoderOffset: Angle
@@ -38,7 +38,7 @@ val elevatorJointConfig = ElevatorJointConfig(
 
     reduction = Reduction(360.0),
 
-    limits = SubsystemLimits(
+    measureLimits = MeasureLimits(
         absoluteMinimum = 0.011.rotations,
         relativeMinimum = 0.025.rotations,
         relativeMaximum = 0.26.rotations,
