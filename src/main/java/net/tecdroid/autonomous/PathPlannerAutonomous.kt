@@ -41,8 +41,8 @@ class PathPlannerAutonomous(val drive: SwerveDrive) {
         AutoBuilder.configure(
             drive::pose::get,
             drive::pose::set,
-            drive::currentSpeeds::get,
-            { speeds: ChassisSpeeds, _: DriveFeedforwards -> drive.driveRobotOriented(speeds) },
+            drive::speeds::get,
+            { speeds: ChassisSpeeds, _: DriveFeedforwards -> drive.driveRobotRelative(speeds) },
             driveController,
             robotConfig,
             { DriverStation.getAlliance().orElse(Alliance.Blue) == Alliance.Red },

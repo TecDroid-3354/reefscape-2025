@@ -48,6 +48,9 @@ class SwerveDrive(private val config: SwerveDriveConfig) : SubsystemBase() {
             imu.setYaw(angle)
         }
 
+    val speeds: ChassisSpeeds
+        get() = ChassisSpeedBridge.ktToJavaArrayChassisSpeeds(kinematics, modules.map { it.state })
+
     init {
         this.configureImuInterface()
         matchRelativeEncodersToAbsoluteEncoders()
