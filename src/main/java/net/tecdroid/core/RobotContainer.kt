@@ -51,19 +51,20 @@ class RobotContainer {
     fun teleopInit() {
         swerve.linkReorientationTrigger(controller.start())
 
-        /*swerve.drive.defaultCommand = Commands.run(
+        swerve.drive.defaultCommand = Commands.run(
             { swerve.drive.driveFieldOriented(ChassisSpeeds(vx(), vy(), vw()))},
             swerve.drive
-        )*/
+        )
 
-        controller.a().whileTrue(
-            swerve.drive.driveFieldOrientedCommand(
-                ChassisSpeeds(0.2, 0.0, 0.0)))
+        controller.a().whileTrue(Commands.run(
+            { swerve.drive.driveFieldOriented(ChassisSpeeds(1.0, 0.0, 0.0))},
+            swerve.drive
+        ))
     }
 
     val autonomousCommand: Command
         get() {
-            return pathPlannerAuto.getAuto("90 deg to right")
+            return pathPlannerAuto.getPath("90 deg to right")
             //return pathPlannerAuto.getAuto("Left auto")
         }
 
