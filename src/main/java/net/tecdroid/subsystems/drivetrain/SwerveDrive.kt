@@ -19,8 +19,8 @@ import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard
 import edu.wpi.first.wpilibj2.command.Command
 import edu.wpi.first.wpilibj2.command.Commands
 import edu.wpi.first.wpilibj2.command.SubsystemBase
-import net.tecdroid.util.units.degrees
-import net.tecdroid.util.units.toRotation2d
+import net.tecdroid.util.degrees
+import net.tecdroid.util.toRotation2d
 import kotlin.math.PI
 
 class SwerveDrive(private val config: SwerveDriveConfig) : SubsystemBase() {

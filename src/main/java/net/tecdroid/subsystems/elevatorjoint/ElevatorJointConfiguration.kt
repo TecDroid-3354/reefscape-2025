@@ -8,9 +8,9 @@ import net.tecdroid.mechanical.Reduction
 import net.tecdroid.safety.MeasureLimits
 import net.tecdroid.util.*
 import net.tecdroid.util.RotationalDirection.Counterclockwise
-import net.tecdroid.util.units.amps
-import net.tecdroid.util.units.rotations
-import net.tecdroid.util.units.seconds
+import net.tecdroid.util.amps
+import net.tecdroid.util.rotations
+import net.tecdroid.util.seconds
 
 data class ElevatorJointConfig(
     val leadMotorControllerId: NumericId,

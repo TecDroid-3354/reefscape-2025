@@ -7,9 +7,9 @@ import edu.wpi.first.units.measure.Current
 import net.tecdroid.mechanical.Reduction
 import net.tecdroid.util.*
 import net.tecdroid.util.RotationalDirection.Clockwise
-import net.tecdroid.util.units.amps
-import net.tecdroid.util.units.rotations
-import net.tecdroid.util.units.seconds
+import net.tecdroid.util.amps
+import net.tecdroid.util.rotations
+import net.tecdroid.util.seconds
 import net.tecdroid.safety.MeasureLimits
 
 data class WristConfig(

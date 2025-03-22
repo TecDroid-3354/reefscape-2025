@@ -9,9 +9,9 @@ import net.tecdroid.safety.MeasureLimits
 import net.tecdroid.util.*
 import net.tecdroid.util.RotationalDirection.Clockwise
 import net.tecdroid.util.Sprocket
-import net.tecdroid.util.units.amps
-import net.tecdroid.util.units.meters
-import net.tecdroid.util.units.seconds
+import net.tecdroid.util.amps
+import net.tecdroid.util.meters
+import net.tecdroid.util.seconds
 
 data class ElevatorConfig(
     val leadMotorControllerId: NumericId,

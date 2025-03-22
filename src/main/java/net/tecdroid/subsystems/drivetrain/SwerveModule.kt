@@ -21,9 +21,8 @@ import edu.wpi.first.units.measure.Distance
 import edu.wpi.first.units.measure.LinearVelocity
 import edu.wpi.first.util.sendable.Sendable
 import edu.wpi.first.util.sendable.SendableBuilder
-import net.tecdroid.constants.UnitConstants.halfRotation
-import net.tecdroid.util.units.degrees
-import net.tecdroid.util.units.toRotation2d
+import net.tecdroid.util.degrees
+import net.tecdroid.util.toRotation2d
 
 /**
  * Represents a single module of a [SwerveDrive]
@@ -280,7 +279,7 @@ class SwerveModule(private val config: SwerveModuleConfig) : Sendable {
 
             closedLoop.positionWrappingEnabled(true).positionWrappingInputRange(
                 0.0,
-                config.steerGearRatio.unapply(halfRotation.`in`(Rotations))
+                config.steerGearRatio.unapply(0.5) // Rotations
             ).pidf(
                 config.steerControlGains.p,
                 config.steerControlGains.i,

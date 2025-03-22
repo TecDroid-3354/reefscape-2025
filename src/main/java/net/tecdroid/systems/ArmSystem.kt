@@ -18,9 +18,9 @@ import net.tecdroid.subsystems.intake.IntakeConfig
 import net.tecdroid.subsystems.wrist.Wrist
 import net.tecdroid.subsystems.wrist.WristConfig
 import net.tecdroid.systems.ArmMember.*
-import net.tecdroid.util.units.meters
-import net.tecdroid.util.units.rotations
-import net.tecdroid.util.units.volts
+import net.tecdroid.util.meters
+import net.tecdroid.util.rotations
+import net.tecdroid.util.volts
 
 enum class ArmMember {
     ArmWrist, ArmElevator, ArmJoint

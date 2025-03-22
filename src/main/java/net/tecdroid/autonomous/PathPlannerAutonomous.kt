@@ -13,7 +13,7 @@ import edu.wpi.first.wpilibj.smartdashboard.SendableChooser
 import edu.wpi.first.wpilibj2.command.Command
 import edu.wpi.first.wpilibj2.command.Commands
 import net.tecdroid.subsystems.drivetrain.SwerveDrive
-import net.tecdroid.util.competition.isRedAlliance
+import net.tecdroid.util.MatchStatus
 import java.io.IOException
 
 class PathPlannerAutonomous(val drive: SwerveDrive) {
@@ -42,7 +42,7 @@ class PathPlannerAutonomous(val drive: SwerveDrive) {
             drive::driveRobotOriented,
             driveController,
             robotConfig,
-            ::isRedAlliance,
+            MatchStatus::isRedAlliance::get,
             drive
         )
 

@@ -1,7 +1,7 @@
 package net.tecdroid.subsystems.intake
 
 import edu.wpi.first.units.measure.Current
-import net.tecdroid.util.units.amps
+import net.tecdroid.util.amps
 import net.tecdroid.util.*
 
 data class IntakeConfig(

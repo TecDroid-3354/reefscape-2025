@@ -12,8 +12,8 @@ import net.tecdroid.constants.GenericConstants.driverControllerId
 import net.tecdroid.input.CompliantXboxController
 import net.tecdroid.subsystems.drivetrain.SwerveDrive
 import net.tecdroid.subsystems.drivetrain.swerveDriveConfiguration
-import net.tecdroid.util.units.degrees
-import net.tecdroid.util.units.seconds
+import net.tecdroid.util.degrees
+import net.tecdroid.util.seconds
 
 
 class RobotContainer {
