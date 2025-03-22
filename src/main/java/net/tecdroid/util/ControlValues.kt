@@ -4,7 +4,7 @@ import edu.wpi.first.units.AngularAccelerationUnit
 import edu.wpi.first.units.LinearAccelerationUnit
 import edu.wpi.first.units.Units.*
 import edu.wpi.first.units.measure.*
-import net.tecdroid.util.geometry.Wheel
+import net.tecdroid.util.Circle
 
 data class ControlGains(
     val p: Double = 0.0,
@@ -35,7 +35,7 @@ data class LinearMotionTargets(
     val acceleration: LinearAcceleration = cruiseVelocity.div(accelerationTimePeriod)
     val jerk: Velocity<LinearAccelerationUnit> = acceleration.div(jerkTimePeriod)
 
-    fun angularVelocity(wheel: Wheel) = wheel.linearVelocityToAngularVelocity(cruiseVelocity)
-    fun angularAcceleration(wheel: Wheel) = angularVelocity(wheel).div(accelerationTimePeriod)
-    fun angularJerk(wheel: Wheel) = angularAcceleration(wheel).div(jerkTimePeriod)
+    fun angularVelocity(circle: Circle) = circle.linearVelocityToAngularVelocity(cruiseVelocity)
+    fun angularAcceleration(circle: Circle) = angularVelocity(circle).div(accelerationTimePeriod)
+    fun angularJerk(circle: Circle) = angularAcceleration(circle).div(jerkTimePeriod)
 }

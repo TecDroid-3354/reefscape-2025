@@ -8,7 +8,7 @@ import net.tecdroid.mechanical.Reduction
 import net.tecdroid.util.units.rotations
 import net.tecdroid.util.*
 import net.tecdroid.util.RotationalDirection.*
-import net.tecdroid.util.geometry.Wheel
+import net.tecdroid.util.Circle
 
 data class SwerveModuleConfig(
     val driveMotorProperties: MotorProperties,
@@ -18,7 +18,7 @@ data class SwerveModuleConfig(
     val absoluteEncoderId: NumericId,
     val driveGearRatio: Reduction,
     val steerGearRatio: Reduction,
-    val wheel: Wheel,
+    val circle: Circle,
     val drivePositiveDirection: RotationalDirection,
     val steerPositiveDirection: RotationalDirection,
     val absoluteEncoderMagnetOffset: Angle,
@@ -36,7 +36,7 @@ fun makeConfig(moduleNumber: SymbolidId, magnetOffset: Angle) = SwerveModuleConf
     absoluteEncoderId = moduleNumber * 10 + NumericId(3),
     driveGearRatio =  Reduction(6.12),
     steerGearRatio = Reduction(150.0 / 7.0),
-    wheel =  Wheel.fromRadius(Inches.of(2.0)),
+    circle =  Circle.fromRadius(Inches.of(2.0)),
     drivePositiveDirection = Clockwise,
     steerPositiveDirection = Clockwise,
     absoluteEncoderMagnetOffset = magnetOffset,

@@ -4,8 +4,8 @@ import edu.wpi.first.math.geometry.Translation2d
 import edu.wpi.first.units.Units.Inches
 import edu.wpi.first.units.measure.Distance
 import net.tecdroid.util.*
-import net.tecdroid.util.geometry.Rectangle
-import net.tecdroid.util.geometry.Square
+import net.tecdroid.util.Rectangle
+import net.tecdroid.util.Square
 
 data class SwerveDriveConfig(
     val longestDiagonal: Distance,
