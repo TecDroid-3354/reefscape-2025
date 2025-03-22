@@ -43,7 +43,7 @@ fun makeConfig(moduleNumber: SymbolicId, magnetOffset: Angle) = SwerveModuleConf
     driveCurrentLimit = Amps.of(40.0),
     steerCurrentLimit = Amps.of(30.0),
     driveControlGains = ControlGains(s = 0.132, v = 0.12, a = 0.01),
-    steerControlGains = ControlGains(p = 0.1, d = 0.01)
+    steerControlGains = ControlGains(p = 0.35)
 )
 
 val frontRightModuleConfig= makeConfig(SymbolicId(1), (-0.09130859375).rotations)

@@ -6,7 +6,6 @@ import edu.wpi.first.units.measure.Angle
 import edu.wpi.first.units.measure.Frequency
 import edu.wpi.first.units.measure.Temperature
 import edu.wpi.first.units.measure.Time
-import net.tecdroid.util.units.*
 
 
 object LimelightTableKeys {

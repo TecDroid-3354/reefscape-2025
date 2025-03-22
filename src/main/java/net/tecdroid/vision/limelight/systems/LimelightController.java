@@ -165,6 +165,13 @@ public class LimelightController {
         }, requiredSubsystem).onlyIf(() -> hasTarget(choice));
     }
 
+    public Command alignRobotWithSpecificAprilTag(LimeLightChoice choice, double xSetPoint, double ySetPoint, int aprilTagId) {
+        if (getTargetId(choice) == aprilTagId) {
+            return alignRobotAllAxis(choice, xSetPoint, ySetPoint);
+        }
+        return Commands.none();
+    }
+
     public void shuffleboardData() {
         ShuffleboardTab tab = Shuffleboard.getTab("Limelight");
 

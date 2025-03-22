@@ -1,3 +1,5 @@
+@file:Suppress("unused")
+
 package net.tecdroid.vision.limelight
 
 import edu.wpi.first.math.geometry.*
@@ -11,7 +13,6 @@ import edu.wpi.first.util.sendable.SendableBuilder
 import edu.wpi.first.wpilibj.util.Color
 import frc.robot.LimelightHelpers
 import net.tecdroid.util.*
-import net.tecdroid.util.units.*
 
 data class LimelightConfig(
     val name: String,

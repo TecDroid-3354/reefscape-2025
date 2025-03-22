@@ -3,6 +3,7 @@ package net.tecdroid.core
 import com.pathplanner.lib.commands.PathPlannerAuto
 import edu.wpi.first.math.filter.SlewRateLimiter
 import edu.wpi.first.math.kinematics.ChassisSpeeds
+import edu.wpi.first.units.Units.Degrees
 import edu.wpi.first.units.Units.Hertz
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser
 import edu.wpi.first.wpilibj2.command.Command
@@ -12,14 +13,28 @@ import net.tecdroid.constants.GenericConstants.driverControllerId
 import net.tecdroid.input.CompliantXboxController
 import net.tecdroid.subsystems.drivetrain.SwerveDrive
 import net.tecdroid.subsystems.drivetrain.swerveDriveConfiguration
+import net.tecdroid.subsystems.wrist.wristConfig
+import net.tecdroid.subsystems.elevator.elevatorConfig
+import net.tecdroid.subsystems.elevatorjoint.elevatorJointConfig
+import net.tecdroid.subsystems.intake.intakeConfig
+import net.tecdroid.systems.ArmSystem
+import net.tecdroid.util.LimeLightChoice
 import net.tecdroid.util.degrees
 import net.tecdroid.util.seconds
+import net.tecdroid.vision.limelight.Limelight
+import net.tecdroid.vision.limelight.systems.LimelightController
+import java.util.function.Consumer
 
 
 class RobotContainer {
     private val controller = CompliantXboxController(driverControllerId)
     private val swerve = SwerveDrive(swerveDriveConfiguration)
-    private val pathPlannerAuto = PathPlannerAutonomous(swerve)
+    private val arm = ArmSystem(wristConfig, elevatorConfig, elevatorJointConfig, intakeConfig)
+    private val limelightController = LimelightController(
+        swerve,
+        Consumer { chassisSpeeds -> swerve.driveRobotOriented(chassisSpeeds) },
+        { swerve.heading.`in`(Degrees) })
+    private val pathPlannerAuto = PathPlannerAutonomous(swerve, limelightController, arm)
 
     // Autonomous
     private var autoChooser: SendableChooser<Command>? = null
@@ -40,12 +55,14 @@ class RobotContainer {
     var vw = { swerve.maxAngularVelocity * angularRateLimiter.calculate(controller.rightX * 0.85) }
 
     init {
+        pathPlannerAuto.publishToShuffleboard("Auto")
+        limelightController.shuffleboardData()
         swerve.heading = 0.0.degrees
     }
 
+
     fun autonomousInit() {
         swerve.removeDefaultCommand()
-        pathPlannerAuto.publishToShuffleboard("Auto")
     }
 
     fun teleopInit() {
@@ -57,14 +74,17 @@ class RobotContainer {
         )
 
         controller.a().whileTrue(Commands.run(
-            { swerve.driveFieldOriented(ChassisSpeeds(1.0, 0.0, 0.0))},
+            { swerve.driveFieldOriented(ChassisSpeeds(1.0, 0.0, 0.0)) },
             swerve
         ))
+
+        controller.leftTrigger().whileTrue(limelightController.alignRobotAllAxis(LimeLightChoice.Left, -0.22, -0.56))
+        controller.rightTrigger().whileTrue(limelightController.alignRobotAllAxis(LimeLightChoice.Right, 0.22, -0.56))
     }
 
     val autonomousCommand: Command
         get() {
-            return pathPlannerAuto.getPath("90 deg to right")
+            return pathPlannerAuto.getPath("Straightforward")
             //return pathPlannerAuto.getAuto("Left auto")
         }
 
