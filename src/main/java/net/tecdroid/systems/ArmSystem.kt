@@ -114,7 +114,7 @@ enum class ArmOrders(val order: ArmOrder) {
 }
 
 class ArmSystem(wristConfig: WristConfig, elevatorConfig: ElevatorConfig, elevatorJointConfig: ElevatorJointConfig, intakeConfig: IntakeConfig) : Sendable {
-    private val wrist = Wrist(wristConfig)
+    val wrist = Wrist(wristConfig)
     private val wristSysIdRoutine = wrist.createIdentificationRoutine()
     private val wristTests = wristSysIdRoutine.createTests()
 
@@ -160,20 +160,27 @@ class ArmSystem(wristConfig: WristConfig, elevatorConfig: ElevatorConfig, elevat
 
     override fun initSendable(builder: SendableBuilder) {
         with(builder) {
-            addDoubleProperty("Elevator Error (Rotations)", { elevator.getPositionError().`in`(Rotations) }) {}
-            addDoubleProperty("Joint Error (Rotations)", { joint.getPositionError().`in`(Rotations) }) {}
+            //addDoubleProperty("Elevator Error (Rotations)", { elevator.getPositionError().`in`(Rotations) }) {}
+            //addDoubleProperty("Joint Error (Rotations)", { joint.getPositionError().`in`(Rotations) }) {}
             addDoubleProperty("Wrist Error (Rotations)", { wrist.getPositionError().`in`(Rotations) }) {}
-            addDoubleProperty("Elevator Displacement (Meters)", { elevator.displacement.`in`(Meters) }) {}
-            addDoubleProperty("Joint Position (Rotations)", { joint.angle.`in`(Rotations) }) {}
+            //addDoubleProperty("Elevator Displacement (Meters)", { elevator.displacement.`in`(Meters) }) {}
+            //addDoubleProperty("Joint Position (Rotations)", { joint.angle.`in`(Rotations) }) {}
             addDoubleProperty("Wrist Position (Rotations)", { wrist.angle.`in`(Rotations) }) {}
         }
     }
 
     fun assignCommandsToController(controller: CompliantXboxController) {
-        controller.a().whileTrue(elevatorTests.quasistaticBackward)
-        controller.y().whileTrue(elevatorTests.quasistaticForward)
-        controller.x().whileTrue(elevatorTests.dynamicBackward)
-        controller.b().whileTrue(elevatorTests.dynamicForward)
+
+
+        controller.a().onTrue(
+            setWristAngle(0.1.rotations)
+        )
+        controller.b().onTrue(
+            setWristAngle(0.25.rotations)
+        )
+        controller.x().onTrue(
+            setWristAngle(0.3.rotations)
+        )
     }
 
 }

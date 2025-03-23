@@ -4,6 +4,7 @@ import edu.wpi.first.math.filter.SlewRateLimiter
 import edu.wpi.first.math.kinematics.ChassisSpeeds
 import edu.wpi.first.units.Units.Degrees
 import edu.wpi.first.units.Units.Hertz
+import edu.wpi.first.wpilibj.shuffleboard.Shuffleboard
 import edu.wpi.first.wpilibj2.command.Command
 import edu.wpi.first.wpilibj2.command.Commands
 import net.tecdroid.autonomous.AutoComposer
@@ -15,10 +16,10 @@ import net.tecdroid.subsystems.wrist.wristConfig
 import net.tecdroid.subsystems.elevator.elevatorConfig
 import net.tecdroid.subsystems.elevatorjoint.elevatorJointConfig
 import net.tecdroid.subsystems.intake.intakeConfig
+import net.tecdroid.systems.ArmOrders
+import net.tecdroid.systems.ArmPoses
 import net.tecdroid.systems.ArmSystem
-import net.tecdroid.util.LimeLightChoice
-import net.tecdroid.util.degrees
-import net.tecdroid.util.seconds
+import net.tecdroid.util.*
 import net.tecdroid.vision.limelight.systems.LimelightController
 
 
@@ -51,8 +52,8 @@ class RobotContainer {
     init {
         limelightController.shuffleboardData()
         swerve.heading = 0.0.degrees
+        linkPoses()
     }
-
 
     fun autonomousInit() {
         swerve.removeDefaultCommand()
@@ -72,5 +73,49 @@ class RobotContainer {
 
     val autonomousCommand: Command
         get() = autoComposer.selectedAutonomousRoutine
+
+    private fun linkPoses() {
+        controller.y().onTrue(
+            Commands.sequence(
+                arm.setPoseCommand(
+                    ArmPoses.L4.pose,
+                    ArmOrders.JEW.order
+                )
+            )
+        )
+
+        controller.x().onTrue(
+            Commands.sequence(
+                arm.setPoseCommand(
+                    ArmPoses.CoralStation.pose,
+                    ArmOrders.EJW.order
+                )
+            )
+        )
+
+        controller.a().onTrue(
+            Commands.sequence(
+                arm.setPoseCommand(
+                    ArmPoses.L2.pose,
+                    ArmOrders.JEW.order
+                )
+            )
+        )
+
+        controller.b().onTrue(
+            Commands.sequence(
+                arm.setPoseCommand(
+                    ArmPoses.L3.pose,
+                    ArmOrders.JEW.order
+                )
+            )
+        )
+
+
+
+        controller.rightBumper().onTrue(arm.enableIntake()).onFalse(arm.disableIntake())
+        controller.leftBumper().onTrue(arm.enableOuttake()).onFalse(arm.disableIntake())
+    }
+
 
 }
