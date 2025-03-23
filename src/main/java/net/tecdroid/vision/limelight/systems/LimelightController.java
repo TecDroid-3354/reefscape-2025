@@ -2,7 +2,6 @@ package net.tecdroid.vision.limelight.systems;
 
 import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.geometry.Pose3d;
-import edu.wpi.first.math.geometry.Translation3d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.wpilibj.shuffleboard.Shuffleboard;
 import edu.wpi.first.wpilibj.shuffleboard.ShuffleboardTab;
@@ -13,6 +12,7 @@ import net.tecdroid.constants.StringConstantsKt;
 import net.tecdroid.util.ControlGains;
 import net.tecdroid.util.LimeLightChoice;
 import net.tecdroid.vision.limelight.Limelight;
+import net.tecdroid.vision.limelight.LimelightAprilTagDetector;
 import net.tecdroid.vision.limelight.LimelightConfig;
 
 import java.util.HashMap;
@@ -21,8 +21,8 @@ import java.util.function.Consumer;
 import java.util.function.DoubleSupplier;
 
 public class LimelightController {
-    private final Limelight leftLimelight = new Limelight(new LimelightConfig(StringConstantsKt.leftLimelightName, new Translation3d()));
-    private final Limelight rightLimelight = new Limelight(new LimelightConfig(StringConstantsKt.rightLimelightName, new Translation3d()));
+    private final LimelightAprilTagDetector leftLimelight  = new LimelightAprilTagDetector(new LimelightConfig(StringConstantsKt.leftLimelightName, new Pose3d()));
+    private final LimelightAprilTagDetector rightLimelight = new LimelightAprilTagDetector(new LimelightConfig(StringConstantsKt.rightLimelightName, new Pose3d()));
 
     private final Subsystem requiredSubsystem;
 
@@ -59,28 +59,44 @@ public class LimelightController {
     private void limelightConfiguration() {
         thetaPIDController.enableContinuousInput(0.0, 360.0);
 
-        int[] validIDs = { 21,20,19,18,17,22,10,11,6,7,8,9 };
-        rightLimelight.setIDFilters(validIDs);
-        leftLimelight.setIDFilters(validIDs);
+        Integer[] validIDs = { 21, 20, 19, 18, 17, 22, 10, 11, 6, 7, 8, 9 };
+        rightLimelight.setIdFilter(validIDs);
+        leftLimelight.setIdFilter(validIDs);
 
         // Camera pose according to robot center
-        rightLimelight.setCameraPose(
-                -0.3461,
-                0.1533,
-                0.354,
-                0.0,
-                -15.0,
-                180
-        );
-
-        leftLimelight.setCameraPose(
-                -0.3461,
-                -0.1533,
-                0.354,
-                0.0,
-                -15.0,
-                180
-        );
+//        rightLimelight.setCameraPositionInRobotSpace(
+//                new Pose3d(
+//                        new Translation3d(
+//                                Inches.of(-12.837580),
+//                                Inches.of(-6.03494),
+//                                Inches.of(15.181982)
+//                        ),
+//                        new Rotation3d(
+//                                Degrees.of(0.0),
+//                                Degrees.of(-15.0),
+//                                Degrees.of(180.0)
+//                        )
+//                )
+//        );
+//
+//        leftLimelight.setCameraPositionInRobotSpace(
+//                new Pose3d(
+//                    new Translation3d(
+//                            Inches.of(-12.837580),
+//                            Inches.of(6.03494),
+//                            Inches.of(15.181982)
+//                    ),
+//                    new Rotation3d(
+//                            Degrees.of(0.0),
+//                            Degrees.of(-15.0),
+//                            Degrees.of(180.0)
+//                    )
+//                )
+//        );
+    }
+    private static double clamp(double max, double min, double v)
+    {
+        return Math.max(min, Math.min(max, v));
     }
 
     public LimelightController(Subsystem requiredSubsystem, Consumer<ChassisSpeeds> drive, DoubleSupplier yaw) {
@@ -92,14 +108,14 @@ public class LimelightController {
         limelightConfiguration();
     }
 
-    private Pose3d getRobotPositionInTargetSpace(LimeLightChoice choice) {
-        Limelight limelight = (choice == LimeLightChoice.Right) ? rightLimelight : leftLimelight;
-        return limelight.getRobotPositionInTargetSpace();
+    private Pose3d getTargetPositionInCameraSpace(LimeLightChoice choice) {
+        LimelightAprilTagDetector limelight = (choice == LimeLightChoice.Right) ? rightLimelight : leftLimelight;
+        return limelight.getTargetPositionInCameraSpace();
     }
 
 
     private int getTargetId(LimeLightChoice choice) {
-        Limelight limelight = (choice == LimeLightChoice.Right) ? rightLimelight : leftLimelight;
+        LimelightAprilTagDetector limelight = (choice == LimeLightChoice.Right) ? rightLimelight : leftLimelight;
         return limelight.getTargetId();
     }
 
@@ -119,7 +135,7 @@ public class LimelightController {
 
     public Command alignRobotXAxis(LimeLightChoice choice, double setPoint) {
         return Commands.run(() -> {
-            Pose3d robotPose = getRobotPositionInTargetSpace(choice);
+            Pose3d robotPose = getTargetPositionInCameraSpace(choice);
             double driveXVelocity = xPIDController.calculate(robotPose.getTranslation().getX(), setPoint);
             drive.accept(new ChassisSpeeds(0.0, driveXVelocity, 0.0));
 
@@ -128,7 +144,7 @@ public class LimelightController {
 
     public Command alignRobotYAxis(LimeLightChoice choice, double setPoint) {
         return Commands.run(() -> {
-            Pose3d robotPose = getRobotPositionInTargetSpace(choice);
+            Pose3d robotPose = getTargetPositionInCameraSpace(choice);
             double driveYVelocity = -yPIDController.calculate(robotPose.getTranslation().getZ(), setPoint);
             drive.accept(new ChassisSpeeds(driveYVelocity, 0.0, 0.0));
 
@@ -150,19 +166,23 @@ public class LimelightController {
 
     public Command alignRobotAllAxis(LimeLightChoice choice, double xSetPoint, double ySetPoint) {
         return Commands.run(() -> {
-            Pose3d robotPose = getRobotPositionInTargetSpace(choice);
+            Pose3d robotPose = getTargetPositionInCameraSpace(choice);
             Double yawSetPoint = alignmentAngles.get(getTargetId(choice));
 
-            double driveXVelocity = xPIDController.calculate(robotPose.getTranslation().getX(), xSetPoint);
-            double driveYVelocity = -yPIDController.calculate(robotPose.getTranslation().getZ(), ySetPoint);
+            double driveXVelocity = -clamp(1.0, -1.0, xPIDController.calculate(robotPose.getTranslation().getX(), xSetPoint));
+            double driveYVelocity = clamp(1.0, -1.0, yPIDController.calculate(robotPose.getTranslation().getZ(), ySetPoint));
 
-            if (yawSetPoint != null) {
-                double driveThetaVelocity = thetaPIDController.calculate(getLimitedYaw(), yawSetPoint);
+            if (!hasTarget(choice)) {
+                drive.accept(new ChassisSpeeds(0.0, 0.0, 0.0));
+            } else if (yawSetPoint != null) {
+                double driveThetaVelocity = clamp(1.0, -1.0, thetaPIDController.calculate(getLimitedYaw(), yawSetPoint));
                 drive.accept(new ChassisSpeeds(driveYVelocity, driveXVelocity, driveThetaVelocity));
             } else {
                 drive.accept(new ChassisSpeeds(driveYVelocity, driveXVelocity, 0.0));
             }
-        }, requiredSubsystem).onlyIf(() -> hasTarget(choice));
+
+
+        }, requiredSubsystem);
     }
 
     public Command alignRobotWithSpecificAprilTag(LimeLightChoice choice, double xSetPoint, double ySetPoint, int aprilTagId) {
@@ -175,8 +195,8 @@ public class LimelightController {
     public void shuffleboardData() {
         ShuffleboardTab tab = Shuffleboard.getTab("Limelight");
 
-        tab.addDoubleArray("rPosition", () -> new double[]{getRobotPositionInTargetSpace(LimeLightChoice.Right).getX(), getRobotPositionInTargetSpace(LimeLightChoice.Right).getY(), getRobotPositionInTargetSpace(LimeLightChoice.Right).getZ()});
-        tab.addDoubleArray("lPosition", () -> new double[]{getRobotPositionInTargetSpace(LimeLightChoice.Left).getX(), getRobotPositionInTargetSpace(LimeLightChoice.Left).getY(), getRobotPositionInTargetSpace(LimeLightChoice.Left).getZ()});
+        tab.addDoubleArray("rPosition", () -> new double[]{ getTargetPositionInCameraSpace(LimeLightChoice.Right).getX(), getTargetPositionInCameraSpace(LimeLightChoice.Right).getY(), getTargetPositionInCameraSpace(LimeLightChoice.Right).getZ()});
+        tab.addDoubleArray("lPosition", () -> new double[]{ getTargetPositionInCameraSpace(LimeLightChoice.Left).getX(), getTargetPositionInCameraSpace(LimeLightChoice.Left).getY(), getTargetPositionInCameraSpace(LimeLightChoice.Left).getZ()});
         tab.addDouble("RobotYaw", this::getLimitedYaw);
         tab.addInteger("Yaw Objective", rightLimelight::getTargetId);
     }

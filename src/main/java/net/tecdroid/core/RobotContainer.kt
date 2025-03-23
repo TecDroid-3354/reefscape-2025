@@ -8,6 +8,7 @@ import edu.wpi.first.units.Units.Hertz
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser
 import edu.wpi.first.wpilibj2.command.Command
 import edu.wpi.first.wpilibj2.command.Commands
+import net.tecdroid.autonomous.AutoComposer
 import net.tecdroid.autonomous.PathPlannerAutonomous
 import net.tecdroid.constants.GenericConstants.driverControllerId
 import net.tecdroid.input.CompliantXboxController
@@ -32,9 +33,10 @@ class RobotContainer {
     private val arm = ArmSystem(wristConfig, elevatorConfig, elevatorJointConfig, intakeConfig)
     private val limelightController = LimelightController(
         swerve,
-        Consumer { chassisSpeeds -> swerve.driveRobotOriented(chassisSpeeds) },
-        { swerve.heading.`in`(Degrees) })
-    private val pathPlannerAuto = PathPlannerAutonomous(swerve, limelightController, arm)
+        { chassisSpeeds -> swerve.driveRobotOriented(chassisSpeeds) },
+        { swerve.heading.`in`(Degrees) }
+    )
+    private val autoComposer = AutoComposer(swerve, limelightController, arm)
 
     // Autonomous
     private var autoChooser: SendableChooser<Command>? = null
@@ -55,7 +57,6 @@ class RobotContainer {
     var vw = { swerve.maxAngularVelocity * angularRateLimiter.calculate(controller.rightX * 0.85) }
 
     init {
-        pathPlannerAuto.publishToShuffleboard("Auto")
         limelightController.shuffleboardData()
         swerve.heading = 0.0.degrees
     }
@@ -78,14 +79,11 @@ class RobotContainer {
             swerve
         ))
 
-        controller.leftTrigger().whileTrue(limelightController.alignRobotAllAxis(LimeLightChoice.Left, -0.22, -0.56))
-        controller.rightTrigger().whileTrue(limelightController.alignRobotAllAxis(LimeLightChoice.Right, 0.22, -0.56))
+        controller.leftTrigger().whileTrue(limelightController.alignRobotAllAxis(LimeLightChoice.Left, -0.22, 0.0))
+        controller.rightTrigger().whileTrue(limelightController.alignRobotAllAxis(LimeLightChoice.Right, 0.22, 0.0))
     }
 
     val autonomousCommand: Command
-        get() {
-            return pathPlannerAuto.getPath("Straightforward")
-            //return pathPlannerAuto.getAuto("Left auto")
-        }
+        get() = autoComposer.selectedAutonomousRoutine
 
 }

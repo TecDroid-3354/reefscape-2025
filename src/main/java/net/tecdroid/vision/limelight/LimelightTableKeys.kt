@@ -1,12 +1,5 @@
 package net.tecdroid.vision.limelight
 
-import edu.wpi.first.math.geometry.Pose2d
-import edu.wpi.first.math.geometry.Pose3d
-import edu.wpi.first.units.measure.Angle
-import edu.wpi.first.units.measure.Frequency
-import edu.wpi.first.units.measure.Temperature
-import edu.wpi.first.units.measure.Time
-
 
 object LimelightTableKeys {
 
@@ -15,8 +8,6 @@ object LimelightTableKeys {
         const val targetId = "tid"
         const val horizontalOffsetDegrees = "tx"
         const val verticalOffsetDegrees = "ty"
-        const val horizontalOffsetPixels = "txnc"
-        const val verticalOffsetPixels = "tync"
         const val targetAreaOccupancyPercentage = "ta"
         const val targetingDataR2 = "t2d"
         const val pipelineLatency = "tl"
@@ -45,32 +36,14 @@ object LimelightTableKeys {
         const val cameraPositionInRobotSpace = "camerapose_robotspace"
 
         object Raw {
+            const val horizontalOffsetPixels = "txnc"
+            const val verticalOffsetPixels = "tync"
             const val cornerData = "tcornxy"
             const val targetData = "rawtargets"
             const val fiducialData = "rawfiducials"
             const val detectionData = "rawdetections"
             const val barcodeData = "rawbarcodes"
         }
-    }
-
-    object T2dIndices {
-        val targetValid = 0
-        val targetCount = 1
-        val targetLatency = 2
-        val captureLatency = 3
-        val tx = 4
-        val ty = 5
-        val txnc = 6
-        val tync = 7
-        val ta = 8
-        val tid = 9
-        val targetClassIndexDetector = 10
-        val targetClassIndexClassifier = 11
-        val targetLongSidePixels = 12
-        val targetShortSidePixels = 13
-        val targetHorizontalExtentPixels = 14
-        val targetVerticalExtentPixels = 15
-        val targetSkewDegrees = 16
     }
 
     object Set {
@@ -88,4 +61,92 @@ object LimelightTableKeys {
         const val imuAssistAlpha = "imuassistalpha_set"
     }
 
+}
+
+object LimelightIndices {
+    object T2d {
+        const val targetValid = 0
+        const val targetCount = 1
+        const val targetLatency = 2
+        const val captureLatency = 3
+        const val tx = 4
+        const val ty = 5
+        const val txnc = 6
+        const val tync = 7
+        const val ta = 8
+        const val tid = 9
+        const val targetClassIndexDetector = 10
+        const val targetClassIndexClassifier = 11
+        const val targetLongSidePixels = 12
+        const val targetShortSidePixels = 13
+        const val targetHorizontalExtentPixels = 14
+        const val targetVerticalExtentPixels = 15
+        const val targetSkewDegrees = 16
+    }
+
+    object T3d {
+        const val x = 0
+        const val y = 1
+        const val z = 2
+        const val roll = 3
+        const val pitch = 4
+        const val yaw = 5
+        const val latency = 6
+        const val tagCount = 7
+        const val tagSpan = 8
+        const val averageTagDistanceFromCamera = 9
+        const val averageTagCoverage = 10
+    }
+
+    object Tc {
+        const val hue = 0
+        const val saturation = 1
+        const val value = 2
+    }
+
+    object TCornXY {
+        const val entriesPerCorner = 4
+        const val x0 = 0
+        const val y0 = 1
+        const val x1 = 2
+        const val y1 = 3
+        const val x2 = 4
+        const val y2 = 5
+        const val x3 = 6
+        const val y3 = 7
+    }
+
+    object RawTargets {
+        const val entriesPerDetection = 3
+        const val txnc = 0
+        const val tync = 1
+        const val ta = 2
+    }
+
+    object RawFiducials {
+        const val entriesPerDetection = 7
+        const val id = 0
+        const val txnc = 1
+        const val tync = 2
+        const val ta = 3
+        const val distToCamera = 4
+        const val distToRobot = 5
+        const val ambiguity = 6
+    }
+
+    object RawDetections {
+        const val entriesPerDetection = 12
+        const val id = 0
+        const val txnc = 1
+        const val tync = 2
+        const val ta = 3
+        const val x0 = 4
+        const val y0 = 5
+        const val x1 = 6
+        const val y1 = 7
+        const val x2 = 8
+        const val y2 = 9
+        const val x3 = 10
+        const val y3 = 11
+    }
 }
