@@ -45,10 +45,10 @@ val elevatorConfig = ElevatorConfig(
 
     controlGains = ControlGains(
         p = 0.2,
-        s = 0.079404,
-        v = 0.1174,
-        a = 0.0020923,
-        g = 0.23015
+        s = 0.11181,
+        v = 0.11468,
+        a = 0.0028093,
+        g = 0.23924
     ),
 
     motionTargets = LinearMotionTargets(

@@ -48,10 +48,10 @@ val wristConfig = WristConfig(
 
     controlGains = ControlGains(
         p = 0.1,
-        s = 0.1191,
-        v = 0.11037,
-        a = 0.0019686,
-        g = 0.0012195
+        s = 0.11467,
+        v = 0.11121,
+        a = 0.0019705,
+        g = 0.0039384
     ),
 
     motionTargets = AngularMotionTargets(

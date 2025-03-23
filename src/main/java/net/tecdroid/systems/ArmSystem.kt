@@ -170,10 +170,10 @@ class ArmSystem(wristConfig: WristConfig, elevatorConfig: ElevatorConfig, elevat
     }
 
     fun assignCommandsToController(controller: CompliantXboxController) {
-        controller.a().whileTrue(wristTests.quasistaticBackward)
-        controller.y().whileTrue(wristTests.quasistaticForward)
-        controller.x().whileTrue(wristTests.dynamicBackward)
-        controller.b().whileTrue(wristTests.dynamicForward)
+        controller.a().whileTrue(elevatorTests.quasistaticBackward)
+        controller.y().whileTrue(elevatorTests.quasistaticForward)
+        controller.x().whileTrue(elevatorTests.dynamicBackward)
+        controller.b().whileTrue(elevatorTests.dynamicForward)
     }
 
 }

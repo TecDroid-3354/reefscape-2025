@@ -80,7 +80,8 @@ class AutoComposer(private val drive: SwerveDrive, private val limelightControll
             // TODO IMPORTANT: then we can add them in a parallel command
             //armSystem.setPoseCommand(ArmPoses.L2.pose, ArmOrders.EJW.order),
             //pathplanner.getPathFollowingCommand(startingPath)
-            pathplanner.resetPoseAndGetPathFollowingCommand("C2-Left-reefToCoralStation"),
+            pathplanner.getPathFollowingCommand("C2-Left-reefToCoralStation"),
+            //pathplanner.resetPoseAndGetPathFollowingCommand("C2-Left-reefToCoralStation"),
 
             //pathplanner.resetPoseAndGetPathFollowingCommand("C2-Left-reefToCoralStation"),
 

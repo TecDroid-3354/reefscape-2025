@@ -1,15 +1,12 @@
 package net.tecdroid.core
 
-import com.pathplanner.lib.commands.PathPlannerAuto
 import edu.wpi.first.math.filter.SlewRateLimiter
 import edu.wpi.first.math.kinematics.ChassisSpeeds
 import edu.wpi.first.units.Units.Degrees
 import edu.wpi.first.units.Units.Hertz
-import edu.wpi.first.wpilibj.smartdashboard.SendableChooser
 import edu.wpi.first.wpilibj2.command.Command
 import edu.wpi.first.wpilibj2.command.Commands
 import net.tecdroid.autonomous.AutoComposer
-import net.tecdroid.autonomous.PathPlannerAutonomous
 import net.tecdroid.constants.GenericConstants.driverControllerId
 import net.tecdroid.input.CompliantXboxController
 import net.tecdroid.subsystems.drivetrain.SwerveDrive
@@ -22,9 +19,7 @@ import net.tecdroid.systems.ArmSystem
 import net.tecdroid.util.LimeLightChoice
 import net.tecdroid.util.degrees
 import net.tecdroid.util.seconds
-import net.tecdroid.vision.limelight.Limelight
 import net.tecdroid.vision.limelight.systems.LimelightController
-import java.util.function.Consumer
 
 
 class RobotContainer {
@@ -56,7 +51,6 @@ class RobotContainer {
     init {
         limelightController.shuffleboardData()
         swerve.heading = 0.0.degrees
-        arm.assignCommandsToController(controller)
     }
 
 
@@ -68,14 +62,9 @@ class RobotContainer {
         controller.start().onTrue(swerve.zeroHeadingCommand())
 
         swerve.defaultCommand = Commands.run(
-            { swerve.driveFieldOriented(ChassisSpeeds(vx(), vy(), vw()))},
+            { swerve.driveFieldOriented(ChassisSpeeds(vx(), vy(), vw())) },
             swerve
         )
-
-        controller.a().whileTrue(Commands.run(
-            { swerve.driveFieldOriented(ChassisSpeeds(1.0, 0.0, 0.0)) },
-            swerve
-        ))
 
         controller.rightTrigger().whileTrue(limelightController.alignRobotAllAxis(LimeLightChoice.Right, 0.22, 0.0))
         controller.leftTrigger().whileTrue(limelightController.alignRobotAllAxis(LimeLightChoice.Left, 0.22, 0.0))

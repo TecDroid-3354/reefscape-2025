@@ -47,10 +47,10 @@ val elevatorJointConfig = ElevatorJointConfig(
 
     controlGains = ControlGains(
         p = 0.8,
-        s = 0.14604, // 0.11123,
-        v = 0.11017, // 0.11406,
-        a = 0.0035221, // 0.0018075,
-        g = 0.011399, // 0.0064604
+        s = 0.16263, // 0.14604,
+        v = 0.11085, // 0.11017,
+        a = 0.002245, // 0.0035221,
+        g = 0.01139, // 0.011399
     ),
 
     motionTargets = AngularMotionTargets(
