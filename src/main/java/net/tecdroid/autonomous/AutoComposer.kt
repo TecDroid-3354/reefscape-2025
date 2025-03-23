@@ -11,8 +11,9 @@ import net.tecdroid.systems.ArmOrders
 import net.tecdroid.systems.ArmPoses
 import net.tecdroid.systems.ArmSystem
 import net.tecdroid.util.LimeLightChoice
+import net.tecdroid.util.seconds
+import net.tecdroid.util.volts
 import net.tecdroid.vision.limelight.systems.LimelightController
-import kotlin.time.Duration.Companion.seconds
 
 class AutoComposer(private val drive: SwerveDrive, private val limelightController: LimelightController, private val armSystem: ArmSystem) {
     private val pathplanner = PathPlannerAutonomous(drive)
@@ -52,16 +53,22 @@ class AutoComposer(private val drive: SwerveDrive, private val limelightControll
     private fun c1BargeToReef(): Command {
         // ! From starting line to reef (leaving pre-charged coral)
         return Commands.sequence(
-            pathplanner.resetPoseAndGetPathFollowingCommand("C1-Left-bargeToReef"),
-
+            pathplanner.resetPoseAndGetPathFollowingCommand("C1-Left-bargeToReef").withTimeout(4.0),
 
             // Poner lógica de la limelight
-            // limelightController.alignRobotWithSpecificAprilTag(LimeLightChoice.Right, 0.22, -0.56, 9)
+//            limelightController.alignRobotAuto(LimeLightChoice.Right, 0.22, 0.0),
+            limelightController.alignRobotAllAxis(LimeLightChoice.Right, 0.22, 0.0).withTimeout(3.5),
 
             // ✅ Poner lógica del arm
-            // armSystem.setPoseCommand(ArmPoses.L4.pose, ArmOrders.JEW.order),
+            armSystem.setPoseCommand(ArmPoses.L4.pose, ArmOrders.JEW.order),
+
+            Commands.waitTime(0.75.seconds),
+
             // ✅ Poner lógica del outtake
-            // armSystem.enableIntake().until { !armSystem.intake.hasCoral() }.andThen(armSystem.disableIntake())
+            armSystem.enableIntake(),
+            Commands.waitTime(1.0.seconds),
+            armSystem.disableIntake(),
+
         )
     }
     private fun c2ReefToCoralStation(): Command {

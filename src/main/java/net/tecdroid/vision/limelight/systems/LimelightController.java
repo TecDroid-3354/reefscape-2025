@@ -3,6 +3,8 @@ package net.tecdroid.vision.limelight.systems;
 import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
+import edu.wpi.first.units.measure.AngularVelocity;
+import edu.wpi.first.units.measure.LinearVelocity;
 import edu.wpi.first.wpilibj.shuffleboard.Shuffleboard;
 import edu.wpi.first.wpilibj.shuffleboard.ShuffleboardTab;
 import edu.wpi.first.wpilibj2.command.Command;
@@ -20,25 +22,33 @@ import java.util.Map;
 import java.util.function.Consumer;
 import java.util.function.DoubleSupplier;
 
+import static edu.wpi.first.units.Units.DegreesPerSecond;
+import static edu.wpi.first.units.Units.MetersPerSecond;
+
 public class LimelightController {
     private final LimelightAprilTagDetector leftLimelight  = new LimelightAprilTagDetector(new LimelightConfig(StringConstantsKt.leftLimelightName, new Pose3d()));
     private final LimelightAprilTagDetector rightLimelight = new LimelightAprilTagDetector(new LimelightConfig(StringConstantsKt.rightLimelightName, new Pose3d()));
 
     private final Subsystem requiredSubsystem;
 
-    private final ControlGains xGains = new ControlGains(1.8, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0);
-    private final ControlGains yGains = new ControlGains(1.8, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0);
-    private final ControlGains thetaGains = new ControlGains(0.08, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0);
+    private final ControlGains xGains = new ControlGains(0.4, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0);
+    private final ControlGains yGains = new ControlGains(0.4, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0);
+    private final ControlGains thetaGains = new ControlGains(0.0075, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0);
 
-    private final PIDController xPIDController = new PIDController(xGains.getP(), xGains.getI(), xGains.getD());
-    private final PIDController yPIDController = new PIDController(yGains.getP(), yGains.getI(), yGains.getD());
-    private final PIDController thetaPIDController = new PIDController(thetaGains.getP(), thetaGains.getI(), thetaGains.getD());
+    private final PIDController rightXPIDController = new PIDController(xGains.getP(), xGains.getI(), xGains.getD());
+    private final PIDController rightYPIDController = new PIDController(yGains.getP(), yGains.getI(), yGains.getD());
+    private final PIDController rightThetaPIDController = new PIDController(thetaGains.getP(), thetaGains.getI(), thetaGains.getD());
+
+    private final PIDController leftXPIDController = new PIDController(xGains.getP(), xGains.getI(), xGains.getD());
+    private final PIDController leftYPIDController = new PIDController(yGains.getP(), yGains.getI(), yGains.getD());
+    private final PIDController leftThetaPIDController = new PIDController(thetaGains.getP(), thetaGains.getI(), thetaGains.getD());
 
     private final Map<Integer, Double> alignmentAngles = new HashMap<>();
     private final Consumer<ChassisSpeeds> drive;
     private final DoubleSupplier yaw;
 
-    private final double positionTolerance = 0.2;
+    private final double positionTolerance = 0.005;
+    private final ChassisSpeeds maxSpeeds;
 
     private void angleDictionaryValues() {
         // Blue
@@ -59,7 +69,8 @@ public class LimelightController {
     }
 
     private void limelightConfiguration() {
-        thetaPIDController.enableContinuousInput(0.0, 360.0);
+        leftThetaPIDController.enableContinuousInput(0.0, 360.0);
+        rightThetaPIDController.enableContinuousInput(0.0, 360.0);
 
         Integer[] validIDs = { 21, 20, 19, 18, 17, 22, 10, 11, 6, 7, 8, 9 };
         rightLimelight.setIdFilter(validIDs);
@@ -72,10 +83,11 @@ public class LimelightController {
         return Math.max(min, Math.min(max, v));
     }
 
-    public LimelightController(Subsystem requiredSubsystem, Consumer<ChassisSpeeds> drive, DoubleSupplier yaw) {
+    public LimelightController(Subsystem requiredSubsystem, Consumer<ChassisSpeeds> drive, DoubleSupplier yaw, ChassisSpeeds maxSpeeds) {
         this.requiredSubsystem = requiredSubsystem;
         this.drive = drive;
         this.yaw = yaw;
+        this.maxSpeeds = maxSpeeds;
 
         angleDictionaryValues();
         limelightConfiguration();
@@ -83,6 +95,7 @@ public class LimelightController {
 
     private boolean isAtSetPoint(LimeLightChoice choice, double xSetPoint, double ySetPoint) {
         Pose3d robotPose = getTargetPositionInCameraSpace(choice);
+
         double xDisplacement = Math.abs(xSetPoint - robotPose.getTranslation().getZ());
         double yDisplacement = Math.abs(ySetPoint - robotPose.getTranslation().getX());
 
@@ -94,10 +107,21 @@ public class LimelightController {
         return limelight.getTargetPositionInCameraSpace();
     }
 
-
     private int getTargetId(LimeLightChoice choice) {
         LimelightAprilTagDetector limelight = (choice == LimeLightChoice.Right) ? rightLimelight : leftLimelight;
         return limelight.getTargetId();
+    }
+
+    private PIDController getXPIDController(LimeLightChoice choice) {
+        return (choice == LimeLightChoice.Right) ? rightXPIDController : leftXPIDController;
+    }
+
+    private PIDController getYPIDController(LimeLightChoice choice) {
+        return (choice == LimeLightChoice.Right) ? rightYPIDController : leftYPIDController;
+    }
+
+    private PIDController getThetaPIDController(LimeLightChoice choice) {
+        return (choice == LimeLightChoice.Right) ? rightThetaPIDController : leftThetaPIDController;
     }
 
     private boolean hasTarget(LimeLightChoice choice) {
@@ -117,6 +141,7 @@ public class LimelightController {
     public Command alignRobotXAxis(LimeLightChoice choice, double setPoint) {
         return Commands.run(() -> {
             Pose3d robotPose = getTargetPositionInCameraSpace(choice);
+            PIDController xPIDController = getXPIDController(choice);
             double driveXVelocity = xPIDController.calculate(robotPose.getTranslation().getZ(), setPoint);
             drive.accept(new ChassisSpeeds(driveXVelocity, 0.0, 0.0));
 
@@ -126,6 +151,7 @@ public class LimelightController {
     public Command alignRobotYAxis(LimeLightChoice choice, double setPoint) {
         return Commands.run(() -> {
             Pose3d robotPose = getTargetPositionInCameraSpace(choice);
+            PIDController yPIDController = getYPIDController(choice);
             double driveYVelocity = -yPIDController.calculate(robotPose.getTranslation().getX(), setPoint);
             drive.accept(new ChassisSpeeds(0.0, driveYVelocity, 0.0));
 
@@ -135,6 +161,7 @@ public class LimelightController {
     public Command alignRobotThetaAxis(LimeLightChoice choice) {
         return Commands.run(() -> {
             Double yawSetPoint = alignmentAngles.get(getTargetId(choice));
+            PIDController thetaPIDController = getThetaPIDController(choice);
 
             if (yawSetPoint != null) {
                 double driveThetaVelocity = thetaPIDController.calculate(getLimitedYaw(), yawSetPoint);
@@ -147,21 +174,28 @@ public class LimelightController {
 
     public Command alignRobotAllAxis(LimeLightChoice choice, double xSetPoint, double ySetPoint) {
         return Commands.run(() -> {
-            Pose3d robotPose = getTargetPositionInCameraSpace(choice);
-            Double yawSetPoint = alignmentAngles.get(getTargetId(choice));
+            int id = getTargetId(choice);
 
-            double driveXVelocity = clamp(1.0, -1.0, xPIDController.calculate(robotPose.getTranslation().getZ(), xSetPoint));
-            double driveYVelocity = -clamp(1.0, -1.0, yPIDController.calculate(robotPose.getTranslation().getX(), ySetPoint));
-
-            if (!hasTarget(choice)) {
+            if (!hasTarget(choice) || !alignmentAngles.containsKey(id) || isAtSetPoint(choice, xSetPoint, ySetPoint)) {
                 drive.accept(new ChassisSpeeds(0.0, 0.0, 0.0));
-            } else if (yawSetPoint != null) {
-                double driveThetaVelocity = clamp(1.0, -1.0, thetaPIDController.calculate(getLimitedYaw(), yawSetPoint));
-                drive.accept(new ChassisSpeeds(driveXVelocity, driveYVelocity, driveThetaVelocity));
-            } else {
-                drive.accept(new ChassisSpeeds(driveXVelocity, driveYVelocity, 0.0));
+                return;
             }
 
+            Pose3d robotPose = getTargetPositionInCameraSpace(choice);
+            PIDController xPIDController = getXPIDController(choice);
+            PIDController yPIDController = getYPIDController(choice);
+            PIDController thetaPIDController = getThetaPIDController(choice);
+            double targetAngleDegrees = alignmentAngles.get(id);
+
+            double xFactor = clamp(1.0, -1.0, xPIDController.calculate(robotPose.getTranslation().getZ(), xSetPoint));
+            double yFactor = -clamp(1.0, -1.0, yPIDController.calculate(robotPose.getTranslation().getX(), ySetPoint));
+            double wFactor = clamp(1.0, -1.0, thetaPIDController.calculate(getLimitedYaw(), targetAngleDegrees));
+
+            LinearVelocity xVelocity = MetersPerSecond.of(maxSpeeds.vxMetersPerSecond * xFactor);
+            LinearVelocity yVelocity = MetersPerSecond.of(maxSpeeds.vyMetersPerSecond * yFactor);
+            AngularVelocity wVelocity = DegreesPerSecond.of(Math.toDegrees(maxSpeeds.omegaRadiansPerSecond) * wFactor);
+
+            drive.accept(new ChassisSpeeds(xVelocity, yVelocity, wVelocity));
 
         }, requiredSubsystem);
     }
@@ -170,9 +204,9 @@ public class LimelightController {
         return alignRobotAllAxis(choice, xSetPoint, ySetPoint).onlyIf(() -> getTargetId(choice) == aprilTagId);
     }
 
-    public Command alignRobotAuto(LimeLightChoice choice, double xSetPoint, double ySetPoint, int aprilTagId, long waitMillis) throws InterruptedException {
-        Command alignRobotWithAprilTagChoice = alignRobotWithAprilTagChoice(choice, xSetPoint, ySetPoint, aprilTagId);
-        alignRobotWithAprilTagChoice.until(() -> isAtSetPoint(choice, xSetPoint, ySetPoint)).wait(waitMillis);
+    public Command alignRobotAuto(LimeLightChoice choice, double xSetPoint, double ySetPoint) throws InterruptedException {
+        Command alignRobotWithAprilTagChoice = alignRobotAllAxis(choice, xSetPoint, ySetPoint);
+        alignRobotWithAprilTagChoice.until(() -> isAtSetPoint(choice, xSetPoint, ySetPoint));
         return alignRobotWithAprilTagChoice;
     }
 

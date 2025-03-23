@@ -1,14 +1,18 @@
+@file:Suppress("MemberVisibilityCanBePrivate", "unused")
+
 package net.tecdroid.subsystems.drivetrain
 
 import com.ctre.phoenix6.configs.Pigeon2Configuration
 import com.ctre.phoenix6.hardware.Pigeon2
 import edu.wpi.first.math.VecBuilder
+import edu.wpi.first.math.Vector
 import edu.wpi.first.math.estimator.SwerveDrivePoseEstimator
 import edu.wpi.first.math.geometry.Pose2d
 import edu.wpi.first.math.kinematics.ChassisSpeeds
 import edu.wpi.first.math.kinematics.SwerveDriveKinematics
 import edu.wpi.first.math.kinematics.SwerveModulePosition
 import edu.wpi.first.math.kinematics.SwerveModuleState
+import edu.wpi.first.math.numbers.N3
 import edu.wpi.first.math.util.Units
 import edu.wpi.first.units.Units.*
 import edu.wpi.first.units.measure.Angle
@@ -25,11 +29,11 @@ import kotlin.math.PI
 
 class SwerveDrive(private val config: SwerveDriveConfig) : SubsystemBase() {
     val imu = Pigeon2(config.imuId.id)
-    private val modules = config.moduleConfigs.map { SwerveModule(it.first) }
-    private val kinematics = SwerveDriveKinematics(*config.moduleConfigs.map { it.second }.toTypedArray())
+    val modules = config.moduleConfigs.map { SwerveModule(it.first) }
+    val kinematics = SwerveDriveKinematics(*config.moduleConfigs.map { it.second }.toTypedArray())
 
-    private val stateStdDevs = VecBuilder.fill(0.005, 0.005, Units.degreesToRadians(2.0))
-    private val visionStdDevs = VecBuilder.fill(0.005, 0.005, Units.degreesToRadians(2.0))
+    val stateStdDevs: Vector<N3> = VecBuilder.fill(0.005, 0.005, Units.degreesToRadians(2.0))
+    val visionStdDevs: Vector<N3> = VecBuilder.fill(0.005, 0.005, Units.degreesToRadians(2.0))
 
     val poseEstimator = SwerveDrivePoseEstimator(
         kinematics, heading.toRotation2d(), modulePositions.toTypedArray(), Pose2d(),
@@ -75,14 +79,18 @@ class SwerveDrive(private val config: SwerveDriveConfig) : SubsystemBase() {
 
     // Drive //
 
+    fun driveRobotOriented(chassisSpeeds: ChassisSpeeds) {
+        val desiredStates = kinematics.toSwerveModuleStates(chassisSpeeds)
+        setModuleTargetStates(*desiredStates)
+    }
+
     fun driveFieldOriented(chassisSpeeds: ChassisSpeeds) {
         val fieldOrientedSpeeds = ChassisSpeeds.fromFieldRelativeSpeeds(chassisSpeeds, heading.toRotation2d())
         driveRobotOriented(fieldOrientedSpeeds)
     }
 
-    fun driveRobotOriented(chassisSpeeds: ChassisSpeeds) {
-        val desiredStates = kinematics.toSwerveModuleStates(chassisSpeeds)
-        setModuleTargetStates(*desiredStates)
+    fun stop() {
+        driveRobotOriented(ChassisSpeeds(0.0, 0.0, 0.0))
     }
 
     // Utilities //
@@ -127,15 +135,17 @@ class SwerveDrive(private val config: SwerveDriveConfig) : SubsystemBase() {
     // Commands //
 
     fun driveRobotRelativeCommand(chassisSpeeds: ChassisSpeeds) : Command {
-        return Commands.runOnce({ driveRobotOriented(chassisSpeeds) })
+        return Commands.runOnce({ driveRobotOriented(chassisSpeeds) }, this)
     }
 
     fun driveFieldOrientedCommand(chassisSpeeds: ChassisSpeeds) : Command {
-        return Commands.runOnce({ driveFieldOriented(chassisSpeeds) })
+        return Commands.runOnce({ driveFieldOriented(chassisSpeeds) }, this)
     }
 
-    fun setHeadingCommand(angle: Angle) = Commands.runOnce({ heading = angle })
+    fun stopCommand(): Command = Commands.runOnce({ stop() }, this)
 
-    fun zeroHeadingCommand() = Commands.runOnce({ zeroHeading() })
+    fun setHeadingCommand(angle: Angle) = Commands.runOnce({ heading = angle }, this)
+
+    fun zeroHeadingCommand() = Commands.runOnce({ zeroHeading() }, this)
 
 }

@@ -1,3 +1,5 @@
+@file:Suppress("MemberVisibilityCanBePrivate")
+
 package net.tecdroid.systems
 
 import edu.wpi.first.units.Units.*
@@ -41,9 +43,9 @@ data class ArmOrder(
 
 enum class ArmPoses(val pose: ArmPose) {
     Passive(ArmPose(
-        wristPosition         = 0.34.rotations,
+        wristPosition         = 0.17.rotations,
         elevatorDisplacement  = 0.01.meters,
-        elevatorJointPosition = 0.05.rotations,
+        elevatorJointPosition = 0.26.rotations,
         targetVoltage = 0.0.volts
     )),
 
@@ -114,19 +116,11 @@ enum class ArmOrders(val order: ArmOrder) {
 }
 
 class ArmSystem(wristConfig: WristConfig, elevatorConfig: ElevatorConfig, elevatorJointConfig: ElevatorJointConfig, intakeConfig: IntakeConfig) : Sendable {
-    private val wrist = Wrist(wristConfig)
-    private val wristSysIdRoutine = wrist.createIdentificationRoutine()
-    private val wristTests = wristSysIdRoutine.createTests()
+    val wrist = Wrist(wristConfig)
+    val elevator = Elevator(elevatorConfig)
+    val joint = ElevatorJoint(elevatorJointConfig)
+    val intake = Intake(intakeConfig)
 
-    private val elevator = Elevator(elevatorConfig)
-    private val elevatorSysIdRoutine = elevator.createIdentificationRoutine()
-    private val elevatorTests = elevatorSysIdRoutine.createTests()
-
-    private val joint = ElevatorJoint(elevatorJointConfig)
-    private val jointSysIdRoutine = joint.createIdentificationRoutine()
-    private val jointTests = jointSysIdRoutine.createTests()
-
-    private val intake = Intake(intakeConfig)
     private var targetVoltage = 0.0.volts
 
     init {
@@ -143,9 +137,9 @@ class ArmSystem(wristConfig: WristConfig, elevatorConfig: ElevatorConfig, elevat
     fun disableIntake() : Command = intake.setVoltageCommand(0.0.volts)
 
     private fun getCommandFor(pose: ArmPose, member: ArmMember) : Command = when (member) {
-        ArmWrist -> wrist.setAngleCommand(pose.wristPosition).andThen(Commands.waitUntil { wrist.getPositionError() < 3.0.rotations })
-        ArmElevator -> elevator.setDisplacementCommand(pose.elevatorDisplacement).andThen(Commands.waitUntil { elevator.getPositionError() < 3.0.rotations })
-        ArmJoint -> joint.setAngleCommand(pose.elevatorJointPosition).andThen(Commands.waitUntil { joint.getPositionError() < 1.0.rotations })
+        ArmWrist -> wrist.setAngleCommand(pose.wristPosition).andThen(Commands.waitUntil { wrist.getPositionError() < 25.0.rotations })
+        ArmElevator -> elevator.setDisplacementCommand(pose.elevatorDisplacement).andThen(Commands.waitUntil { elevator.getPositionError() < 25.0.rotations })
+        ArmJoint -> joint.setAngleCommand(pose.elevatorJointPosition).andThen(Commands.waitUntil { joint.getPositionError() < 25.0.rotations })
     }
 
     fun setPoseCommand(pose: ArmPose, order: ArmOrder) : Command {
@@ -170,10 +164,14 @@ class ArmSystem(wristConfig: WristConfig, elevatorConfig: ElevatorConfig, elevat
     }
 
     fun assignCommandsToController(controller: CompliantXboxController) {
-        controller.a().whileTrue(elevatorTests.quasistaticBackward)
-        controller.y().whileTrue(elevatorTests.quasistaticForward)
-        controller.x().whileTrue(elevatorTests.dynamicBackward)
-        controller.b().whileTrue(elevatorTests.dynamicForward)
+        controller.rightBumper().onTrue(enableIntake()).onFalse(disableIntake())
+        controller.leftBumper().onTrue(enableOuttake()).onFalse(disableIntake())
+
+        controller.back().onTrue(setPoseCommand(ArmPoses.Passive.pose, ArmOrders.JEW.order))
+        controller.y().onTrue(setPoseCommand(ArmPoses.L4.pose, ArmOrders.JEW.order))
+        controller.b().onTrue(setPoseCommand(ArmPoses.L3.pose, ArmOrders.JEW.order))
+        controller.a().onTrue(setPoseCommand(ArmPoses.L2.pose, ArmOrders.JEW.order))
+        controller.x().onTrue(setPoseCommand(ArmPoses.CoralStation.pose, ArmOrders.EJW.order))
     }
 
 }
