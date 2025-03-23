@@ -169,16 +169,16 @@ public class LimelightController {
             Pose3d robotPose = getTargetPositionInCameraSpace(choice);
             Double yawSetPoint = alignmentAngles.get(getTargetId(choice));
 
-            double driveXVelocity = -clamp(1.0, -1.0, xPIDController.calculate(robotPose.getTranslation().getX(), xSetPoint));
-            double driveYVelocity = clamp(1.0, -1.0, yPIDController.calculate(robotPose.getTranslation().getZ(), ySetPoint));
+            double driveXVelocity = clamp(1.0, -1.0, xPIDController.calculate(robotPose.getTranslation().getZ(), xSetPoint));
+            double driveYVelocity = -clamp(1.0, -1.0, yPIDController.calculate(robotPose.getTranslation().getX(), ySetPoint));
 
             if (!hasTarget(choice)) {
                 drive.accept(new ChassisSpeeds(0.0, 0.0, 0.0));
             } else if (yawSetPoint != null) {
                 double driveThetaVelocity = clamp(1.0, -1.0, thetaPIDController.calculate(getLimitedYaw(), yawSetPoint));
-                drive.accept(new ChassisSpeeds(driveYVelocity, driveXVelocity, driveThetaVelocity));
+                drive.accept(new ChassisSpeeds(driveXVelocity, driveYVelocity, driveThetaVelocity));
             } else {
-                drive.accept(new ChassisSpeeds(driveYVelocity, driveXVelocity, 0.0));
+                drive.accept(new ChassisSpeeds(driveXVelocity, driveYVelocity, 0.0));
             }
 
 

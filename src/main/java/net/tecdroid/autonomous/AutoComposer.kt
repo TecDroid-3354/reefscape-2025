@@ -62,8 +62,8 @@ class AutoComposer(private val drive: SwerveDrive, private val limelightControll
         )
     }
     private fun c2ReefToCoralStation(): Command {
-        val startingPath = pathplanner.getPath("C2-Left-reefToCoralStation")
-        drive.pose = startingPath.pathPoses.first()
+        /*val startingPath = pathplanner.getPath("C2-Left-reefToCoralStation")
+        drive.pose = startingPath.pathPoses.first()*/
 
         // ! From reef to coral station (taking second coral)
         return Commands.sequence(
@@ -76,7 +76,9 @@ class AutoComposer(private val drive: SwerveDrive, private val limelightControll
             // TODO IMPORTANT: test each of these individually
             // TODO IMPORTANT: then we can add them in a parallel command
             //armSystem.setPoseCommand(ArmPoses.L2.pose, ArmOrders.EJW.order),
-            pathplanner.getPathFollowingCommand(startingPath)
+            //pathplanner.getPathFollowingCommand(startingPath)
+
+            pathplanner.resetPoseAndGetPathFollowingCommand("C2-Left-reefToCoralStation"),
 
             // ✅ Poner lógica del arm
             //armSystem.setPoseCommand(ArmPoses.CoralStation.pose, ArmOrders.EJW.order),

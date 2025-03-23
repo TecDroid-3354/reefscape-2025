@@ -79,8 +79,8 @@ class RobotContainer {
             swerve
         ))
 
-        controller.leftTrigger().whileTrue(limelightController.alignRobotAllAxis(LimeLightChoice.Left, -0.22, 0.0))
-        controller.rightTrigger().whileTrue(limelightController.alignRobotAllAxis(LimeLightChoice.Right, 0.22, 0.0))
+        controller.leftTrigger().whileTrue(limelightController.alignRobotAllAxis(LimeLightChoice.Right, 0.22, 0.0))
+        controller.rightTrigger().whileTrue(limelightController.alignRobotAllAxis(LimeLightChoice.Left, 0.22, 0.0))
     }
 
     val autonomousCommand: Command

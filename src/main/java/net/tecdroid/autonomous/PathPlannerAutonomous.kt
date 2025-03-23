@@ -63,7 +63,7 @@ class PathPlannerAutonomous(val drive: SwerveDrive) {
         return resetPoseAndGetPathFollowingCommand(path)
     }
 
-    fun resetPoseAndGetPathFollowingCommand(path: PathPlannerPath) : Command {
+    private fun resetPoseAndGetPathFollowingCommand(path: PathPlannerPath) : Command {
         drive.pose = path.pathPoses.first()
         return getPathFollowingCommand(path)
     }
