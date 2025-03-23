@@ -28,7 +28,7 @@ data class SwerveModuleConfig(
     val steerControlGains: ControlGains
 )
 
-fun makeConfig(moduleNumber: SymbolicId, magnetOffset: Angle) = SwerveModuleConfig(
+fun makeConfig(moduleNumber: SymbolicId, magnetOffset: Angle, controlGains: ControlGains) = SwerveModuleConfig(
     driveMotorProperties = Motors.krakenX60,
     steerMotorProperties = Motors.neo,
     driveControllerId = moduleNumber * 10 + NumericId(1),
@@ -42,11 +42,11 @@ fun makeConfig(moduleNumber: SymbolicId, magnetOffset: Angle) = SwerveModuleConf
     absoluteEncoderMagnetOffset = magnetOffset,
     driveCurrentLimit = Amps.of(40.0),
     steerCurrentLimit = Amps.of(30.0),
-    driveControlGains = ControlGains(s = 0.132, v = 0.12, a = 0.01),
+    driveControlGains = controlGains,
     steerControlGains = ControlGains(p = 0.35)
 )
 
-val frontRightModuleConfig= makeConfig(SymbolicId(1), (-0.09130859375).rotations)
-val frontLeftModuleConfig = makeConfig(SymbolicId(2), (-0.38982578125).rotations)
-val backLeftModuleConfig  = makeConfig(SymbolicId(3), (-0.345458984375).rotations)
-val backRightModuleConfig = makeConfig(SymbolicId(4), (+0.138427734375).rotations)
+val frontRightModuleConfig= makeConfig(SymbolicId(1), (-0.09130859375).rotations, ControlGains(s = 0.18174, v = 0.11491, a = 0.005462))
+val frontLeftModuleConfig = makeConfig(SymbolicId(2), (-0.38982578125).rotations, ControlGains(s = 0.12853, v = 0.11318, a = 0.0058254))
+val backLeftModuleConfig  = makeConfig(SymbolicId(3), (-0.345458984375).rotations, ControlGains(s = 0.1435, v = 0.11366, a = 0.0091299))
+val backRightModuleConfig = makeConfig(SymbolicId(4), (+0.138427734375).rotations, ControlGains(s = 0.21496, v = 0.11182, a = 0.008843))
