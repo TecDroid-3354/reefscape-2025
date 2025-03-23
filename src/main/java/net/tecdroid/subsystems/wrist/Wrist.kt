@@ -73,20 +73,12 @@ class Wrist(private val config: WristConfig) :
         motorController.setPosition(config.reduction.unapply(absoluteAngle))
     }
 
-    fun coast() {
-        motorController.setNeutralMode(NeutralModeValue.Coast)
-    }
-
-    fun brake() {
-        motorController.setNeutralMode(NeutralModeValue.Brake)
-    }
-
     private fun configureMotorInterface() {
         val talonConfig = TalonFXConfiguration()
 
         with(talonConfig) {
             MotorOutput
-                .withNeutralMode(NeutralModeValue.Coast)
+                .withNeutralMode(NeutralModeValue.Brake)
                 .withInverted(config.motorDirection.toInvertedValue())
 
             CurrentLimits

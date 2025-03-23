@@ -54,6 +54,7 @@ class SwerveDrive(private val config: SwerveDriveConfig) : SubsystemBase() {
     init {
         this.configureImuInterface()
         matchRelativeEncodersToAbsoluteEncoders()
+        pose = Pose2d()
         SmartDashboard.putData("Field", field)
     }
 

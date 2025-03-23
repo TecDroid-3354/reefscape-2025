@@ -9,6 +9,7 @@ import edu.wpi.first.util.sendable.SendableBuilder
 import edu.wpi.first.wpilibj2.command.Command
 import edu.wpi.first.wpilibj2.command.Commands
 import edu.wpi.first.wpilibj2.command.SequentialCommandGroup
+import net.tecdroid.input.CompliantXboxController
 import net.tecdroid.subsystems.elevator.Elevator
 import net.tecdroid.subsystems.elevator.ElevatorConfig
 import net.tecdroid.subsystems.elevatorjoint.ElevatorJoint
@@ -114,9 +115,18 @@ enum class ArmOrders(val order: ArmOrder) {
 
 class ArmSystem(wristConfig: WristConfig, elevatorConfig: ElevatorConfig, elevatorJointConfig: ElevatorJointConfig, intakeConfig: IntakeConfig) : Sendable {
     private val wrist = Wrist(wristConfig)
+    private val wristSysIdRoutine = wrist.createIdentificationRoutine()
+    private val wristTests = wristSysIdRoutine.createTests()
+
     private val elevator = Elevator(elevatorConfig)
+    private val elevatorSysIdRoutine = elevator.createIdentificationRoutine()
+    private val elevatorTests = elevatorSysIdRoutine.createTests()
+
     private val joint = ElevatorJoint(elevatorJointConfig)
-     val intake = Intake(intakeConfig)
+    private val jointSysIdRoutine = joint.createIdentificationRoutine()
+    private val jointTests = jointSysIdRoutine.createTests()
+
+    private val intake = Intake(intakeConfig)
     private var targetVoltage = 0.0.volts
 
     init {
@@ -157,6 +167,13 @@ class ArmSystem(wristConfig: WristConfig, elevatorConfig: ElevatorConfig, elevat
             addDoubleProperty("Joint Position (Rotations)", { joint.angle.`in`(Rotations) }) {}
             addDoubleProperty("Wrist Position (Rotations)", { wrist.angle.`in`(Rotations) }) {}
         }
+    }
+
+    fun assignCommandsToController(controller: CompliantXboxController) {
+        controller.a().whileTrue(wristTests.quasistaticBackward)
+        controller.y().whileTrue(wristTests.quasistaticForward)
+        controller.x().whileTrue(wristTests.dynamicBackward)
+        controller.b().whileTrue(wristTests.dynamicForward)
     }
 
 }

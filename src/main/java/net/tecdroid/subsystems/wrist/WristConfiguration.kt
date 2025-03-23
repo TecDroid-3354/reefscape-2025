@@ -11,6 +11,7 @@ import net.tecdroid.util.amps
 import net.tecdroid.util.rotations
 import net.tecdroid.util.seconds
 import net.tecdroid.safety.MeasureLimits
+import net.tecdroid.util.RotationalDirection.Counterclockwise
 
 data class WristConfig(
     val motorControllerId: NumericId,
@@ -29,12 +30,12 @@ data class WristConfig(
 
 val wristConfig = WristConfig(
     motorControllerId = NumericId(61),
-    motorDirection = Clockwise,
+    motorDirection = Counterclockwise,
     motorCurrentLimit = 30.0.amps,
 
     absoluteEncoderPort = NumericId(2),
     absoluteEncoderIsInverted = false,
-    absoluteEncoderOffset = (0.1501).rotations,
+    absoluteEncoderOffset = (0.1532).rotations,
 
     reduction = Reduction(214.285714),
 

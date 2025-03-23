@@ -7,7 +7,9 @@ import com.pathplanner.lib.config.RobotConfig
 import com.pathplanner.lib.controllers.PPHolonomicDriveController
 import com.pathplanner.lib.path.PathPlannerPath
 import edu.wpi.first.wpilibj.DriverStation
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard
 import edu.wpi.first.wpilibj2.command.Command
+import edu.wpi.first.wpilibj2.command.Commands
 import net.tecdroid.subsystems.drivetrain.SwerveDrive
 import net.tecdroid.util.MatchStatus
 import java.io.IOException
@@ -34,7 +36,7 @@ class PathPlannerAutonomous(val drive: SwerveDrive) {
             drive::pose::set,
             drive::speeds::get,
             { speeds, _ ->
-                drive.driveRobotOriented(speeds)
+                drive.driveRobotOriented(speeds * 0.25)
             },
             driveController,
             robotConfig,
@@ -64,7 +66,9 @@ class PathPlannerAutonomous(val drive: SwerveDrive) {
     }
 
     private fun resetPoseAndGetPathFollowingCommand(path: PathPlannerPath) : Command {
-        drive.pose = path.pathPoses.first()
-        return getPathFollowingCommand(path)
+        return Commands.runOnce({
+            drive.pose = path.pathPoses.first()
+            SmartDashboard.putBoolean("SSS", true)
+        }).andThen(getPathFollowingCommand(path))
     }
 }

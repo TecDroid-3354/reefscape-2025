@@ -38,9 +38,6 @@ class RobotContainer {
     )
     private val autoComposer = AutoComposer(swerve, limelightController, arm)
 
-    // Autonomous
-    private var autoChooser: SendableChooser<Command>? = null
-
     // Swerve Control
     private val accelerationPeriod = 0.1.seconds
     private val decelerationPeriod = accelerationPeriod
@@ -59,6 +56,7 @@ class RobotContainer {
     init {
         limelightController.shuffleboardData()
         swerve.heading = 0.0.degrees
+        arm.assignCommandsToController(controller)
     }
 
 
@@ -79,8 +77,8 @@ class RobotContainer {
             swerve
         ))
 
-        controller.leftTrigger().whileTrue(limelightController.alignRobotAllAxis(LimeLightChoice.Right, 0.22, 0.0))
-        controller.rightTrigger().whileTrue(limelightController.alignRobotAllAxis(LimeLightChoice.Left, 0.22, 0.0))
+        controller.rightTrigger().whileTrue(limelightController.alignRobotAllAxis(LimeLightChoice.Right, 0.22, 0.0))
+        controller.leftTrigger().whileTrue(limelightController.alignRobotAllAxis(LimeLightChoice.Left, 0.22, 0.0))
     }
 
     val autonomousCommand: Command
