@@ -2,6 +2,7 @@ package net.tecdroid.autonomous
 
 import edu.wpi.first.wpilibj.shuffleboard.Shuffleboard
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard
 import edu.wpi.first.wpilibj2.command.Command
 import edu.wpi.first.wpilibj2.command.Commands
 import edu.wpi.first.wpilibj2.command.ParallelCommandGroup
@@ -46,9 +47,12 @@ class AutoComposer(private val drive: SwerveDrive, private val limelightControll
         autoChooser.addOption("Straight Forward", pathplanner.resetPoseAndGetPathFollowingCommand("Straightforward"))
 
         // Complete autos
-        autoChooser.addOption("ONLY TEST WHEN ALL PATHS HAVE FINISHED", leftCompleteAuto())
+        autoChooser.addOption("LeftAuto", leftCompleteAuto())
+        autoChooser.addOption("RightAuto", rightCompleteAuto())
+        autoChooser.addOption("CenterAuto", centerCompleteAuto())
 
         tab.add("Autonomous Chooser", autoChooser)
+        SmartDashboard.putData("Autonomus Chooser", autoChooser)
     }
 
     fun getRoutine(side: AutonomousSide, direction: AutonomousDirection, coralChoice: AutonomousCoralChoice, llChoice: LimeLightChoice): Command {
@@ -93,6 +97,26 @@ class AutoComposer(private val drive: SwerveDrive, private val limelightControll
             getRoutine(AutonomousSide.Left, AutonomousDirection.CoralStationToReef, AutonomousCoralChoice.C2, LimeLightChoice.Right),
             getRoutine(AutonomousSide.Left, AutonomousDirection.ReefToCoralStation, AutonomousCoralChoice.C3, LimeLightChoice.Left),
             getRoutine(AutonomousSide.Left, AutonomousDirection.CoralStationToReef, AutonomousCoralChoice.C3, LimeLightChoice.Left),
+        )
+    }
+
+    private fun rightCompleteAuto(): Command {
+        return Commands.sequence(
+            getRoutine(AutonomousSide.Right, AutonomousDirection.BargeToReef, AutonomousCoralChoice.C1, LimeLightChoice.Right),
+            getRoutine(AutonomousSide.Right, AutonomousDirection.ReefToCoralStation, AutonomousCoralChoice.C2, LimeLightChoice.Right),
+            getRoutine(AutonomousSide.Right, AutonomousDirection.CoralStationToReef, AutonomousCoralChoice.C2, LimeLightChoice.Right),
+            getRoutine(AutonomousSide.Right, AutonomousDirection.ReefToCoralStation, AutonomousCoralChoice.C3, LimeLightChoice.Left),
+            getRoutine(AutonomousSide.Right, AutonomousDirection.CoralStationToReef, AutonomousCoralChoice.C3, LimeLightChoice.Left),
+        )
+    }
+
+    private fun centerCompleteAuto(): Command {
+        return Commands.sequence(
+            getRoutine(AutonomousSide.Center, AutonomousDirection.BargeToReef, AutonomousCoralChoice.C1, LimeLightChoice.Right),
+            getRoutine(AutonomousSide.Center, AutonomousDirection.ReefToCoralStation, AutonomousCoralChoice.C2, LimeLightChoice.Right),
+            getRoutine(AutonomousSide.Center, AutonomousDirection.CoralStationToReef, AutonomousCoralChoice.C2, LimeLightChoice.Right),
+            getRoutine(AutonomousSide.Center, AutonomousDirection.ReefToCoralStation, AutonomousCoralChoice.C3, LimeLightChoice.Left),
+            getRoutine(AutonomousSide.Center, AutonomousDirection.CoralStationToReef, AutonomousCoralChoice.C3, LimeLightChoice.Left),
         )
     }
 
