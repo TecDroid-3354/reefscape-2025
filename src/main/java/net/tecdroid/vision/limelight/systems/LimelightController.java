@@ -13,7 +13,6 @@ import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.Subsystem;
 import net.tecdroid.constants.StringConstantsKt;
 import net.tecdroid.util.ControlGains;
-import net.tecdroid.util.LimeLightChoice;
 import net.tecdroid.vision.limelight.Limelight;
 import net.tecdroid.vision.limelight.LimelightAprilTagDetector;
 import net.tecdroid.vision.limelight.LimelightConfig;

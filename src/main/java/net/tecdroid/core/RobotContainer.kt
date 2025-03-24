@@ -1,11 +1,17 @@
 package net.tecdroid.core
 
 import edu.wpi.first.math.filter.SlewRateLimiter
+import edu.wpi.first.math.geometry.Pose2d
+import edu.wpi.first.math.geometry.Rotation2d
+import edu.wpi.first.math.geometry.Translation2d
 import edu.wpi.first.math.kinematics.ChassisSpeeds
 import edu.wpi.first.units.Units.Degrees
 import edu.wpi.first.units.Units.Hertz
+import edu.wpi.first.wpilibj.smartdashboard.Field2d
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard
 import edu.wpi.first.wpilibj2.command.Command
 import edu.wpi.first.wpilibj2.command.Commands
+import frc.robot.LimelightHelpers
 import net.tecdroid.autonomous.AutoComposer
 import net.tecdroid.constants.GenericConstants.driverControllerId
 import net.tecdroid.input.CompliantXboxController
@@ -16,7 +22,7 @@ import net.tecdroid.subsystems.elevator.elevatorConfig
 import net.tecdroid.subsystems.elevatorjoint.elevatorJointConfig
 import net.tecdroid.subsystems.intake.intakeConfig
 import net.tecdroid.systems.ArmSystem
-import net.tecdroid.util.LimeLightChoice
+import net.tecdroid.vision.limelight.systems.LimeLightChoice
 import net.tecdroid.util.degrees
 import net.tecdroid.util.seconds
 import net.tecdroid.vision.limelight.systems.LimelightController
@@ -32,6 +38,8 @@ class RobotContainer {
         { swerve.heading.`in`(Degrees) }, swerve.maxSpeeds.times(0.75)
     )
     private val autoComposer = AutoComposer(swerve, limelightController, arm)
+
+    private val f = Field2d()
 
     // Swerve Control
     private val accelerationPeriod = 0.1.seconds
@@ -52,6 +60,7 @@ class RobotContainer {
         limelightController.shuffleboardData()
         swerve.heading = 0.0.degrees
         arm.assignCommandsToController(controller)
+        SmartDashboard.putData("AAAAA", f)
     }
 
 

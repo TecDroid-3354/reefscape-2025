@@ -6,13 +6,14 @@ import edu.wpi.first.wpilibj2.command.Command
 import edu.wpi.first.wpilibj2.command.Commands
 import edu.wpi.first.wpilibj2.command.ParallelCommandGroup
 import edu.wpi.first.wpilibj2.command.SequentialCommandGroup
-import edu.wpi.first.wpilibj2.command.WaitCommand
+import frc.robot.LimelightHelpers
 import net.tecdroid.subsystems.drivetrain.SwerveDrive
+import net.tecdroid.subsystems.drivetrain.swerveDriveConfiguration
 import net.tecdroid.systems.ArmOrders
 import net.tecdroid.systems.ArmPoses
 import net.tecdroid.systems.ArmSystem
-import net.tecdroid.util.LimeLightChoice
-import net.tecdroid.util.meters
+import net.tecdroid.util.MatchStatus
+import net.tecdroid.vision.limelight.systems.LimeLightChoice
 import net.tecdroid.util.seconds
 import net.tecdroid.vision.limelight.systems.LimelightController
 
@@ -67,8 +68,7 @@ class AutoComposer(private val drive: SwerveDrive, private val limelightControll
                 (if (direction == AutonomousDirection.BargeToReef)
                     pathplanner.resetPoseAndGetPathFollowingCommand("${coralChoice.str}-${side.str}-${direction.str}")
                 else
-                     pathplanner.getPathFollowingCommand("${coralChoice.str}-${side.str}-${direction.str}")).withTimeout(1.5),
-
+                     pathplanner.getPathFollowingCommand("${coralChoice.str}-${side.str}-${direction.str}")),
 
                 ParallelCommandGroup(
                     limelightController.alignRobotAllAxis(llChoice, 0.21, 0.0)
@@ -95,45 +95,6 @@ class AutoComposer(private val drive: SwerveDrive, private val limelightControll
             getRoutine(AutonomousSide.Left, AutonomousDirection.CoralStationToReef, AutonomousCoralChoice.C3, LimeLightChoice.Left),
         )
     }
-
-    private fun c3ReefToCoralStation(): Command {
-        return Commands.sequence(
-            pathplanner.getPathFollowingCommand("C3-Left-reefToCoralStation"),
-
-            armSystem.setPoseCommand(ArmPoses.CoralStation.pose, ArmOrders.JEW.order),
-
-            armSystem.enableIntake(),
-            Commands.waitUntil { armSystem.intake.hasCoral() },
-            armSystem.disableIntake()
-        )
-    }
-    private fun c3CoralStationToReef(): Command {
-        val startingPath = pathplanner.getPath("C3-Left-coralStationToReef")
-        drive.pose = startingPath.pathPoses.first()
-
-        // ! From coral station to reef (taking and placing the second coral)
-        return Commands.sequence(
-            // TODO: test only after we've assured the arm doesn't kill itself
-            /*Commands.parallel(
-                armSystem.setPoseCommand(ArmPoses.L2.pose, ArmOrders.EJW.order),
-                pathplanner.getPathFollowingCommand(startingPath),
-            ),*/
-
-            // TODO IMPORTANT: test each of these individually
-            // TODO IMPORTANT: then we can add them in a parallel command
-            //armSystem.setPoseCommand(ArmPoses.L2.pose, ArmOrders.EJW.order),
-            pathplanner.getPathFollowingCommand(startingPath),
-
-            // Poner lógica de la limelight
-            // limelightController.alignRobotWithSpecificAprilTag(LimeLightChoice.Right, 0.22, -0.56, 9)
-
-            // ✅ Poner lógica del arm
-            // armSystem.setPoseCommand(ArmPoses.L4.pose, ArmOrders.JEW.order),
-            // ✅ Poner lógica del outtake
-            // armSystem.enableIntake().until { !armSystem.intake.hasCoral() }.andThen(armSystem.disableIntake())
-        )
-    }
-
 
     val selectedAutonomousRoutine: Command
         get() = autoChooser.selected

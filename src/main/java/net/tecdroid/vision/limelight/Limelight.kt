@@ -43,14 +43,14 @@ abstract class LimelightBase(private val config: LimelightConfig) {
     private val table = NetworkTableInstance.getDefault().getTable(config.name)
 
     init {
-        setDoubleArray(LimelightTableKeys.Set.cameraPositionInRobotSpace, arrayOf(
-            config.cameraPositionInRobotSpace.measureX.`in`(Meters),
-            config.cameraPositionInRobotSpace.measureY.`in`(Meters),
-            config.cameraPositionInRobotSpace.measureZ.`in`(Meters),
-            config.cameraPositionInRobotSpace.rotation.measureX.`in`(Degrees),
-            config.cameraPositionInRobotSpace.rotation.measureY.`in`(Degrees),
-            config.cameraPositionInRobotSpace.rotation.measureZ.`in`(Degrees)
-        ).toDoubleArray())
+//        setDoubleArray(LimelightTableKeys.Set.cameraPositionInRobotSpace, arrayOf(
+//            config.cameraPositionInRobotSpace.measureX.`in`(Meters),
+//            config.cameraPositionInRobotSpace.measureY.`in`(Meters),
+//            config.cameraPositionInRobotSpace.measureZ.`in`(Meters),
+//            config.cameraPositionInRobotSpace.rotation.measureX.`in`(Degrees),
+//            config.cameraPositionInRobotSpace.rotation.measureY.`in`(Degrees),
+//            config.cameraPositionInRobotSpace.rotation.measureZ.`in`(Degrees)
+//        ).toDoubleArray())
     }
 
     /**
