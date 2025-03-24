@@ -26,6 +26,8 @@ import edu.wpi.first.wpilibj2.command.SubsystemBase
 import net.tecdroid.util.degrees
 import net.tecdroid.util.toRotation2d
 import kotlin.math.PI
+import kotlin.math.max
+import kotlin.math.sqrt
 
 class SwerveDrive(private val config: SwerveDriveConfig) : SubsystemBase() {
     val imu = Pigeon2(config.imuId.id)
@@ -80,7 +82,8 @@ class SwerveDrive(private val config: SwerveDriveConfig) : SubsystemBase() {
     // Drive //
 
     fun driveRobotOriented(chassisSpeeds: ChassisSpeeds) {
-        val desiredStates = kinematics.toSwerveModuleStates(chassisSpeeds)
+        val speeds = normalizeSpeeds(chassisSpeeds)
+        val desiredStates = kinematics.toSwerveModuleStates(speeds)
         setModuleTargetStates(*desiredStates)
     }
 
@@ -117,7 +120,7 @@ class SwerveDrive(private val config: SwerveDriveConfig) : SubsystemBase() {
 
     val maxLinearVelocity: LinearVelocity = modules.map { it.wheelMaxLinearVelocity }.minByOrNull { it.`in`(MetersPerSecond) }!!
     val maxAngularVelocity: AngularVelocity = Rotations.one().div((config.longestDiagonal * PI) / maxLinearVelocity);
-    val maxChassisSpeeds = ChassisSpeeds(maxLinearVelocity, maxLinearVelocity, maxAngularVelocity)
+    val maxSpeeds = ChassisSpeeds(maxLinearVelocity, maxLinearVelocity, maxAngularVelocity)
 
     // Configuration //
 
@@ -147,5 +150,18 @@ class SwerveDrive(private val config: SwerveDriveConfig) : SubsystemBase() {
     fun setHeadingCommand(angle: Angle) = Commands.runOnce({ heading = angle }, this)
 
     fun zeroHeadingCommand() = Commands.runOnce({ zeroHeading() }, this)
+
+    fun normalizeSpeeds(speeds: ChassisSpeeds): ChassisSpeeds {
+        val maxMagnitude = sqrt(maxSpeeds.vxMetersPerSecond * maxSpeeds.vxMetersPerSecond + maxSpeeds.vyMetersPerSecond * maxSpeeds.vyMetersPerSecond)
+        val currentMagnitude = sqrt(speeds.vxMetersPerSecond * speeds.vxMetersPerSecond + speeds.vyMetersPerSecond * speeds.vyMetersPerSecond)
+
+        return if (currentMagnitude > maxMagnitude) {
+            ChassisSpeeds(
+                (speeds.vxMetersPerSecond / currentMagnitude) * maxSpeeds.vxMetersPerSecond,
+                (speeds.vyMetersPerSecond / currentMagnitude) * maxSpeeds.vyMetersPerSecond,
+                (speeds.omegaRadiansPerSecond / currentMagnitude) * maxSpeeds.omegaRadiansPerSecond,
+            )
+        } else speeds
+    }
 
 }

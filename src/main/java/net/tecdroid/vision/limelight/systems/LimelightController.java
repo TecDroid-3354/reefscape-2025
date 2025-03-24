@@ -4,6 +4,7 @@ import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.units.measure.AngularVelocity;
+import edu.wpi.first.units.measure.Distance;
 import edu.wpi.first.units.measure.LinearVelocity;
 import edu.wpi.first.wpilibj.shuffleboard.Shuffleboard;
 import edu.wpi.first.wpilibj.shuffleboard.ShuffleboardTab;
@@ -22,8 +23,7 @@ import java.util.Map;
 import java.util.function.Consumer;
 import java.util.function.DoubleSupplier;
 
-import static edu.wpi.first.units.Units.DegreesPerSecond;
-import static edu.wpi.first.units.Units.MetersPerSecond;
+import static edu.wpi.first.units.Units.*;
 
 public class LimelightController {
     private final LimelightAprilTagDetector leftLimelight  = new LimelightAprilTagDetector(new LimelightConfig(StringConstantsKt.leftLimelightName, new Pose3d()));
@@ -31,8 +31,8 @@ public class LimelightController {
 
     private final Subsystem requiredSubsystem;
 
-    private final ControlGains xGains = new ControlGains(0.4, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0);
-    private final ControlGains yGains = new ControlGains(0.4, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0);
+    private final ControlGains xGains = new ControlGains(0.55, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0);
+    private final ControlGains yGains = new ControlGains(0.55, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0);
     private final ControlGains thetaGains = new ControlGains(0.0075, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0);
 
     private final PIDController rightXPIDController = new PIDController(xGains.getP(), xGains.getI(), xGains.getD());
@@ -47,7 +47,6 @@ public class LimelightController {
     private final Consumer<ChassisSpeeds> drive;
     private final DoubleSupplier yaw;
 
-    private final double positionTolerance = 0.005;
     private final ChassisSpeeds maxSpeeds;
 
     private void angleDictionaryValues() {
@@ -93,13 +92,21 @@ public class LimelightController {
         limelightConfiguration();
     }
 
-    private boolean isAtSetPoint(LimeLightChoice choice, double xSetPoint, double ySetPoint) {
+    public Distance getSquaredDistance(LimeLightChoice choice) {
+        LimelightAprilTagDetector limelight = (choice == LimeLightChoice.Right) ? rightLimelight : leftLimelight;
+        var pos =limelight.getTargetPositionInCameraSpace();
+        return Meters.of(pos.getX() * pos.getX() + pos.getY() * pos.getY() + pos.getZ() * pos.getZ());
+
+    }
+
+    public boolean isAtSetPoint(LimeLightChoice choice, double xSetPoint, double ySetPoint) {
         Pose3d robotPose = getTargetPositionInCameraSpace(choice);
 
         double xDisplacement = Math.abs(xSetPoint - robotPose.getTranslation().getZ());
         double yDisplacement = Math.abs(ySetPoint - robotPose.getTranslation().getX());
 
-        return xDisplacement <= positionTolerance && yDisplacement <= positionTolerance;
+        double positionTolerance = 0.01;
+        return hasTarget(choice) && (xDisplacement <= positionTolerance && yDisplacement <= positionTolerance);
     }
 
     private Pose3d getTargetPositionInCameraSpace(LimeLightChoice choice) {
@@ -124,7 +131,7 @@ public class LimelightController {
         return (choice == LimeLightChoice.Right) ? rightThetaPIDController : leftThetaPIDController;
     }
 
-    private boolean hasTarget(LimeLightChoice choice) {
+    public boolean hasTarget(LimeLightChoice choice) {
         Limelight limelight = (choice == LimeLightChoice.Right) ? rightLimelight : leftLimelight;
         return limelight.getHasTarget();
     }
@@ -204,10 +211,10 @@ public class LimelightController {
         return alignRobotAllAxis(choice, xSetPoint, ySetPoint).onlyIf(() -> getTargetId(choice) == aprilTagId);
     }
 
-    public Command alignRobotAuto(LimeLightChoice choice, double xSetPoint, double ySetPoint) throws InterruptedException {
-        Command alignRobotWithAprilTagChoice = alignRobotAllAxis(choice, xSetPoint, ySetPoint);
-        alignRobotWithAprilTagChoice.until(() -> isAtSetPoint(choice, xSetPoint, ySetPoint));
-        return alignRobotWithAprilTagChoice;
+    public Command alignRobotAuto(LimeLightChoice choice, double xSetPoint, double ySetPoint, double waitSeconds) throws InterruptedException {
+        Command alignRobotCMD = alignRobotAllAxis(choice, xSetPoint, ySetPoint);
+        alignRobotCMD.until(() -> isAtSetPoint(choice, xSetPoint, ySetPoint)).withTimeout(waitSeconds);
+        return alignRobotCMD;
     }
 
     public void shuffleboardData() {

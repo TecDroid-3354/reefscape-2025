@@ -52,7 +52,7 @@ val elevatorConfig = ElevatorConfig(
     ),
 
     motionTargets = LinearMotionTargets(
-        cruiseVelocity = 1.2.meters.per(Second) * 0.3,
+        cruiseVelocity = 1.2.meters.per(Second),
         accelerationTimePeriod = 0.5.seconds,
         jerkTimePeriod = 0.1.seconds
     ),

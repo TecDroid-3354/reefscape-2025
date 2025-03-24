@@ -29,7 +29,7 @@ class RobotContainer {
     private val limelightController = LimelightController(
         swerve,
         { chassisSpeeds -> swerve.driveRobotOriented(chassisSpeeds) },
-        { swerve.heading.`in`(Degrees) }, swerve.maxChassisSpeeds.times(0.75)
+        { swerve.heading.`in`(Degrees) }, swerve.maxSpeeds.times(0.75)
     )
     private val autoComposer = AutoComposer(swerve, limelightController, arm)
 

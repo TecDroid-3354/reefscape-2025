@@ -6,6 +6,7 @@ import com.pathplanner.lib.config.PIDConstants
 import com.pathplanner.lib.config.RobotConfig
 import com.pathplanner.lib.controllers.PPHolonomicDriveController
 import com.pathplanner.lib.path.PathPlannerPath
+import edu.wpi.first.math.kinematics.ChassisSpeeds
 import edu.wpi.first.wpilibj.DriverStation
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard
 import edu.wpi.first.wpilibj2.command.Command
@@ -26,8 +27,8 @@ class PathPlannerAutonomous(val drive: SwerveDrive) {
     }
 
     private val driveController = PPHolonomicDriveController(
-        PIDConstants(5.0, 0.0, 0.0),
-        PIDConstants(9.0, 0.0, 0.0)
+        PIDConstants(6.0, 0.0, 0.0),
+        PIDConstants(18.0, 0.0, 0.0)
     )
 
     init {
@@ -36,7 +37,7 @@ class PathPlannerAutonomous(val drive: SwerveDrive) {
             drive::pose::set,
             drive::speeds::get,
             { speeds, _ ->
-                drive.driveRobotOriented(speeds * 0.25)
+                drive.driveRobotOriented(speeds)
             },
             driveController,
             robotConfig,

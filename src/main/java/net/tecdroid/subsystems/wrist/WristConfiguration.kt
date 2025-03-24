@@ -55,7 +55,7 @@ val wristConfig = WristConfig(
     ),
 
     motionTargets = AngularMotionTargets(
-        cruiseVelocity = 0.5.rotations.per(Second) * 0.3,
+        cruiseVelocity = 0.5.rotations.per(Second),
         accelerationTimePeriod = 0.5.seconds,
         jerkTimePeriod = 0.1.seconds
     )
