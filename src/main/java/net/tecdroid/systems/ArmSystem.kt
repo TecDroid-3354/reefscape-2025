@@ -98,6 +98,13 @@ enum class ArmPoses(var pose: ArmPose) {
         targetVoltage = 8.0.volts
     )),
 
+    AlgaeFloorIntake(ArmPose(
+        wristPosition         = 0.3705.rotations,
+        elevatorDisplacement  = 0.0150.meters,
+        elevatorJointPosition = 0.0315.rotations,
+        targetVoltage = 8.0.volts
+    )),
+
     Barge(ArmPose(
         wristPosition         = 0.3476.rotations,
         elevatorDisplacement  = 1.0420.meters,
@@ -120,18 +127,14 @@ class ArmSystem(wristConfig: WristConfig, elevatorConfig: ElevatorConfig, elevat
     val elevator = Elevator(elevatorConfig)
     val joint = ElevatorJoint(elevatorJointConfig)
     val intake = Intake(intakeConfig)
-    var interactiveWristPose = ArmPoses.L2.pose.wristPosition
-        set(value) {field = value}
-
-    var interactiveElevatorDisplacement = ArmPoses.L2.pose.elevatorDisplacement
-        set(value) {field = value}
-    var interactiveJointPose = ArmPoses.L2.pose.elevatorJointPosition
-        set(value) {field = value}
-
     private var targetVoltage = 0.0.volts
 
-    private var isNormalMode = { true }
-    fun toggleIsNormalMode() { isNormalMode = { !isNormalMode.invoke() } }
+    var isCoralMode = true
+    var pollIsCoralMode = { isCoralMode }
+
+    fun toggleCoralMode() {
+        isCoralMode = !isCoralMode
+    }
 
     // To change the position orders according to the position of the entire arm
     private var isLow = { false }
@@ -178,7 +181,7 @@ class ArmSystem(wristConfig: WristConfig, elevatorConfig: ElevatorConfig, elevat
     }
 
     fun assignCommandsToController(controller: CompliantXboxController) {
-        controller.povLeft().onTrue(Commands.runOnce({ toggleIsNormalMode() }))
+        controller.povLeft().onTrue(Commands.runOnce({ toggleCoralMode() }))
 
         controller.y().onTrue(
             Commands.either(
@@ -190,7 +193,7 @@ class ArmSystem(wristConfig: WristConfig, elevatorConfig: ElevatorConfig, elevat
                     ArmPoses.Barge.pose,
                     ArmOrders.JEW.order
                 ).andThen({ setIsLow(false) }),
-                isNormalMode
+                pollIsCoralMode
             )
         )
 
@@ -204,7 +207,7 @@ class ArmSystem(wristConfig: WristConfig, elevatorConfig: ElevatorConfig, elevat
                     ArmPoses.A2.pose,
                     if (isLow()) ArmOrders.JWE.order else ArmOrders.EWJ.order
                 ).andThen({ setIsLow(false) }),
-                isNormalMode
+                pollIsCoralMode
             )
         )
 
@@ -218,7 +221,7 @@ class ArmSystem(wristConfig: WristConfig, elevatorConfig: ElevatorConfig, elevat
                     ArmPoses.A1.pose,
                     if (isLow()) ArmOrders.JWE.order else ArmOrders.EWJ.order
                 ).andThen({ setIsLow(false) }),
-                isNormalMode
+                pollIsCoralMode
             )
         )
 
@@ -228,42 +231,22 @@ class ArmSystem(wristConfig: WristConfig, elevatorConfig: ElevatorConfig, elevat
                     ArmPoses.CoralStation.pose,
                     ArmOrders.EJW.order
                 ),
-                setPoseCommand(
-                    ArmPoses.Processor.pose,
-                    ArmOrders.EWJ.order
-                ).andThen({ setIsLow(true) }),
-                isNormalMode
+                Commands.none(),
+                pollIsCoralMode
             )
+        )
+        controller.povDown().onTrue(
+            setPoseCommand(ArmPoses.AlgaeFloorIntake.pose, ArmOrders.EWJ.order)
+        )
+
+        controller.povRight().onTrue(
+            setPoseCommand(ArmPoses.Processor.pose, ArmOrders.EWJ.order)
         )
 
         controller.back().onTrue(setPoseCommand(ArmPoses.Passive.pose, ArmOrders.JEW.order))
 
         controller.rightBumper().onTrue(enableIntake()).onFalse(disableIntake())
         controller.leftBumper().onTrue(enableOuttake()).onFalse(disableIntake())
-    }
-
-    fun iapWristDelta(delta: Angle): Command {
-        return Commands.sequence(
-            Commands.runOnce({
-                interactiveWristPose = delta + interactiveWristPose
-            }),
-            setWristAngle(interactiveWristPose))
-    }
-
-    fun iapJointDelta(delta: Angle): Command {
-        return Commands.sequence(
-            Commands.runOnce({
-                interactiveJointPose = delta + interactiveJointPose
-            }),
-            setJointAngle(interactiveJointPose))
-    }
-
-    fun iapElevatorDelta(delta: Distance): Command {
-        return Commands.sequence(
-            Commands.runOnce({
-                interactiveElevatorDisplacement = delta + interactiveElevatorDisplacement
-            }),
-            setElevatorDisplacement(interactiveElevatorDisplacement))
     }
 
     fun breakMode(): Command {
