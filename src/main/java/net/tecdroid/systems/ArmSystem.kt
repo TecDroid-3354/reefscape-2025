@@ -58,7 +58,7 @@ enum class ArmPoses(var pose: ArmPose) {
     )),
 
     L3(ArmPose(
-        wristPosition         = 0.3688.rotations,
+        wristPosition         = 0.3528.rotations,
         elevatorDisplacement  = 0.4631.meters,
         elevatorJointPosition = 0.2615.rotations,
         targetVoltage = 10.0.volts
@@ -99,11 +99,18 @@ enum class ArmPoses(var pose: ArmPose) {
         targetVoltage = 8.0.volts
     )),
 
+    AlgaeFloorIntake(ArmPose(
+        wristPosition         = 0.3705.rotations,
+        elevatorDisplacement  = 0.0150.meters,
+        elevatorJointPosition = 0.0315.rotations,
+        targetVoltage = 8.0.volts
+    )),
+
     Barge(ArmPose(
         wristPosition         = 0.3476.rotations,
-        elevatorDisplacement  = 1.0420.meters,
-        elevatorJointPosition = 0.2549.rotations,
-        targetVoltage = 8.0.volts
+        elevatorDisplacement  = 1.035.meters,
+        elevatorJointPosition = 0.258.rotations,
+        targetVoltage = 11.9.volts
     ))
 }
 
@@ -142,7 +149,7 @@ class ArmSystem(wristConfig: WristConfig, elevatorConfig: ElevatorConfig, elevat
 
     fun enableIntake() : Command = intake.setVoltageCommand(targetVoltage)
     fun enableOuttake() : Command = intake.setVoltageCommand(-targetVoltage)
-    fun disableIntake() : Command = intake.setVoltageCommand(0.0.volts)
+    fun disableIntake() : Command = intake.setVoltageCommand((0.0).volts)
 
     private fun getCommandFor(pose: ArmPose, member: ArmMember) : Command = when (member) {
         ArmWrist -> wrist.setAngleCommand(pose.wristPosition).andThen(Commands.waitUntil { wrist.getPositionError() < 50.0.rotations })
@@ -175,7 +182,6 @@ class ArmSystem(wristConfig: WristConfig, elevatorConfig: ElevatorConfig, elevat
         controller.rightBumper().onTrue(enableIntake()).onFalse(disableIntake())
         controller.leftBumper().onTrue(enableOuttake()).onFalse(disableIntake())
 
-        controller.back().onTrue(setPoseCommand(ArmPoses.Passive.pose, ArmOrders.JEW.order))
         controller.y().onTrue(setPoseCommand(ArmPoses.L4.pose, ArmOrders.JEW.order))
         controller.b().onTrue(setPoseCommand(ArmPoses.L3.pose, ArmOrders.JEW.order))
         controller.a().onTrue(setPoseCommand(ArmPoses.L2.pose, ArmOrders.JEW.order))
