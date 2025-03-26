@@ -21,7 +21,6 @@ import net.tecdroid.subsystems.intake.IntakeConfig
 import net.tecdroid.subsystems.wrist.Wrist
 import net.tecdroid.subsystems.wrist.WristConfig
 import net.tecdroid.systems.ArmMember.*
-import net.tecdroid.util.degrees
 import net.tecdroid.util.meters
 import net.tecdroid.util.rotations
 import net.tecdroid.util.volts
@@ -131,6 +130,10 @@ class ArmSystem(wristConfig: WristConfig, elevatorConfig: ElevatorConfig, elevat
 
     private var targetVoltage = 0.0.volts
 
+    // To change the position orders according to the position of the entire arm
+    private var isLow = false
+    private var isNormalMode = { true }
+
     init {
         wrist.matchRelativeEncodersToAbsoluteEncoders()
         joint.matchRelativeEncodersToAbsoluteEncoders()
@@ -172,14 +175,68 @@ class ArmSystem(wristConfig: WristConfig, elevatorConfig: ElevatorConfig, elevat
     }
 
     fun assignCommandsToController(controller: CompliantXboxController) {
-        controller.rightBumper().onTrue(enableIntake()).onFalse(disableIntake())
-        controller.leftBumper().onTrue(enableOuttake()).onFalse(disableIntake())
+        controller.povLeft().onTrue(Commands.runOnce({ isNormalMode = { !isNormalMode.invoke() } }))
+
+        controller.y().onTrue(
+            Commands.either(
+                setPoseCommand(
+                    ArmPoses.L4.pose,
+                    ArmOrders.JEW.order
+                ),
+                setPoseCommand(
+                    ArmPoses.Barge.pose,
+                    ArmOrders.JEW.order
+                ).andThen({ isLow = false }),
+                isNormalMode
+            )
+        )
+
+        controller.b().onTrue(
+            Commands.either(
+                setPoseCommand(
+                    ArmPoses.L3.pose,
+                    ArmOrders.JEW.order
+                ),
+                setPoseCommand(
+                    ArmPoses.A2.pose,
+                    if (isLow) ArmOrders.JWE.order else ArmOrders.EWJ.order
+                ).andThen({ isLow = false }),
+                isNormalMode
+            )
+        )
+
+        controller.a().onTrue(
+            Commands.either(
+                setPoseCommand(
+                    ArmPoses.L2.pose,
+                    ArmOrders.EJW.order
+                ),
+                setPoseCommand(
+                    ArmPoses.A1.pose,
+                    if (isLow) ArmOrders.JWE.order else ArmOrders.EWJ.order
+                ).andThen({ isLow = false }),
+                isNormalMode
+            )
+        )
+
+        controller.x().onTrue(
+            Commands.either(
+                setPoseCommand(
+                    ArmPoses.CoralStation.pose,
+                    ArmOrders.EJW.order
+                ),
+                setPoseCommand(
+                    ArmPoses.Processor.pose,
+                    ArmOrders.EWJ.order
+                ).andThen({ isLow = true }),
+                isNormalMode
+            )
+        )
 
         controller.back().onTrue(setPoseCommand(ArmPoses.Passive.pose, ArmOrders.JEW.order))
-        controller.y().onTrue(setPoseCommand(ArmPoses.L4.pose, ArmOrders.JEW.order))
-        controller.b().onTrue(setPoseCommand(ArmPoses.L3.pose, ArmOrders.JEW.order))
-        controller.a().onTrue(setPoseCommand(ArmPoses.L2.pose, ArmOrders.JEW.order))
-        controller.x().onTrue(setPoseCommand(ArmPoses.CoralStation.pose, ArmOrders.EJW.order))
+
+        controller.rightBumper().onTrue(enableIntake()).onFalse(disableIntake())
+        controller.leftBumper().onTrue(enableOuttake()).onFalse(disableIntake())
     }
 
     fun iapWristDelta(delta: Angle): Command {
