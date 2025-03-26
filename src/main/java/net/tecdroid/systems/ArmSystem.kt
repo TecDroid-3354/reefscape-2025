@@ -130,9 +130,12 @@ class ArmSystem(wristConfig: WristConfig, elevatorConfig: ElevatorConfig, elevat
 
     private var targetVoltage = 0.0.volts
 
-    // To change the position orders according to the position of the entire arm
-    private var isLow = false
     private var isNormalMode = { true }
+    fun toggleIsNormalMode() { isNormalMode = { !isNormalMode.invoke() } }
+
+    // To change the position orders according to the position of the entire arm
+    private var isLow = { false }
+    fun setIsLow(value: Boolean) { isLow = { value } }
 
     init {
         wrist.matchRelativeEncodersToAbsoluteEncoders()
@@ -175,7 +178,7 @@ class ArmSystem(wristConfig: WristConfig, elevatorConfig: ElevatorConfig, elevat
     }
 
     fun assignCommandsToController(controller: CompliantXboxController) {
-        controller.povLeft().onTrue(Commands.runOnce({ isNormalMode = { !isNormalMode.invoke() } }))
+        controller.povLeft().onTrue(Commands.runOnce({ toggleIsNormalMode() }))
 
         controller.y().onTrue(
             Commands.either(
@@ -186,7 +189,7 @@ class ArmSystem(wristConfig: WristConfig, elevatorConfig: ElevatorConfig, elevat
                 setPoseCommand(
                     ArmPoses.Barge.pose,
                     ArmOrders.JEW.order
-                ).andThen({ isLow = false }),
+                ).andThen({ setIsLow(false) }),
                 isNormalMode
             )
         )
@@ -199,8 +202,8 @@ class ArmSystem(wristConfig: WristConfig, elevatorConfig: ElevatorConfig, elevat
                 ),
                 setPoseCommand(
                     ArmPoses.A2.pose,
-                    if (isLow) ArmOrders.JWE.order else ArmOrders.EWJ.order
-                ).andThen({ isLow = false }),
+                    if (isLow()) ArmOrders.JWE.order else ArmOrders.EWJ.order
+                ).andThen({ setIsLow(false) }),
                 isNormalMode
             )
         )
@@ -213,8 +216,8 @@ class ArmSystem(wristConfig: WristConfig, elevatorConfig: ElevatorConfig, elevat
                 ),
                 setPoseCommand(
                     ArmPoses.A1.pose,
-                    if (isLow) ArmOrders.JWE.order else ArmOrders.EWJ.order
-                ).andThen({ isLow = false }),
+                    if (isLow()) ArmOrders.JWE.order else ArmOrders.EWJ.order
+                ).andThen({ setIsLow(false) }),
                 isNormalMode
             )
         )
@@ -228,7 +231,7 @@ class ArmSystem(wristConfig: WristConfig, elevatorConfig: ElevatorConfig, elevat
                 setPoseCommand(
                     ArmPoses.Processor.pose,
                     ArmOrders.EWJ.order
-                ).andThen({ isLow = true }),
+                ).andThen({ setIsLow(true) }),
                 isNormalMode
             )
         )
