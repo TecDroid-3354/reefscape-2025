@@ -38,7 +38,7 @@ val elevatorConfig = ElevatorConfig(
 
     measureLimits = MeasureLimits(
         absoluteMinimum = 0.0.meters,
-        relativeMinimum = 0.02.meters,
+        relativeMinimum = 0.0175.meters,
         relativeMaximum = 1.030.meters,
         absoluteMaximum = 1.0389.meters,
     ),
@@ -53,7 +53,7 @@ val elevatorConfig = ElevatorConfig(
 
     motionTargets = LinearMotionTargets(
         cruiseVelocity = 1.2.meters.per(Second),
-        accelerationTimePeriod = 0.5.seconds,
+        accelerationTimePeriod = 0.1.seconds,
         jerkTimePeriod = 0.1.seconds
     ),
 )

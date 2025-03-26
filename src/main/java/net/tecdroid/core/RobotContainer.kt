@@ -24,6 +24,7 @@ import net.tecdroid.subsystems.intake.intakeConfig
 import net.tecdroid.systems.ArmSystem
 import net.tecdroid.vision.limelight.systems.LimeLightChoice
 import net.tecdroid.util.degrees
+import net.tecdroid.util.meters
 import net.tecdroid.util.seconds
 import net.tecdroid.vision.limelight.systems.LimelightController
 
@@ -60,6 +61,7 @@ class RobotContainer {
         limelightController.shuffleboardData()
         swerve.heading = 0.0.degrees
         arm.assignCommandsToController(controller)
+
         SmartDashboard.putData("AAAAA", f)
     }
 
@@ -76,8 +78,19 @@ class RobotContainer {
             swerve
         )
 
-        controller.rightTrigger().whileTrue(limelightController.alignRobotAllAxis(LimeLightChoice.Right, 0.22, 0.0))
-        controller.leftTrigger().whileTrue(limelightController.alignRobotAllAxis(LimeLightChoice.Left, 0.22, 0.0))
+        controller.rightTrigger().whileTrue(limelightController.alignRobotAllAxis(LimeLightChoice.Right, 0.21, 0.0))
+        controller.leftTrigger().whileTrue(limelightController.alignRobotAllAxis(LimeLightChoice.Left, 0.21, 0.0))
+
+        controller.povRight()
+    }
+
+    fun testInit() {
+        //controller.povUp().onTrue(arm.breakMode())
+        //controller.povDown().onTrue(arm.coastMode())
+    }
+
+    fun testPeriodic() {
+
     }
 
     val autonomousCommand: Command

@@ -21,6 +21,7 @@ import net.tecdroid.subsystems.intake.IntakeConfig
 import net.tecdroid.subsystems.wrist.Wrist
 import net.tecdroid.subsystems.wrist.WristConfig
 import net.tecdroid.systems.ArmMember.*
+import net.tecdroid.util.degrees
 import net.tecdroid.util.meters
 import net.tecdroid.util.rotations
 import net.tecdroid.util.volts
@@ -30,9 +31,9 @@ enum class ArmMember {
 }
 
 data class ArmPose(
-    val wristPosition: Angle,
-    val elevatorDisplacement: Distance,
-    val elevatorJointPosition: Angle,
+    var wristPosition: Angle,
+    var elevatorDisplacement: Distance,
+    var elevatorJointPosition: Angle,
     val targetVoltage: Voltage
 )
 data class ArmOrder(
@@ -41,7 +42,7 @@ data class ArmOrder(
     val third: ArmMember
 )
 
-enum class ArmPoses(val pose: ArmPose) {
+enum class ArmPoses(var pose: ArmPose) {
     Passive(ArmPose(
         wristPosition         = 0.17.rotations,
         elevatorDisplacement  = 0.01.meters,
@@ -71,9 +72,9 @@ enum class ArmPoses(val pose: ArmPose) {
     )),
 
     CoralStation(ArmPose(
-        wristPosition         = 0.3436.rotations,
-        elevatorDisplacement  = 0.02345.meters,
-        elevatorJointPosition = 0.1891.rotations,
+        wristPosition         = 0.3601.rotations,
+        elevatorDisplacement  = 0.01.meters,
+        elevatorJointPosition = 0.1822.rotations,
         targetVoltage = 8.0.volts
     )),
 
@@ -120,6 +121,13 @@ class ArmSystem(wristConfig: WristConfig, elevatorConfig: ElevatorConfig, elevat
     val elevator = Elevator(elevatorConfig)
     val joint = ElevatorJoint(elevatorJointConfig)
     val intake = Intake(intakeConfig)
+    var interactiveWristPose = ArmPoses.L2.pose.wristPosition
+        set(value) {field = value}
+
+    var interactiveElevatorDisplacement = ArmPoses.L2.pose.elevatorDisplacement
+        set(value) {field = value}
+    var interactiveJointPose = ArmPoses.L2.pose.elevatorJointPosition
+        set(value) {field = value}
 
     private var targetVoltage = 0.0.volts
 
@@ -172,6 +180,46 @@ class ArmSystem(wristConfig: WristConfig, elevatorConfig: ElevatorConfig, elevat
         controller.b().onTrue(setPoseCommand(ArmPoses.L3.pose, ArmOrders.JEW.order))
         controller.a().onTrue(setPoseCommand(ArmPoses.L2.pose, ArmOrders.JEW.order))
         controller.x().onTrue(setPoseCommand(ArmPoses.CoralStation.pose, ArmOrders.EJW.order))
+    }
+
+    fun iapWristDelta(delta: Angle): Command {
+        return Commands.sequence(
+            Commands.runOnce({
+                interactiveWristPose = delta + interactiveWristPose
+            }),
+            setWristAngle(interactiveWristPose))
+    }
+
+    fun iapJointDelta(delta: Angle): Command {
+        return Commands.sequence(
+            Commands.runOnce({
+                interactiveJointPose = delta + interactiveJointPose
+            }),
+            setJointAngle(interactiveJointPose))
+    }
+
+    fun iapElevatorDelta(delta: Distance): Command {
+        return Commands.sequence(
+            Commands.runOnce({
+                interactiveElevatorDisplacement = delta + interactiveElevatorDisplacement
+            }),
+            setElevatorDisplacement(interactiveElevatorDisplacement))
+    }
+
+    fun breakMode(): Command {
+        return Commands.sequence(
+            wrist.brake(),
+            elevator.brake(),
+            joint.brake()
+        )
+    }
+
+    fun coastMode(): Command {
+        return Commands.sequence(
+            wrist.coast(),
+            elevator.coast(),
+            joint.coast()
+        )
     }
 
 }

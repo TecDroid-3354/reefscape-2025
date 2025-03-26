@@ -46,7 +46,7 @@ fun makeConfig(moduleNumber: SymbolicId, magnetOffset: Angle, controlGains: Cont
     steerControlGains = ControlGains(p = 0.35)
 )
 
-val frontRightModuleConfig= makeConfig(SymbolicId(1), (-0.09130859375).rotations, ControlGains(s = 0.18174, v = 0.11491, a = 0.005462))
-val frontLeftModuleConfig = makeConfig(SymbolicId(2), (-0.38982578125).rotations, ControlGains(s = 0.12853, v = 0.11318, a = 0.0058254))
-val backLeftModuleConfig  = makeConfig(SymbolicId(3), (-0.345458984375).rotations, ControlGains(s = 0.1435, v = 0.11366, a = 0.0091299))
-val backRightModuleConfig = makeConfig(SymbolicId(4), (+0.138427734375).rotations, ControlGains(s = 0.21496, v = 0.11182, a = 0.008843))
+val frontRightModuleConfig= makeConfig(SymbolicId(1), (-0.098876953125).rotations, ControlGains(s = 0.18174, v = 0.11491, a = 0.005462))
+val frontLeftModuleConfig = makeConfig(SymbolicId(2), (-0.390380859375).rotations, ControlGains(s = 0.12853, v = 0.11318, a = 0.0058254))
+val backLeftModuleConfig  = makeConfig(SymbolicId(3), (-0.342041015625).rotations, ControlGains(s = 0.1435, v = 0.11366, a = 0.0091299))
+val backRightModuleConfig = makeConfig(SymbolicId(4), (+0.13574211875).rotations, ControlGains(s = 0.21496, v = 0.11182, a = 0.008843))

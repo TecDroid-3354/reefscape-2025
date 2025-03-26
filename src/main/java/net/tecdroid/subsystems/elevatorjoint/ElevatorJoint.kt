@@ -11,6 +11,8 @@ import edu.wpi.first.units.measure.Angle
 import edu.wpi.first.units.measure.AngularVelocity
 import edu.wpi.first.units.measure.Voltage
 import edu.wpi.first.util.sendable.SendableBuilder
+import edu.wpi.first.wpilibj2.command.Command
+import edu.wpi.first.wpilibj2.command.Commands
 import net.tecdroid.subsystems.util.generic.*
 import net.tecdroid.wrappers.ThroughBoreAbsoluteEncoder
 
@@ -78,16 +80,6 @@ class ElevatorJoint(private val config: ElevatorJointConfig) :
         leadMotorController.setPosition(config.reduction.unapply(absoluteAngle))
     }
 
-    fun coast() {
-        leadMotorController.setNeutralMode(NeutralModeValue.Coast)
-        followerMotorController.setNeutralMode(NeutralModeValue.Coast)
-    }
-
-    fun brake() {
-        leadMotorController.setNeutralMode(NeutralModeValue.Brake)
-        followerMotorController.setNeutralMode(NeutralModeValue.Brake)
-    }
-
     private fun configureMotorsInterface() {
         val talonConfig = TalonFXConfiguration()
 
@@ -130,4 +122,14 @@ class ElevatorJoint(private val config: ElevatorJointConfig) :
             addDoubleProperty("Current Absolute Angle (Rotations)", { absoluteAngle.`in`(Rotations) }, {})
         }
     }
+
+    fun coast(): Command = Commands.runOnce({
+        leadMotorController.setNeutralMode(NeutralModeValue.Coast)
+        followerMotorController.setNeutralMode(NeutralModeValue.Coast)
+    })
+
+    fun brake(): Command = Commands.runOnce({
+        leadMotorController.setNeutralMode(NeutralModeValue.Brake)
+        followerMotorController.setNeutralMode(NeutralModeValue.Brake)
+    })
 }

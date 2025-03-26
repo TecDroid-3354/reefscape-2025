@@ -46,9 +46,11 @@ class Robot : TimedRobot() {
 
     override fun testInit() {
         CommandScheduler.getInstance().cancelAll()
+        container.testInit()
     }
 
     override fun testPeriodic() {
+        container.testPeriodic()
     }
 
     override fun simulationInit() {

@@ -10,6 +10,8 @@ import edu.wpi.first.units.Units.Meters
 import edu.wpi.first.units.Units.Rotations
 import edu.wpi.first.units.measure.*
 import edu.wpi.first.util.sendable.SendableBuilder
+import edu.wpi.first.wpilibj2.command.Command
+import edu.wpi.first.wpilibj2.command.Commands
 import net.tecdroid.subsystems.util.generic.*
 
 class Elevator(private val config: ElevatorConfig) :
@@ -67,15 +69,15 @@ class Elevator(private val config: ElevatorConfig) :
     override val velocity: LinearVelocity
         get() = config.sprocket.angularVelocityToLinearVelocity(config.reduction.apply(motorVelocity))
 
-    fun coast() {
+    fun coast(): Command = Commands.runOnce({
         leadMotorController.setNeutralMode(NeutralModeValue.Coast)
         followerMotorController.setNeutralMode(NeutralModeValue.Coast)
-    }
+    })
 
-    fun brake() {
+    fun brake(): Command = Commands.runOnce({
         leadMotorController.setNeutralMode(NeutralModeValue.Brake)
         followerMotorController.setNeutralMode(NeutralModeValue.Brake)
-    }
+    })
 
     private fun configureMotorsInterface() {
         val talonConfig = TalonFXConfiguration()
