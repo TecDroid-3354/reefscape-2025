@@ -68,7 +68,7 @@ enum class ArmPoses(var pose: ArmPose) {
     L4(ArmPose(
         wristPosition         = 0.3528.rotations,
         elevatorDisplacement  = 1.0283.meters,
-        elevatorJointPosition = 0.2610.rotations + 1.0.degrees,
+        elevatorJointPosition = 0.2610.rotations + 1.5.degrees,
         targetVoltage = 10.0.volts
     )),
 
