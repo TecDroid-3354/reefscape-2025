@@ -8,6 +8,7 @@ import edu.wpi.first.units.measure.Distance
 import edu.wpi.first.units.measure.Voltage
 import edu.wpi.first.util.sendable.Sendable
 import edu.wpi.first.util.sendable.SendableBuilder
+import edu.wpi.first.wpilibj.shuffleboard.Shuffleboard
 import edu.wpi.first.wpilibj2.command.Command
 import edu.wpi.first.wpilibj2.command.Commands
 import edu.wpi.first.wpilibj2.command.SequentialCommandGroup
@@ -21,6 +22,7 @@ import net.tecdroid.subsystems.intake.IntakeConfig
 import net.tecdroid.subsystems.wrist.Wrist
 import net.tecdroid.subsystems.wrist.WristConfig
 import net.tecdroid.systems.ArmMember.*
+import net.tecdroid.util.degrees
 import net.tecdroid.util.meters
 import net.tecdroid.util.rotations
 import net.tecdroid.util.volts
@@ -99,9 +101,9 @@ enum class ArmPoses(var pose: ArmPose) {
     )),
 
     AlgaeFloorIntake(ArmPose(
-        wristPosition         = 0.3705.rotations,
+        wristPosition         = 0.3705.rotations - 24.0.degrees,
         elevatorDisplacement  = 0.0150.meters,
-        elevatorJointPosition = 0.0315.rotations,
+        elevatorJointPosition = 0.0615.rotations,
         targetVoltage = 8.0.volts
     )),
 
@@ -181,6 +183,11 @@ class ArmSystem(wristConfig: WristConfig, elevatorConfig: ElevatorConfig, elevat
         }
     }
 
+    fun publishShuffleBoardData() {
+        val tab = Shuffleboard.getTab("Driver Tab")
+        tab.addBoolean("Is Coral Mode", { isCoralMode })
+    }
+
     fun assignCommandsToController(controller: CompliantXboxController) {
         controller.povLeft().onTrue(Commands.runOnce({ toggleCoralMode() }))
 
@@ -245,9 +252,6 @@ class ArmSystem(wristConfig: WristConfig, elevatorConfig: ElevatorConfig, elevat
         )
 
         controller.back().onTrue(setPoseCommand(ArmPoses.Passive.pose, ArmOrders.JEW.order))
-
-        //controller.rightBumper().onTrue(enableIntake()).onFalse(disableIntake())
-        //controller.leftBumper().onTrue(enableOuttake()).onFalse(disableIntake())
 
         controller.rightBumper().onTrue(enableIntake()).onFalse(disableIntake())
         controller.leftBumper().onTrue(enableOuttake()).onFalse(disableIntake())

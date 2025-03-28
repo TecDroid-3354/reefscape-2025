@@ -40,8 +40,6 @@ class RobotContainer {
     )
     private val autoComposer = AutoComposer(swerve, limelightController, arm)
 
-    private val f = Field2d()
-
     // Swerve Control
     private val accelerationPeriod = 0.1.seconds
     private val decelerationPeriod = accelerationPeriod
@@ -59,11 +57,10 @@ class RobotContainer {
 
     init {
         limelightController.shuffleboardData()
+        arm.publishShuffleBoardData()
         swerve.heading = 0.0.degrees
 
         arm.assignCommandsToController(controller)
-
-        SmartDashboard.putData("Hello", arm)
     }
 
 

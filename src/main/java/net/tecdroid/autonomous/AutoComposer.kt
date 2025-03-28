@@ -7,13 +7,10 @@ import edu.wpi.first.wpilibj2.command.Command
 import edu.wpi.first.wpilibj2.command.Commands
 import edu.wpi.first.wpilibj2.command.ParallelCommandGroup
 import edu.wpi.first.wpilibj2.command.SequentialCommandGroup
-import frc.robot.LimelightHelpers
 import net.tecdroid.subsystems.drivetrain.SwerveDrive
-import net.tecdroid.subsystems.drivetrain.swerveDriveConfiguration
 import net.tecdroid.systems.ArmOrders
 import net.tecdroid.systems.ArmPoses
 import net.tecdroid.systems.ArmSystem
-import net.tecdroid.util.MatchStatus
 import net.tecdroid.vision.limelight.systems.LimeLightChoice
 import net.tecdroid.util.seconds
 import net.tecdroid.vision.limelight.systems.LimelightController
@@ -47,8 +44,8 @@ class AutoComposer(private val drive: SwerveDrive, private val limelightControll
         autoChooser.addOption("Straight Forward", pathplanner.resetPoseAndGetPathFollowingCommand("Straightforward"))
 
         // Complete autos
-        autoChooser.addOption("LeftAuto", leftCompleteAuto())
         autoChooser.addOption("RightAuto", rightCompleteAuto())
+        autoChooser.addOption("LeftAuto", leftCompleteAuto())
         autoChooser.addOption("CenterAuto", centerCompleteAuto())
 
         tab.add("Autonomous Chooser", autoChooser)
@@ -90,7 +87,7 @@ class AutoComposer(private val drive: SwerveDrive, private val limelightControll
         }
     }
 
-    private fun leftCompleteAuto(): Command {
+    private fun rightCompleteAuto(): Command {
         return Commands.sequence(
             getRoutine(AutonomousSide.Left, AutonomousDirection.BargeToReef, AutonomousCoralChoice.C1, LimeLightChoice.Right),
             getRoutine(AutonomousSide.Left, AutonomousDirection.ReefToCoralStation, AutonomousCoralChoice.C2, LimeLightChoice.Right),
@@ -100,7 +97,7 @@ class AutoComposer(private val drive: SwerveDrive, private val limelightControll
         )
     }
 
-    private fun rightCompleteAuto(): Command {
+    private fun leftCompleteAuto(): Command {
         return Commands.sequence(
             getRoutine(AutonomousSide.Right, AutonomousDirection.BargeToReef, AutonomousCoralChoice.C1, LimeLightChoice.Right),
             getRoutine(AutonomousSide.Right, AutonomousDirection.ReefToCoralStation, AutonomousCoralChoice.C2, LimeLightChoice.Right),
