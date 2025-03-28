@@ -59,16 +59,16 @@ enum class ArmPoses(var pose: ArmPose) {
     )),
 
     L3(ArmPose(
-        wristPosition         = 0.3688.rotations,
-        elevatorDisplacement  = 0.4631.meters,
+        wristPosition         = 0.3528.rotations,
+        elevatorDisplacement  = 0.4031.meters,
         elevatorJointPosition = 0.2615.rotations,
         targetVoltage = 10.0.volts
     )),
 
     L4(ArmPose(
-        wristPosition         = 0.3390.rotations,
-        elevatorDisplacement  = 1.0133.meters,
-        elevatorJointPosition = 0.2610.rotations,
+        wristPosition         = 0.3528.rotations,
+        elevatorDisplacement  = 1.0283.meters,
+        elevatorJointPosition = 0.2610.rotations + 1.0.degrees,
         targetVoltage = 10.0.volts
     )),
 
@@ -152,6 +152,7 @@ class ArmSystem(wristConfig: WristConfig, elevatorConfig: ElevatorConfig, elevat
     fun setWristAngle(angle: Angle) : Command = wrist.setAngleCommand(angle)
 
     fun enableIntake() : Command = intake.setVoltageCommand(targetVoltage)
+    fun enableIntakeAuto() : Command = intake.setVoltageCommand(8.0.volts)
     fun enableOuttake() : Command = intake.setVoltageCommand(-targetVoltage)
     fun disableIntake() : Command = Commands.either(intake.setVoltageCommand(0.0.volts),
         intake.setVoltageCommand(1.0.volts), { isCoralMode })

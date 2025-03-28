@@ -49,7 +49,7 @@ class AutoComposer(private val drive: SwerveDrive, private val limelightControll
         autoChooser.addOption("CenterAuto", centerCompleteAuto())
 
         tab.add("Autonomous Chooser", autoChooser)
-        SmartDashboard.putData("Autonomus Chooser", autoChooser)
+        SmartDashboard.putData("Autonomous Chooser", autoChooser)
     }
 
     fun getRoutine(side: AutonomousSide, direction: AutonomousDirection, coralChoice: AutonomousCoralChoice, llChoice: LimeLightChoice): Command {
@@ -60,7 +60,7 @@ class AutoComposer(private val drive: SwerveDrive, private val limelightControll
                     armSystem.setPoseCommand(ArmPoses.CoralStation.pose, ArmOrders.EJW.order),
                 ),
 
-                armSystem.enableIntake(),
+                armSystem.enableIntakeAuto(),
                 Commands.waitUntil { armSystem.intake.hasCoral() },
                 armSystem.disableIntake()
             )
@@ -79,7 +79,7 @@ class AutoComposer(private val drive: SwerveDrive, private val limelightControll
 
                 Commands.waitTime(0.5.seconds),
 
-                armSystem.enableIntake(),
+                armSystem.enableIntakeAuto(),
                 Commands.waitUntil { !armSystem.intake.hasCoral() },
                 Commands.waitTime(0.5.seconds),
                 armSystem.disableIntake(),
@@ -110,10 +110,10 @@ class AutoComposer(private val drive: SwerveDrive, private val limelightControll
     private fun centerCompleteAuto(): Command {
         return Commands.sequence(
             getRoutine(AutonomousSide.Center, AutonomousDirection.BargeToReef, AutonomousCoralChoice.C1, LimeLightChoice.Right),
-            getRoutine(AutonomousSide.Center, AutonomousDirection.ReefToCoralStation, AutonomousCoralChoice.C2, LimeLightChoice.Right),
-            getRoutine(AutonomousSide.Center, AutonomousDirection.CoralStationToReef, AutonomousCoralChoice.C2, LimeLightChoice.Right),
-            getRoutine(AutonomousSide.Center, AutonomousDirection.ReefToCoralStation, AutonomousCoralChoice.C3, LimeLightChoice.Left),
-            getRoutine(AutonomousSide.Center, AutonomousDirection.CoralStationToReef, AutonomousCoralChoice.C3, LimeLightChoice.Left),
+            //getRoutine(AutonomousSide.Center, AutonomousDirection.ReefToCoralStation, AutonomousCoralChoice.C2, LimeLightChoice.Right),
+            //getRoutine(AutonomousSide.Center, AutonomousDirection.CoralStationToReef, AutonomousCoralChoice.C2, LimeLightChoice.Right),
+            //getRoutine(AutonomousSide.Center, AutonomousDirection.ReefToCoralStation, AutonomousCoralChoice.C3, LimeLightChoice.Left),
+            //getRoutine(AutonomousSide.Center, AutonomousDirection.CoralStationToReef, AutonomousCoralChoice.C3, LimeLightChoice.Left),
         )
     }
 
