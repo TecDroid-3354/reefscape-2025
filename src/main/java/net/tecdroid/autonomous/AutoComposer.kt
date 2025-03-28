@@ -68,6 +68,7 @@ class AutoComposer(private val drive: SwerveDrive, private val limelightControll
             AutonomousDirection.CoralStationToReef, AutonomousDirection.BargeToReef -> SequentialCommandGroup(
                 (if (direction == AutonomousDirection.BargeToReef)
                     pathplanner.resetPoseAndGetPathFollowingCommand("${coralChoice.str}-${side.str}-${direction.str}")
+                        .alongWith(armSystem.setPoseCommand(ArmPoses.L2.pose, ArmOrders.WJE.order))
                 else
                      pathplanner.getPathFollowingCommand("${coralChoice.str}-${side.str}-${direction.str}")),
 

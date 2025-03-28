@@ -82,14 +82,14 @@ enum class ArmPoses(var pose: ArmPose) {
     A1(ArmPose(
         wristPosition         = 0.2798.rotations,
         elevatorDisplacement  = 0.1457.meters,
-        elevatorJointPosition = 0.1972.rotations,
+        elevatorJointPosition = 0.1972.rotations - 1.5.degrees,
         targetVoltage = 12.0.volts
     )),
 
     A2(ArmPose(
         wristPosition         = 0.2628.rotations,
         elevatorDisplacement  = 0.4920.meters,
-        elevatorJointPosition = 0.2168.rotations,
+        elevatorJointPosition = 0.2168.rotations - 1.5.degrees,
         targetVoltage = 12.0.volts
     )),
 
