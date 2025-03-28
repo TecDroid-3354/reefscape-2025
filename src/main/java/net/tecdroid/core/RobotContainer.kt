@@ -76,8 +76,8 @@ class RobotContainer {
             swerve
         )
 
-        controller.rightTrigger().whileTrue(limelightController.alignRobotAllAxis(LimeLightChoice.Right, 0.19, 0.0))
-        controller.leftTrigger().whileTrue(limelightController.alignRobotAllAxis(LimeLightChoice.Left, 0.19, 0.0))
+        controller.rightTrigger().whileTrue(limelightController.alignRobotAllAxis(LimeLightChoice.Right, 0.18, 0.0))
+        controller.leftTrigger().whileTrue(limelightController.alignRobotAllAxis(LimeLightChoice.Left, 0.18, 0.0))
 
         controller.povRight()
     }
