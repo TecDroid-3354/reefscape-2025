@@ -127,7 +127,7 @@ class ArmSystem(wristConfig: WristConfig, elevatorConfig: ElevatorConfig, elevat
     val elevator = Elevator(elevatorConfig)
     val joint = ElevatorJoint(elevatorJointConfig)
     val intake = Intake(intakeConfig)
-    private var targetVoltage = 0.0.volts
+    private var targetVoltage = 10.0.volts
 
     var isCoralMode = true
     var pollIsCoralMode = { isCoralMode }
@@ -151,7 +151,8 @@ class ArmSystem(wristConfig: WristConfig, elevatorConfig: ElevatorConfig, elevat
 
     fun enableIntake() : Command = intake.setVoltageCommand(targetVoltage)
     fun enableOuttake() : Command = intake.setVoltageCommand(-targetVoltage)
-    fun disableIntake() : Command = intake.setVoltageCommand(0.0.volts)
+    fun disableIntake() : Command = Commands.either(intake.setVoltageCommand(0.0.volts),
+        intake.setVoltageCommand(0.5.volts), { isCoralMode })
 
     private fun getCommandFor(pose: ArmPose, member: ArmMember) : Command = when (member) {
         ArmWrist -> wrist.setAngleCommand(pose.wristPosition).andThen(Commands.waitUntil { wrist.getPositionError() < 50.0.rotations })
@@ -160,9 +161,8 @@ class ArmSystem(wristConfig: WristConfig, elevatorConfig: ElevatorConfig, elevat
     }
 
     fun setPoseCommand(pose: ArmPose, order: ArmOrder) : Command {
-        targetVoltage = pose.targetVoltage
-
         return SequentialCommandGroup(
+            Commands.runOnce({ targetVoltage = pose.targetVoltage }),
             getCommandFor(pose, order.first),
             getCommandFor(pose, order.second),
             getCommandFor(pose, order.third),
@@ -177,6 +177,7 @@ class ArmSystem(wristConfig: WristConfig, elevatorConfig: ElevatorConfig, elevat
             addDoubleProperty("Elevator Displacement (Meters)", { elevator.displacement.`in`(Meters) }) {}
             addDoubleProperty("Joint Position (Rotations)", { joint.angle.`in`(Rotations) }) {}
             addDoubleProperty("Wrist Position (Rotations)", { wrist.angle.`in`(Rotations) }) {}
+            addDoubleProperty("Voltage", { targetVoltage.`in`(Volts)}) {}
         }
     }
 
@@ -230,7 +231,7 @@ class ArmSystem(wristConfig: WristConfig, elevatorConfig: ElevatorConfig, elevat
                 setPoseCommand(
                     ArmPoses.CoralStation.pose,
                     ArmOrders.EJW.order
-                ),
+                ).andThen({ setIsLow(true) }),
                 Commands.none(),
                 pollIsCoralMode
             )
@@ -244,6 +245,9 @@ class ArmSystem(wristConfig: WristConfig, elevatorConfig: ElevatorConfig, elevat
         )
 
         controller.back().onTrue(setPoseCommand(ArmPoses.Passive.pose, ArmOrders.JEW.order))
+
+        //controller.rightBumper().onTrue(enableIntake()).onFalse(disableIntake())
+        //controller.leftBumper().onTrue(enableOuttake()).onFalse(disableIntake())
 
         controller.rightBumper().onTrue(enableIntake()).onFalse(disableIntake())
         controller.leftBumper().onTrue(enableOuttake()).onFalse(disableIntake())

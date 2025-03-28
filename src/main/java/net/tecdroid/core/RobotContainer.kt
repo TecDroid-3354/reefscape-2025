@@ -63,7 +63,7 @@ class RobotContainer {
 
         arm.assignCommandsToController(controller)
 
-        SmartDashboard.putData("AAAAA", f)
+        SmartDashboard.putData("Hello", arm)
     }
 
 
