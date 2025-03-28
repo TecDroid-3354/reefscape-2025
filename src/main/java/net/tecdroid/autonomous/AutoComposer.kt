@@ -72,8 +72,8 @@ class AutoComposer(private val drive: SwerveDrive, private val limelightControll
                      pathplanner.getPathFollowingCommand("${coralChoice.str}-${side.str}-${direction.str}")),
 
                 ParallelCommandGroup(
-                    limelightController.alignRobotAllAxis(llChoice, 0.21, 0.0)
-                        .until { limelightController.isAtSetPoint(llChoice, 0.21, 0.0) },
+                    limelightController.alignRobotAllAxis(llChoice, 0.19, 0.0)
+                        .until { limelightController.isAtSetPoint(llChoice, 0.19, 0.0) },
                     armSystem.setPoseCommand(ArmPoses.L4.pose, ArmOrders.JEW.order).beforeStarting(Commands.waitTime(0.5.seconds)),
                 ),
 

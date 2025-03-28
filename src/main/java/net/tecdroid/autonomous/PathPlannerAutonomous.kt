@@ -41,7 +41,7 @@ class PathPlannerAutonomous(val drive: SwerveDrive) {
             },
             driveController,
             robotConfig,
-            MatchStatus::isRedAlliance::get,
+            { false },
             drive
         )
     }
