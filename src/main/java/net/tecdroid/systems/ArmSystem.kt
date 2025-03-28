@@ -129,7 +129,7 @@ class ArmSystem(wristConfig: WristConfig, elevatorConfig: ElevatorConfig, elevat
     val elevator = Elevator(elevatorConfig)
     val joint = ElevatorJoint(elevatorJointConfig)
     val intake = Intake(intakeConfig)
-    private var targetVoltage = 10.0.volts
+    private var targetVoltage = 9.0.volts
 
     var isCoralMode = true
     var pollIsCoralMode = { isCoralMode }
