@@ -152,7 +152,7 @@ class ArmSystem(wristConfig: WristConfig, elevatorConfig: ElevatorConfig, elevat
     fun setWristAngle(angle: Angle) : Command = wrist.setAngleCommand(angle)
 
     fun enableIntake() : Command = intake.setVoltageCommand(targetVoltage)
-    fun enableIntakeAuto() : Command = intake.setVoltageCommand(8.0.volts)
+    fun enableIntakeAuto() : Command = intake.setVoltageCommand(7.0.volts)
     fun enableOuttake() : Command = intake.setVoltageCommand(-targetVoltage)
     fun disableIntake() : Command = Commands.either(intake.setVoltageCommand(0.0.volts),
         intake.setVoltageCommand(1.0.volts), { isCoralMode })
