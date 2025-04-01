@@ -55,28 +55,28 @@ enum class ArmPoses(var pose: ArmPose) {
         wristPosition         = 0.3528.rotations,
         elevatorDisplacement  = 0.0367.meters,
         elevatorJointPosition = 0.2615.rotations,
-        targetVoltage = 10.0.volts
+        targetVoltage = 9.0.volts
     )),
 
     L3(ArmPose(
         wristPosition         = 0.3528.rotations,
         elevatorDisplacement  = 0.4281.meters,
         elevatorJointPosition = 0.2615.rotations,
-        targetVoltage = 10.0.volts
+        targetVoltage = 9.0.volts
     )),
 
     L4(ArmPose(
         wristPosition         = 0.3528.rotations,
         elevatorDisplacement  = 1.0283.meters,
         elevatorJointPosition = 0.2610.rotations + 1.5.degrees,
-        targetVoltage = 10.0.volts
+        targetVoltage = 9.0.volts
     )),
 
     CoralStation(ArmPose(
         wristPosition         = 0.3601.rotations - 2.0.degrees,
         elevatorDisplacement  = 0.01.meters,
         elevatorJointPosition = 0.1822.rotations + 2.0.degrees,
-        targetVoltage = 8.0.volts
+        targetVoltage = 9.0.volts
     )),
 
     A1(ArmPose(
@@ -129,7 +129,7 @@ class ArmSystem(wristConfig: WristConfig, elevatorConfig: ElevatorConfig, elevat
     val elevator = Elevator(elevatorConfig)
     val joint = ElevatorJoint(elevatorJointConfig)
     val intake = Intake(intakeConfig)
-    private var targetVoltage = 9.0.volts
+    private var targetVoltage = 0.0.volts
 
     var isCoralMode = true
     var pollIsCoralMode = { isCoralMode }
@@ -151,11 +151,11 @@ class ArmSystem(wristConfig: WristConfig, elevatorConfig: ElevatorConfig, elevat
     fun setElevatorDisplacement(displacement: Distance) : Command = elevator.setDisplacementCommand(displacement)
     fun setWristAngle(angle: Angle) : Command = wrist.setAngleCommand(angle)
 
-    fun enableIntake() : Command = intake.setVoltageCommand(targetVoltage)
-    fun enableIntakeAuto() : Command = intake.setVoltageCommand(7.0.volts)
-    fun enableOuttake() : Command = intake.setVoltageCommand(-targetVoltage)
-    fun disableIntake() : Command = Commands.either(intake.setVoltageCommand(0.0.volts),
-        intake.setVoltageCommand(1.0.volts), { isCoralMode })
+    fun enableIntake() : Command = intake.setVoltageCommand({ targetVoltage })
+    fun enableIntakeAuto() : Command = intake.setVoltageCommand({ 7.0.volts })
+    fun enableOuttake() : Command = intake.setVoltageCommand({ -targetVoltage })
+    fun disableIntake() : Command = Commands.either(intake.setVoltageCommand({ 0.0.volts }),
+        intake.setVoltageCommand({ 1.0.volts }), { isCoralMode })
 
     private fun getCommandFor(pose: ArmPose, member: ArmMember) : Command = when (member) {
         ArmWrist -> wrist.setAngleCommand(pose.wristPosition).andThen(Commands.waitUntil { wrist.getPositionError() < 50.0.rotations })
@@ -180,13 +180,13 @@ class ArmSystem(wristConfig: WristConfig, elevatorConfig: ElevatorConfig, elevat
             addDoubleProperty("Elevator Displacement (Meters)", { elevator.displacement.`in`(Meters) }) {}
             addDoubleProperty("Joint Position (Rotations)", { joint.angle.`in`(Rotations) }) {}
             addDoubleProperty("Wrist Position (Rotations)", { wrist.angle.`in`(Rotations) }) {}
-            addDoubleProperty("Voltage", { targetVoltage.`in`(Volts)}) {}
         }
     }
 
     fun publishShuffleBoardData() {
         val tab = Shuffleboard.getTab("Driver Tab")
         tab.addBoolean("Is Coral Mode", { isCoralMode })
+        tab.addDouble("Target Voltage", { targetVoltage.`in`(Volts) })
     }
 
     fun assignCommandsToController(controller: CompliantXboxController) {
