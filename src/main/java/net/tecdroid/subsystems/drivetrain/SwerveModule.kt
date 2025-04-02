@@ -21,10 +21,8 @@ import edu.wpi.first.units.measure.Distance
 import edu.wpi.first.units.measure.LinearVelocity
 import edu.wpi.first.util.sendable.Sendable
 import edu.wpi.first.util.sendable.SendableBuilder
-import net.tecdroid.constants.UnitConstants.halfRotation
-import net.tecdroid.subsystems.util.generic.WithThroughBoreAbsoluteEncoder
-import net.tecdroid.util.units.degrees
-import net.tecdroid.util.units.toRotation2d
+import net.tecdroid.util.degrees
+import net.tecdroid.util.toRotation2d
 
 /**
  * Represents a single module of a [SwerveDrive]
@@ -106,7 +104,7 @@ class SwerveModule(private val config: SwerveModuleConfig) : Sendable {
      * The accumulated linear displacement of the module's wheel
      */
     val wheelLinearDisplacement: Distance
-        get() = config.wheel.angularDisplacementToLinearDisplacement(wheelAngularDisplacement)
+        get() = config.circle.angularDisplacementToLinearDisplacement(wheelAngularDisplacement)
 
     /**
      * The angular velocity of the module's drive motor shaft
@@ -124,7 +122,7 @@ class SwerveModule(private val config: SwerveModuleConfig) : Sendable {
      * The linear velocity of the module's wheel
      */
     val wheelLinearVelocity: LinearVelocity
-        get() = config.wheel.angularVelocityToLinearVelocity(wheelAngularVelocity)
+        get() = config.circle.angularVelocityToLinearVelocity(wheelAngularVelocity)
 
     /**
      * The max angular velocity of the drive motor's shaft
@@ -136,7 +134,7 @@ class SwerveModule(private val config: SwerveModuleConfig) : Sendable {
      * The max linear velocity of the drive wheel
      */
     val wheelMaxLinearVelocity: LinearVelocity
-        get() = config.wheel.angularVelocityToLinearVelocity(
+        get() = config.circle.angularVelocityToLinearVelocity(
             config.driveGearRatio.apply(
                 driveMotorShaftMaxAngularVelocity
             )
@@ -188,7 +186,7 @@ class SwerveModule(private val config: SwerveModuleConfig) : Sendable {
      * @return The drive motor shaft angular velocity
      */
     private fun wheelLinearVelocityToDriveMotorShaftAngularVelocity(wheelVelocity: LinearVelocity): AngularVelocity {
-        return config.driveGearRatio.unapply(config.wheel.linearVelocityToAngularVelocity(wheelVelocity))
+        return config.driveGearRatio.unapply(config.circle.linearVelocityToAngularVelocity(wheelVelocity))
     }
 
     // //////// //
@@ -207,6 +205,15 @@ class SwerveModule(private val config: SwerveModuleConfig) : Sendable {
         sendableBuilder.addDoubleProperty(
             "Target Azimuth (deg)",
             { tst.angle.degrees },
+            { })
+
+        sendableBuilder.addDoubleProperty(
+            "Velocity (m/s)",
+            { wheelLinearVelocity.`in`(MetersPerSecond) },
+            { })
+        sendableBuilder.addIntegerProperty(
+            "Integer",
+            { config.driveControllerId.id.toLong() },
             { })
     }
 
@@ -272,7 +279,7 @@ class SwerveModule(private val config: SwerveModuleConfig) : Sendable {
 
             closedLoop.positionWrappingEnabled(true).positionWrappingInputRange(
                 0.0,
-                config.steerGearRatio.unapply(halfRotation.`in`(Rotations))
+                config.steerGearRatio.unapply(0.5) // Rotations
             ).pidf(
                 config.steerControlGains.p,
                 config.steerControlGains.i,
@@ -307,5 +314,10 @@ class SwerveModule(private val config: SwerveModuleConfig) : Sendable {
     fun align() {
         setTargetAngle(0.0.degrees)
     }
+
+    // Creamos una propiedad que devuelve el estado del módulo
+    val state: SwerveModuleState
+        get() = SwerveModuleState(wheelLinearVelocity, wheelAzimuth.toRotation2d())
+
 
 }

@@ -4,7 +4,7 @@ import edu.wpi.first.units.Units.Rotations
 import edu.wpi.first.units.measure.Angle
 import edu.wpi.first.wpilibj.DutyCycleEncoder
 import net.tecdroid.util.NumericId
-import net.tecdroid.util.units.rotations
+import net.tecdroid.util.rotations
 
 class ThroughBoreAbsoluteEncoder(port: NumericId, private val offset: Angle, private val inverted: Boolean) {
     private val encoder: DutyCycleEncoder = DutyCycleEncoder(port.id)

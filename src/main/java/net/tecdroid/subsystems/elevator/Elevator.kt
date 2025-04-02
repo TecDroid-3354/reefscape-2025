@@ -10,9 +10,9 @@ import edu.wpi.first.units.Units.Meters
 import edu.wpi.first.units.Units.Rotations
 import edu.wpi.first.units.measure.*
 import edu.wpi.first.util.sendable.SendableBuilder
+import edu.wpi.first.wpilibj2.command.Command
+import edu.wpi.first.wpilibj2.command.Commands
 import net.tecdroid.subsystems.util.generic.*
-import net.tecdroid.util.units.abs
-import kotlin.math.absoluteValue
 
 class Elevator(private val config: ElevatorConfig) :
     TdSubsystem("Elevator"),
@@ -25,8 +25,8 @@ class Elevator(private val config: ElevatorConfig) :
     private val followerMotorController = TalonFX(config.followerMotorId.id)
     private var target: Angle
 
-    override val forwardsRunningCondition = { displacement < config.limits.relativeMaximum }
-    override val backwardsRunningCondition = { displacement > config.limits.relativeMinimum }
+    override val forwardsRunningCondition = { displacement < config.measureLimits.relativeMaximum }
+    override val backwardsRunningCondition = { displacement > config.measureLimits.relativeMinimum }
 
     init {
         configureMotorsInterface()
@@ -40,7 +40,7 @@ class Elevator(private val config: ElevatorConfig) :
     }
 
     override fun setDisplacement(targetDisplacement: Distance) {
-        val clampedDisplacement = config.limits.coerceIn(targetDisplacement) as Distance
+        val clampedDisplacement = config.measureLimits.coerceIn(targetDisplacement) as Distance
         val targetAngle = config.sprocket.linearDisplacementToAngularDisplacement(clampedDisplacement)
         val transformedAngle = config.reduction.unapply(targetAngle)
         val request = MotionMagicVoltage(transformedAngle)
@@ -69,15 +69,15 @@ class Elevator(private val config: ElevatorConfig) :
     override val velocity: LinearVelocity
         get() = config.sprocket.angularVelocityToLinearVelocity(config.reduction.apply(motorVelocity))
 
-    fun coast() {
+    fun coast(): Command = Commands.runOnce({
         leadMotorController.setNeutralMode(NeutralModeValue.Coast)
         followerMotorController.setNeutralMode(NeutralModeValue.Coast)
-    }
+    })
 
-    fun brake() {
+    fun brake(): Command = Commands.runOnce({
         leadMotorController.setNeutralMode(NeutralModeValue.Brake)
         followerMotorController.setNeutralMode(NeutralModeValue.Brake)
-    }
+    })
 
     private fun configureMotorsInterface() {
         val talonConfig = TalonFXConfiguration()

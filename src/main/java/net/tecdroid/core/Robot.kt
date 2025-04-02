@@ -2,14 +2,13 @@ package net.tecdroid.core
 
 import edu.wpi.first.wpilibj.DriverStation
 import edu.wpi.first.wpilibj.TimedRobot
-import edu.wpi.first.wpilibj.Timer
+import edu.wpi.first.wpilibj2.command.Command
 import edu.wpi.first.wpilibj2.command.CommandScheduler
-import net.tecdroid.util.units.degrees
 
 class Robot : TimedRobot() {
-
     private val container = RobotContainer()
-    val timer = Timer()
+    private val autonomousCommand: Command
+        get() = container.autonomousCommand
 
     override fun robotInit() {
         DriverStation.silenceJoystickConnectionWarning(true)
@@ -17,6 +16,7 @@ class Robot : TimedRobot() {
 
     override fun robotPeriodic() {
         CommandScheduler.getInstance().run()
+        container.robotPeriodic()
     }
 
     override fun disabledInit() {
@@ -30,39 +30,19 @@ class Robot : TimedRobot() {
     }
 
     override fun autonomousInit() {
-        timer.restart()
-        timer.reset()
-        timer.start()
-
+        container.autonomousInit()
+        autonomousCommand.schedule()
     }
 
     override fun autonomousPeriodic() {
-        for (module in container.swerve.drive.modules) {
-            module.setTargetAngle(0.0.degrees)
-        }
-
-        val power = 0.25
-
-        if (timer.get() < 1.5) {
-            container.swerve.drive.modules[0].setPower(power)
-            container.swerve.drive.modules[1].setPower(power)
-            container.swerve.drive.modules[2].setPower(power)
-            container.swerve.drive.modules[3].setPower(-power)
-
-
-        } else {
-            container.swerve.drive.setPower(0.0)
-        }
-
     }
 
     override fun teleopInit() {
-        container.swerve.driver.setFieldOriented()
-        container.initial()
+        container.teleopInit()
+        if (autonomousCommand.isScheduled) autonomousCommand.cancel()
     }
 
     override fun teleopPeriodic() {
-        container.always()
     }
 
     override fun testInit() {

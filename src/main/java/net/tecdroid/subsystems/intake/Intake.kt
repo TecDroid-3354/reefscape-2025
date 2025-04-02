@@ -8,8 +8,12 @@ import edu.wpi.first.units.measure.Angle
 import edu.wpi.first.units.measure.AngularVelocity
 import edu.wpi.first.units.measure.Voltage
 import edu.wpi.first.wpilibj.DigitalInput
+import edu.wpi.first.wpilibj.DriverStation
+import edu.wpi.first.wpilibj2.command.Command
+import edu.wpi.first.wpilibj2.command.Commands
 import edu.wpi.first.wpilibj2.command.button.Trigger
 import net.tecdroid.subsystems.util.generic.TdSubsystem
+import java.sql.Driver
 
 class Intake(private val config: IntakeConfig) : TdSubsystem("Intake") {
     private val motorController = TalonFX(config.motorControllerId.id)
@@ -30,7 +34,7 @@ class Intake(private val config: IntakeConfig) : TdSubsystem("Intake") {
 
     init {
         configureMotorInterface()
-        trigger.onFalse(stopCommand())
+        (trigger.negate()).and { DriverStation.isTeleop() }.onTrue(stopCommand())
     }
 
     override fun setVoltage(voltage: Voltage) {

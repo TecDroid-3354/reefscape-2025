@@ -4,8 +4,8 @@ import edu.wpi.first.math.geometry.Translation2d
 import edu.wpi.first.units.Units.Inches
 import edu.wpi.first.units.measure.Distance
 import net.tecdroid.util.*
-import net.tecdroid.util.geometry.Rectangle
-import net.tecdroid.util.geometry.Square
+import net.tecdroid.util.Rectangle
+import net.tecdroid.util.Square
 
 data class SwerveDriveConfig(
     val longestDiagonal: Distance,
@@ -13,11 +13,11 @@ data class SwerveDriveConfig(
     val imuId: NumericId
 )
 
-fun makeSquareChassisConfig(convention: SpatialConvention, moduleConfigs: List<SwerveModuleConfig>, geometry: Rectangle, imuId: NumericId): SwerveDriveConfig {
-    val scaledGeometry = geometry.scale(0.5)
+fun makeSquareChassisConfig(convention: SpatialConvention, moduleConfigs: List<SwerveModuleConfig>, wheelGeometry: Rectangle, chassisGeometry: Rectangle, imuId: NumericId): SwerveDriveConfig {
+    val scaledGeometry = wheelGeometry.scale(0.5)
 
     return SwerveDriveConfig(
-        geometry.diagonalLength,
+        chassisGeometry.diagonalLength,
         moduleConfigs.zip(listOf(
             Translation2d(
                 convention.translateFront(scaledGeometry.length),
@@ -52,6 +52,7 @@ val swerveDriveConfiguration = makeSquareChassisConfig(
         rotationalDirection = RotationalDirection.Counterclockwise
     ),
     moduleConfigs = listOf(frontRightModuleConfig, frontLeftModuleConfig, backLeftModuleConfig, backRightModuleConfig),
-    geometry = Square(Inches.of(27.5)),
+    wheelGeometry = Square(Inches.of(22.229226)),
+    chassisGeometry = Square(Inches.of(27.5)),
     imuId = NumericId(1)
 )

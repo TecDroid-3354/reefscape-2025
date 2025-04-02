@@ -5,7 +5,7 @@ import edu.wpi.first.units.measure.Angle
 import edu.wpi.first.units.measure.AngularVelocity
 import net.tecdroid.util.RotationalDirection.Clockwise
 import net.tecdroid.util.RotationalDirection.Counterclockwise
-import net.tecdroid.util.units.rotations
+import net.tecdroid.util.rotations
 
 /**
  * Allows grouping the properties of a motor
