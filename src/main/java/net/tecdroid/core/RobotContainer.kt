@@ -9,6 +9,7 @@ import edu.wpi.first.units.Units.Degrees
 import edu.wpi.first.units.Units.Hertz
 import edu.wpi.first.wpilibj2.command.Command
 import edu.wpi.first.wpilibj2.command.Commands
+import frc.robot.LimelightHelpers
 import net.tecdroid.autonomous.AutoComposer
 import net.tecdroid.constants.GenericConstants.driverControllerId
 import net.tecdroid.input.CompliantXboxController
@@ -55,6 +56,8 @@ class RobotContainer {
     // Advantage Scope log publisher
     private val robotPosePublisher: StructPublisher<Pose2d> = NetworkTableInstance.getDefault()
         .getStructTopic("RobotPose", Pose2d.struct).publish()
+    private val mt2PosePublisher: StructPublisher<Pose2d> = NetworkTableInstance.getDefault()
+        .getStructTopic("mt2RobotPose", Pose2d.struct).publish()
 
     init {
         limelightController.shuffleboardData()
@@ -85,11 +88,13 @@ class RobotContainer {
 
     private fun advantageScopeLogs() {
         robotPosePublisher.set(swerve.pose)
+        mt2PosePublisher.set(LimelightHelpers.getBotPoseEstimate_wpiBlue_MegaTag2("limelight-left").pose)
 
     }
 
     fun robotPeriodic() {
         advantageScopeLogs()
+        limelightController.updatePose(swerve.poseEstimator, swerve.imu.angularVelocityZWorld)
     }
 
     val autonomousCommand: Command

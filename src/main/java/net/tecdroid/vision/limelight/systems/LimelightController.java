@@ -1,8 +1,14 @@
 package net.tecdroid.vision.limelight.systems;
 
+import com.ctre.phoenix6.StatusSignal;
+import com.ctre.phoenix6.hardware.Pigeon2;
+import edu.wpi.first.math.VecBuilder;
 import edu.wpi.first.math.controller.PIDController;
+import edu.wpi.first.math.estimator.SwerveDrivePoseEstimator;
 import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
+import edu.wpi.first.units.AngularAccelerationUnit;
+import edu.wpi.first.units.Units;
 import edu.wpi.first.units.measure.AngularVelocity;
 import edu.wpi.first.units.measure.Distance;
 import edu.wpi.first.units.measure.LinearVelocity;
@@ -11,6 +17,7 @@ import edu.wpi.first.wpilibj.shuffleboard.ShuffleboardTab;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.Subsystem;
+import frc.robot.LimelightHelpers;
 import net.tecdroid.constants.StringConstantsKt;
 import net.tecdroid.util.ControlGains;
 import net.tecdroid.vision.limelight.Limelight;
@@ -89,13 +96,6 @@ public class LimelightController {
 
         angleDictionaryValues();
         limelightConfiguration();
-    }
-
-    public Distance getSquaredDistance(LimeLightChoice choice) {
-        LimelightAprilTagDetector limelight = (choice == LimeLightChoice.Right) ? rightLimelight : leftLimelight;
-        var pos =limelight.getTargetPositionInCameraSpace();
-        return Meters.of(pos.getX() * pos.getX() + pos.getY() * pos.getY() + pos.getZ() * pos.getZ());
-
     }
 
     public boolean isAtSetPoint(LimeLightChoice choice, double xSetPoint, double ySetPoint) {
@@ -206,14 +206,21 @@ public class LimelightController {
         }, requiredSubsystem);
     }
 
-    public Command alignRobotWithAprilTagChoice(LimeLightChoice choice, double xSetPoint, double ySetPoint, int aprilTagId) {
-        return alignRobotAllAxis(choice, xSetPoint, ySetPoint).onlyIf(() -> getTargetId(choice) == aprilTagId);
-    }
+    public void updatePose(SwerveDrivePoseEstimator poseEstimator, StatusSignal<AngularVelocity> angularVelocity) {
+        boolean doRejectUpdate = false;
 
-    public Command alignRobotAuto(LimeLightChoice choice, double xSetPoint, double ySetPoint, double waitSeconds) throws InterruptedException {
-        Command alignRobotCMD = alignRobotAllAxis(choice, xSetPoint, ySetPoint);
-        alignRobotCMD.until(() -> isAtSetPoint(choice, xSetPoint, ySetPoint)).withTimeout(waitSeconds);
-        return alignRobotCMD;
+        LimelightHelpers.SetRobotOrientation(StringConstantsKt.leftLimelightName, poseEstimator.getEstimatedPosition().getRotation().getDegrees(), 0, 0, 0, 0, 0);
+        LimelightHelpers.PoseEstimate mt2 = LimelightHelpers.getBotPoseEstimate_wpiBlue_MegaTag2(StringConstantsKt.leftLimelightName);
+        if(Math.abs(angularVelocity.getValueAsDouble()) > 720 || mt2.tagCount == 0) {
+            doRejectUpdate = true;
+        }
+        if(!doRejectUpdate)
+        {
+            poseEstimator.setVisionMeasurementStdDevs(VecBuilder.fill(.7,.7,9999999));
+                poseEstimator.addVisionMeasurement(
+                        mt2.pose,
+                        mt2.timestampSeconds);
+        }
     }
 
     public void shuffleboardData() {

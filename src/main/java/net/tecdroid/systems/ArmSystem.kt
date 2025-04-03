@@ -147,6 +147,18 @@ class ArmSystem(wristConfig: WristConfig, elevatorConfig: ElevatorConfig, elevat
         joint.matchRelativeEncodersToAbsoluteEncoders()
     }
 
+    /*fun isL4Done(pose: ArmPose) {
+        if (pose == ArmPoses.pose.L4 && !intake.hasCoral()) setJointAngle(pose.elevatorJointPosition - 1.5.degrees)
+    }fun isL4Done(pose: ArmPose) {
+        if (pose == ArmPoses.pose.L4 && !intake.hasCoral()) setJointAngle(pose.elevatorJointPosition - 1.5.degrees)
+    }fun isL4Done(pose: ArmPose) {
+        if (pose == ArmPoses.pose.L4 && !intake.hasCoral()) setJointAngle(pose.elevatorJointPosition - 1.5.degrees)
+    }fun isL4Done(pose: ArmPose) {
+        if (pose == ArmPoses.pose.L4 && !intake.hasCoral()) setJointAngle(pose.elevatorJointPosition - 1.5.degrees)
+    }fun isL4Done(pose: ArmPose) {
+        if (pose == ArmPoses.pose.L4 && !intake.hasCoral()) setJointAngle(pose.elevatorJointPosition - 1.5.degrees)
+    }*/
+
     fun setJointAngle(angle: Angle) : Command = joint.setAngleCommand(angle)
     fun setElevatorDisplacement(displacement: Distance) : Command = elevator.setDisplacementCommand(displacement)
     fun setWristAngle(angle: Angle) : Command = wrist.setAngleCommand(angle)
