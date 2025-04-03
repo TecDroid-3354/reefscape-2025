@@ -147,6 +147,18 @@ class ArmSystem(wristConfig: WristConfig, elevatorConfig: ElevatorConfig, elevat
         joint.matchRelativeEncodersToAbsoluteEncoders()
     }
 
+    var interactiveJointPose = ArmPoses.L4.pose.elevatorJointPosition
+        set(value) {field = value}
+
+    fun jointDeltaL4Pose(delta: Angle): Command {
+        return Commands.sequence(
+            Commands.runOnce({
+                interactiveJointPose = delta + interactiveJointPose
+            }),
+            setJointAngle(interactiveJointPose)
+        )
+    }
+
     fun setJointAngle(angle: Angle) : Command = joint.setAngleCommand(angle)
     fun setElevatorDisplacement(displacement: Distance) : Command = elevator.setDisplacementCommand(displacement)
     fun setWristAngle(angle: Angle) : Command = wrist.setAngleCommand(angle)
@@ -165,6 +177,7 @@ class ArmSystem(wristConfig: WristConfig, elevatorConfig: ElevatorConfig, elevat
 
     fun setPoseCommand(pose: ArmPose, order: ArmOrder) : Command {
         return SequentialCommandGroup(
+            Commands.runOnce({ interactiveJointPose = ArmPoses.L4.pose.elevatorJointPosition }),
             Commands.runOnce({ targetVoltage = pose.targetVoltage }),
             getCommandFor(pose, order.first),
             getCommandFor(pose, order.second),
@@ -197,6 +210,14 @@ class ArmSystem(wristConfig: WristConfig, elevatorConfig: ElevatorConfig, elevat
                 setPoseCommand(
                     ArmPoses.L4.pose,
                     ArmOrders.JEW.order
+                ).andThen(
+                    Commands.waitUntil({ !intake.hasCoral() }).andThen(
+                        jointDeltaL4Pose((-1.5).degrees),
+                        setPoseCommand(
+                            ArmPoses.L3.pose,
+                            ArmOrders.JEW.order
+                        )
+                    )
                 ),
                 setPoseCommand(
                     ArmPoses.Barge.pose,
