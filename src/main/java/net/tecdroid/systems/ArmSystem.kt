@@ -214,9 +214,9 @@ class ArmSystem(wristConfig: WristConfig, elevatorConfig: ElevatorConfig, elevat
                     Commands.waitUntil({ !intake.hasCoral() }).andThen(
                         jointDeltaL4Pose((-1.5).degrees),
                         setPoseCommand(
-                            ArmPoses.L3.pose,
-                            ArmOrders.JEW.order
-                        )
+                            ArmPoses.CoralStation.pose,
+                            ArmOrders.EJW.order
+                        ).beforeStarting(Commands.waitSeconds(2.0))
                     )
                 ),
                 setPoseCommand(
@@ -232,6 +232,13 @@ class ArmSystem(wristConfig: WristConfig, elevatorConfig: ElevatorConfig, elevat
                 setPoseCommand(
                     ArmPoses.L3.pose,
                     ArmOrders.JEW.order
+                ).andThen(
+                    Commands.waitUntil({ !intake.hasCoral() }).andThen(
+                        setPoseCommand(
+                            ArmPoses.CoralStation.pose,
+                            ArmOrders.EJW.order
+                        ).beforeStarting(Commands.waitSeconds(2.0))
+                    )
                 ),
                 setPoseCommand(
                     ArmPoses.A2.pose,
@@ -246,6 +253,13 @@ class ArmSystem(wristConfig: WristConfig, elevatorConfig: ElevatorConfig, elevat
                 setPoseCommand(
                     ArmPoses.L2.pose,
                     ArmOrders.EJW.order
+                ).andThen(
+                    Commands.waitUntil({ !intake.hasCoral() }).andThen(
+                        setPoseCommand(
+                            ArmPoses.CoralStation.pose,
+                            ArmOrders.EJW.order
+                        ).beforeStarting(Commands.waitSeconds(2.0))
+                    )
                 ),
                 setPoseCommand(
                     ArmPoses.A1.pose,
