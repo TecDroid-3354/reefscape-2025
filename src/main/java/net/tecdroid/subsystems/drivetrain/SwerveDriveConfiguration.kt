@@ -3,6 +3,7 @@ package net.tecdroid.subsystems.drivetrain
 import edu.wpi.first.math.geometry.Translation2d
 import edu.wpi.first.units.Units.Inches
 import edu.wpi.first.units.measure.Distance
+import edu.wpi.first.units.measure.Time
 import net.tecdroid.util.*
 import net.tecdroid.util.Rectangle
 import net.tecdroid.util.Square
@@ -10,7 +11,10 @@ import net.tecdroid.util.Square
 data class SwerveDriveConfig(
     val longestDiagonal: Distance,
     val moduleConfigs: List<Pair<SwerveModuleConfig, Translation2d>>,
-    val imuId: NumericId
+    val imuId: NumericId,
+    val directionControlGains: ControlGains,
+    val accelerationPeriod: Time,
+    val decelerationPeriod: Time
 )
 
 fun makeSquareChassisConfig(convention: SpatialConvention, moduleConfigs: List<SwerveModuleConfig>, wheelGeometry: Rectangle, chassisGeometry: Rectangle, imuId: NumericId): SwerveDriveConfig {
@@ -40,7 +44,10 @@ fun makeSquareChassisConfig(convention: SpatialConvention, moduleConfigs: List<S
             )
 
         )),
-        imuId
+        imuId = imuId,
+        directionControlGains = ControlGains(),
+        accelerationPeriod = 0.1.seconds,
+        decelerationPeriod = 0.1.seconds,
     )
 }
 

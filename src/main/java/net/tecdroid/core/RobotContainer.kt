@@ -36,22 +36,6 @@ class RobotContainer {
     )
     private val autoComposer = AutoComposer(swerve, limelightController, arm)
 
-    // Swerve Control
-    private val accelerationPeriod = 0.1.seconds
-    private val decelerationPeriod = accelerationPeriod
-
-    private val da = accelerationPeriod.asFrequency()
-    private val dd = -decelerationPeriod.asFrequency()
-
-    private val longitudinalRateLimiter = SlewRateLimiter(da.`in`(Hertz), dd.`in`(Hertz), 0.0)
-    private val transversalRateLimiter = SlewRateLimiter(da.`in`(Hertz), dd.`in`(Hertz), 0.0)
-    private val angularRateLimiter = SlewRateLimiter(da.`in`(Hertz), dd.`in`(Hertz), 0.0)
-
-    var vx = { swerve.maxLinearVelocity * longitudinalRateLimiter.calculate(controller.leftY * 0.85) }
-    var vy = { swerve.maxLinearVelocity * transversalRateLimiter.calculate(controller.leftX * 0.85) }
-    var vw = { swerve.maxAngularVelocity * angularRateLimiter.calculate(controller.rightX * 0.85) }
-
-
     // Advantage Scope log publisher
     private val robotPosePublisher: StructPublisher<Pose2d> = NetworkTableInstance.getDefault()
         .getStructTopic("RobotPose", Pose2d.struct).publish()
@@ -73,7 +57,10 @@ class RobotContainer {
         controller.start().onTrue(swerve.zeroHeadingCommand())
 
         swerve.defaultCommand = Commands.run(
-            { swerve.driveFieldOriented(ChassisSpeeds(vx(), vy(), vw())) },
+            {
+                swerve.driveDirected(swerve.vector2dToLinearVelocity(controller.leftY, controller.leftX),
+                    SwerveDrive.vector2dToTargetAngle(controller.rightX, controller.rightY))
+            },
             swerve
         )
 
