@@ -5,7 +5,10 @@ import com.ctre.phoenix6.hardware.Pigeon2;
 import edu.wpi.first.math.VecBuilder;
 import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.estimator.SwerveDrivePoseEstimator;
+import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Pose3d;
+import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.math.geometry.Translation3d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.units.AngularAccelerationUnit;
 import edu.wpi.first.units.Units;
@@ -206,20 +209,143 @@ public class LimelightController {
         }, requiredSubsystem);
     }
 
-    public void updatePose(SwerveDrivePoseEstimator poseEstimator, StatusSignal<AngularVelocity> angularVelocity) {
+    public void updatePoseMT2(SwerveDrivePoseEstimator poseEstimator, StatusSignal<AngularVelocity> angularVelocity, Rotation2d robotYaw) {
         boolean doRejectUpdate = false;
 
-        LimelightHelpers.SetRobotOrientation(StringConstantsKt.leftLimelightName, poseEstimator.getEstimatedPosition().getRotation().getDegrees(), 0, 0, 0, 0, 0);
         LimelightHelpers.PoseEstimate mt2 = LimelightHelpers.getBotPoseEstimate_wpiBlue_MegaTag2(StringConstantsKt.leftLimelightName);
-        if(Math.abs(angularVelocity.getValueAsDouble()) > 720 || mt2.tagCount == 0) {
+        LimelightHelpers.SetRobotOrientation(StringConstantsKt.leftLimelightName, poseEstimator.getEstimatedPosition().getRotation().getDegrees(), 0, 0, 0, 0, 0);
+
+        if(Math.abs(angularVelocity.getValueAsDouble()) > 360 || mt2.tagCount == 0) {
             doRejectUpdate = true;
         }
         if(!doRejectUpdate)
         {
-            poseEstimator.setVisionMeasurementStdDevs(VecBuilder.fill(.7,.7,9999999));
-                poseEstimator.addVisionMeasurement(
-                        mt2.pose,
-                        mt2.timestampSeconds);
+            //poseEstimator.setVisionMeasurementStdDevs(VecBuilder.fill(.7,.7,9999999));
+            poseEstimator.addVisionMeasurement(
+                    mt2.pose,
+                    mt2.timestampSeconds);
+
+        }
+    }
+
+    public void updatePoseMT1(SwerveDrivePoseEstimator poseEstimator) {
+        boolean doRejectUpdateLeft = false;
+        boolean doRejectUpdateRight = false;
+        LimelightHelpers.PoseEstimate mt1Left = LimelightHelpers.getBotPoseEstimate_wpiBlue(StringConstantsKt.leftLimelightName);
+        LimelightHelpers.PoseEstimate mt1Right = LimelightHelpers.getBotPoseEstimate_wpiBlue(StringConstantsKt.rightLimelightName);
+
+        if(mt1Left.tagCount == 1 && mt1Left.rawFiducials.length == 1)
+        {
+            if(mt1Left.rawFiducials[0].ambiguity > .7)
+            {
+                doRejectUpdateLeft = true;
+            }
+            if(mt1Left.rawFiducials[0].distToCamera > 3)
+            {
+                doRejectUpdateLeft = true;
+            }
+        }
+
+        if(mt1Left.tagCount == 0 || getTargetPositionInCameraSpace(LimeLightChoice.Left).getZ() > 1.0)
+        {
+            doRejectUpdateLeft = true;
+        }
+
+        if(mt1Right.tagCount == 1 && mt1Right.rawFiducials.length == 1)
+        {
+            if(mt1Right.rawFiducials[0].ambiguity > .7)
+            {
+                doRejectUpdateRight = true;
+            }
+            if(mt1Right.rawFiducials[0].distToCamera > 3)
+            {
+                doRejectUpdateRight = true;
+            }
+        }
+
+        if(mt1Right.tagCount == 0 || getTargetPositionInCameraSpace(LimeLightChoice.Right).getZ() > 1.0)
+        {
+            doRejectUpdateRight = true;
+        }
+
+        if(!doRejectUpdateRight && !doRejectUpdateLeft)
+        {
+            //poseEstimator.setVisionMeasurementStdDevs(VecBuilder.fill(.5,.5,9999999));
+            poseEstimator.addVisionMeasurement(
+                    averagePose(mt1Right.pose, mt1Left.pose),
+                    mt1Left.timestampSeconds);
+        }else if(!doRejectUpdateRight)
+        {
+            //poseEstimator.setVisionMeasurementStdDevs(VecBuilder.fill(.5,.5,9999999));
+            poseEstimator.addVisionMeasurement(
+                    mt1Right.pose,
+                    mt1Right.timestampSeconds);
+        }else if(!doRejectUpdateLeft)
+        {
+            //poseEstimator.setVisionMeasurementStdDevs(VecBuilder.fill(.5,.5,9999999));
+            poseEstimator.addVisionMeasurement(
+                    mt1Left.pose,
+                    mt1Left.timestampSeconds);
+        }
+    }
+
+    public void updatePoseLeftLimelight(SwerveDrivePoseEstimator poseEstimator) {
+        boolean doRejectUpdate = false;
+        LimelightHelpers.PoseEstimate mt1 = LimelightHelpers.getBotPoseEstimate_wpiBlue(StringConstantsKt.leftLimelightName);
+
+        if(mt1.tagCount == 1 && mt1.rawFiducials.length == 1)
+        {
+            if(mt1.rawFiducials[0].ambiguity > .7)
+            {
+                doRejectUpdate = true;
+            }
+            if(mt1.rawFiducials[0].distToCamera > 3)
+            {
+                doRejectUpdate = true;
+            }
+        }
+
+        if(mt1.tagCount == 0 || getTargetPositionInCameraSpace(LimeLightChoice.Left).getZ() > 1.0)
+        {
+            doRejectUpdate = true;
+        }
+
+        if(!doRejectUpdate)
+        {
+            //poseEstimator.setVisionMeasurementStdDevs(VecBuilder.fill(.5,.5,9999999));
+            poseEstimator.addVisionMeasurement(
+                    mt1.pose,
+                    mt1.timestampSeconds);
+        }
+    }
+
+    public void updatePoseRightLimelight(SwerveDrivePoseEstimator poseEstimator) {
+        boolean doRejectUpdate = false;
+        LimelightHelpers.PoseEstimate mt1 = LimelightHelpers.getBotPoseEstimate_wpiBlue(StringConstantsKt.rightLimelightName);
+
+        if(mt1.tagCount == 1 && mt1.rawFiducials.length == 1)
+        {
+            if(mt1.rawFiducials[0].ambiguity > .7)
+            {
+                doRejectUpdate = true;
+            }
+            if(mt1.rawFiducials[0].distToCamera > 3)
+            {
+                doRejectUpdate = true;
+            }
+        }
+
+        if(mt1.tagCount == 0 || getTargetPositionInCameraSpace(LimeLightChoice.Right).getZ() > 1.0)
+        {
+            doRejectUpdate = true;
+        }
+
+        if(!doRejectUpdate)
+        {
+            //poseEstimator.setVisionMeasurementStdDevs(VecBuilder.fill(.5,.5,9999999));
+            poseEstimator.addVisionMeasurement(
+                    mt1.pose,
+                    mt1.timestampSeconds);
         }
     }
 
@@ -232,5 +358,21 @@ public class LimelightController {
         tab.addInteger("Yaw Objective", rightLimelight::getTargetId);
     }
 
+    public static Pose2d averagePose(Pose2d... poses) {
+        double sumX = 0;
+        double sumY = 0;
+        double sumTheta = 0;
 
+        for (Pose2d pose : poses) {
+            sumX += pose.getX();
+            sumY += pose.getY();
+            sumTheta += pose.getRotation().getRadians();
+        }
+
+        double avgX = sumX / poses.length;
+        double avgY = sumY / poses.length;
+        double avgTheta = sumTheta / poses.length;
+
+        return new Pose2d(avgX, avgY, new Rotation2d(avgTheta));
+    }
 }

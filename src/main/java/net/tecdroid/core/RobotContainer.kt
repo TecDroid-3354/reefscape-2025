@@ -2,6 +2,7 @@ package net.tecdroid.core
 
 import edu.wpi.first.math.filter.SlewRateLimiter
 import edu.wpi.first.math.geometry.Pose2d
+import edu.wpi.first.math.geometry.Translation2d
 import edu.wpi.first.math.kinematics.ChassisSpeeds
 import edu.wpi.first.networktables.NetworkTableInstance
 import edu.wpi.first.networktables.StructPublisher
@@ -88,13 +89,13 @@ class RobotContainer {
 
     private fun advantageScopeLogs() {
         robotPosePublisher.set(swerve.pose)
-        mt2PosePublisher.set(LimelightHelpers.getBotPoseEstimate_wpiBlue_MegaTag2("limelight-left").pose)
-
     }
 
     fun robotPeriodic() {
         advantageScopeLogs()
-        limelightController.updatePose(swerve.poseEstimator, swerve.imu.angularVelocityZWorld)
+        limelightController.updatePoseLeftLimelight(swerve.poseEstimator)
+        limelightController.updatePoseRightLimelight(swerve.poseEstimator)
+
     }
 
     val autonomousCommand: Command
