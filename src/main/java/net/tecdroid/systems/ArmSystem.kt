@@ -26,6 +26,8 @@ import net.tecdroid.util.degrees
 import net.tecdroid.util.meters
 import net.tecdroid.util.rotations
 import net.tecdroid.util.volts
+import net.tecdroid.vision.limelight.systems.LimeLightChoice
+import net.tecdroid.vision.limelight.systems.LimelightController
 
 enum class ArmMember {
     ArmWrist, ArmElevator, ArmJoint
@@ -124,7 +126,9 @@ enum class ArmOrders(val order: ArmOrder) {
     WJE(ArmOrder(ArmWrist, ArmJoint, ArmElevator))
 }
 
-class ArmSystem(wristConfig: WristConfig, elevatorConfig: ElevatorConfig, elevatorJointConfig: ElevatorJointConfig, intakeConfig: IntakeConfig) : Sendable {
+class ArmSystem(wristConfig: WristConfig, elevatorConfig: ElevatorConfig, elevatorJointConfig: ElevatorJointConfig, intakeConfig: IntakeConfig,
+                val limelightController: LimelightController
+) : Sendable {
     val wrist = Wrist(wristConfig)
     val elevator = Elevator(elevatorConfig)
     val joint = ElevatorJoint(elevatorJointConfig)
@@ -169,6 +173,22 @@ class ArmSystem(wristConfig: WristConfig, elevatorConfig: ElevatorConfig, elevat
     fun disableIntake() : Command = Commands.either(intake.setVoltageCommand({ 0.0.volts }),
         intake.setVoltageCommand({ 1.0.volts }), { isCoralMode })
 
+    fun scoringSequence(pose: ArmPose, order: ArmOrder, choice: LimeLightChoice, delta: Angle = 0.0.degrees): Command {
+        return Commands.waitUntil { limelightController.isAtSetPoint(choice, 0.19, 0.0) }.andThen(
+            setPoseCommand(pose, order)
+        ).andThen(
+            enableIntake(),
+            Commands.waitUntil { !intake.hasCoral() }.andThen(
+                disableIntake(),
+                if (delta != 0.0.degrees) jointDeltaL4Pose(delta) else Commands.none(),
+                setPoseCommand(
+                    ArmPoses.CoralStation.pose,
+                    ArmOrders.EJW.order
+                )
+            )
+        )
+    }
+
     private fun getCommandFor(pose: ArmPose, member: ArmMember) : Command = when (member) {
         ArmWrist -> wrist.setAngleCommand(pose.wristPosition).andThen(Commands.waitUntil { wrist.getPositionError() < 50.0.rotations })
         ArmElevator -> elevator.setDisplacementCommand(pose.elevatorDisplacement).andThen(Commands.waitUntil { elevator.getPositionError() < 25.0.rotations })
@@ -207,18 +227,11 @@ class ArmSystem(wristConfig: WristConfig, elevatorConfig: ElevatorConfig, elevat
 
         controller.y().onTrue(
             Commands.either(
-                setPoseCommand(
+                scoringSequence(
                     ArmPoses.L4.pose,
-                    ArmOrders.JEW.order
-                ).andThen(
-                    Commands.waitUntil({ !intake.hasCoral() }).andThen(
-                        jointDeltaL4Pose((-1.5).degrees),
-                        setPoseCommand(
-                            ArmPoses.L3.pose,
-                            ArmOrders.JEW.order
-                        )
-                    )
-                ),
+                    ArmOrders.JEW.order,
+                    if (limelightController.hasTarget(LimeLightChoice.Left)) LimeLightChoice.Left else LimeLightChoice.Right,
+                    (-1.5).degrees),
                 setPoseCommand(
                     ArmPoses.Barge.pose,
                     ArmOrders.JEW.order
@@ -229,10 +242,10 @@ class ArmSystem(wristConfig: WristConfig, elevatorConfig: ElevatorConfig, elevat
 
         controller.b().onTrue(
             Commands.either(
-                setPoseCommand(
+                scoringSequence(
                     ArmPoses.L3.pose,
-                    ArmOrders.JEW.order
-                ),
+                    ArmOrders.JEW.order,
+                    if (limelightController.hasTarget(LimeLightChoice.Left)) LimeLightChoice.Left else LimeLightChoice.Right),
                 setPoseCommand(
                     ArmPoses.A2.pose,
                     if (isLow()) ArmOrders.JWE.order else ArmOrders.EWJ.order
@@ -243,10 +256,10 @@ class ArmSystem(wristConfig: WristConfig, elevatorConfig: ElevatorConfig, elevat
 
         controller.a().onTrue(
             Commands.either(
-                setPoseCommand(
+                scoringSequence(
                     ArmPoses.L2.pose,
-                    ArmOrders.EJW.order
-                ),
+                    ArmOrders.EJW.order,
+                    if (limelightController.hasTarget(LimeLightChoice.Left)) LimeLightChoice.Left else LimeLightChoice.Right),
                 setPoseCommand(
                     ArmPoses.A1.pose,
                     if (isLow()) ArmOrders.JWE.order else ArmOrders.EWJ.order

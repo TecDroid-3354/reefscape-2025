@@ -28,12 +28,12 @@ import net.tecdroid.vision.limelight.systems.LimelightController
 class RobotContainer {
     private val controller = CompliantXboxController(driverControllerId)
     private val swerve = SwerveDrive(swerveDriveConfiguration)
-    private val arm = ArmSystem(wristConfig, elevatorConfig, elevatorJointConfig, intakeConfig)
     private val limelightController = LimelightController(
         swerve,
         { chassisSpeeds -> swerve.driveRobotOriented(chassisSpeeds) },
         { swerve.heading.`in`(Degrees) }, swerve.maxSpeeds.times(0.75)
     )
+    private val arm = ArmSystem(wristConfig, elevatorConfig, elevatorJointConfig, intakeConfig, limelightController)
     private val autoComposer = AutoComposer(swerve, limelightController, arm)
 
     // Swerve Control
