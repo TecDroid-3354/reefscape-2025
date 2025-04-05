@@ -5,6 +5,7 @@ package net.tecdroid.systems
 import edu.wpi.first.units.Units.*
 import edu.wpi.first.units.measure.Angle
 import edu.wpi.first.units.measure.Distance
+import edu.wpi.first.units.measure.Time
 import edu.wpi.first.units.measure.Voltage
 import edu.wpi.first.util.sendable.Sendable
 import edu.wpi.first.util.sendable.SendableBuilder
@@ -22,10 +23,7 @@ import net.tecdroid.subsystems.intake.IntakeConfig
 import net.tecdroid.subsystems.wrist.Wrist
 import net.tecdroid.subsystems.wrist.WristConfig
 import net.tecdroid.systems.ArmMember.*
-import net.tecdroid.util.degrees
-import net.tecdroid.util.meters
-import net.tecdroid.util.rotations
-import net.tecdroid.util.volts
+import net.tecdroid.util.*
 import net.tecdroid.vision.limelight.systems.LimeLightChoice
 import net.tecdroid.vision.limelight.systems.LimelightController
 
@@ -167,13 +165,13 @@ class ArmSystem(wristConfig: WristConfig, elevatorConfig: ElevatorConfig, elevat
     fun setElevatorDisplacement(displacement: Distance) : Command = elevator.setDisplacementCommand(displacement)
     fun setWristAngle(angle: Angle) : Command = wrist.setAngleCommand(angle)
 
-    fun enableIntake() : Command = intake.setVoltageCommand({ targetVoltage })
-    fun enableIntakeAuto() : Command = intake.setVoltageCommand({ 7.0.volts })
-    fun enableOuttake() : Command = intake.setVoltageCommand({ -targetVoltage })
-    fun disableIntake() : Command = Commands.either(intake.setVoltageCommand({ 0.0.volts }),
-        intake.setVoltageCommand({ 1.0.volts }), { isCoralMode })
+    fun enableIntake() : Command = intake.setVoltageCommand { targetVoltage }
+    fun enableIntakeAuto() : Command = intake.setVoltageCommand { 7.0.volts }
+    fun enableOuttake() : Command = intake.setVoltageCommand { -targetVoltage }
+    fun disableIntake() : Command = Commands.either(intake.setVoltageCommand { 0.0.volts },
+        intake.setVoltageCommand { 1.0.volts }) { isCoralMode }
 
-    fun scoringSequence(pose: ArmPose, order: ArmOrder, choice: LimeLightChoice, delta: Angle = 0.0.degrees): Command {
+    fun scoringSequence(pose: ArmPose, order: ArmOrder, choice: LimeLightChoice, delta: Angle = 0.0.degrees, waitTime: Time = 0.0.seconds): Command {
         return Commands.waitUntil { limelightController.isAtSetPoint(choice, 0.19, 0.0) }.andThen(
             setPoseCommand(pose, order)
         ).andThen(
@@ -184,7 +182,7 @@ class ArmSystem(wristConfig: WristConfig, elevatorConfig: ElevatorConfig, elevat
                 setPoseCommand(
                     ArmPoses.CoralStation.pose,
                     ArmOrders.EJW.order
-                )
+                ).beforeStarting(Commands.waitTime(waitTime))
             )
         )
     }
@@ -218,8 +216,8 @@ class ArmSystem(wristConfig: WristConfig, elevatorConfig: ElevatorConfig, elevat
 
     fun publishShuffleBoardData() {
         val tab = Shuffleboard.getTab("Driver Tab")
-        tab.addBoolean("Is Coral Mode", { isCoralMode })
-        tab.addDouble("Target Voltage", { targetVoltage.`in`(Volts) })
+        tab.addBoolean("Is Coral Mode") { isCoralMode }
+        tab.addDouble("Target Voltage") { targetVoltage.`in`(Volts) }
     }
 
     fun assignCommandsToController(controller: CompliantXboxController) {
@@ -231,7 +229,8 @@ class ArmSystem(wristConfig: WristConfig, elevatorConfig: ElevatorConfig, elevat
                     ArmPoses.L4.pose,
                     ArmOrders.JEW.order,
                     if (limelightController.hasTarget(LimeLightChoice.Left)) LimeLightChoice.Left else LimeLightChoice.Right,
-                    (-1.5).degrees),
+                    (-1.5).degrees,
+                    2.0.seconds),
                 setPoseCommand(
                     ArmPoses.Barge.pose,
                     ArmOrders.JEW.order
