@@ -25,9 +25,11 @@ import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard
 import edu.wpi.first.wpilibj2.command.Command
 import edu.wpi.first.wpilibj2.command.Commands
 import edu.wpi.first.wpilibj2.command.SubsystemBase
+import net.tecdroid.safety.pidOutputRange
 import net.tecdroid.util.degrees
 import net.tecdroid.util.toRotation2d
 import kotlin.math.PI
+import kotlin.math.absoluteValue
 import kotlin.math.atan2
 import kotlin.math.sqrt
 
@@ -48,7 +50,8 @@ class SwerveDrive(private val config: SwerveDriveConfig) : SubsystemBase() {
     val yRateLimiter = SlewRateLimiter(config.accelerationPeriod.asFrequency().`in`(Hertz), -config.decelerationPeriod.asFrequency().`in`(Hertz), 0.0)
     val wRateLimiter = SlewRateLimiter(config.accelerationPeriod.asFrequency().`in`(Hertz), -config.decelerationPeriod.asFrequency().`in`(Hertz), 0.0)
 
-    val directionPIDController = PIDController(0.0, 0.0, 0.0)
+    val directionPIDController = PIDController(config.directionControlGains.p, config.directionControlGains.i, config.directionControlGains.d)
+    val lastDirection = Radians.mutable(0.0)
 
     private val field = Field2d()
 
@@ -70,6 +73,7 @@ class SwerveDrive(private val config: SwerveDriveConfig) : SubsystemBase() {
         matchRelativeEncodersToAbsoluteEncoders()
         pose = Pose2d()
         SmartDashboard.putData("Field", field)
+        directionPIDController.enableContinuousInput(-PI, PI)
     }
 
     override fun periodic() {
@@ -103,12 +107,17 @@ class SwerveDrive(private val config: SwerveDriveConfig) : SubsystemBase() {
     fun driveDirected(chassisSpeeds: ChassisSpeeds, angle: Angle) {
         chassisSpeeds.omegaRadiansPerSecond = 0.0
 
-        val output = directionPIDController.calculate(heading.`in`(Radians), angle.`in`(Radians))
-        val speed = maxAngularVelocity * output
+        val output = directionPIDController.calculate(heading.`in`(Radians), angle.`in`(Radians)).coerceIn(pidOutputRange)
+        val angularVelocity = maxAngularVelocity * output
+        lastDirection.mut_replace(angle)
 
-        chassisSpeeds.omegaRadiansPerSecond = speed.`in`(RadiansPerSecond)
-
-        driveRobotOriented(chassisSpeeds)
+        driveFieldOriented(
+            ChassisSpeeds(
+                MetersPerSecond.of(chassisSpeeds.vxMetersPerSecond),
+                MetersPerSecond.of(chassisSpeeds.vyMetersPerSecond),
+                angularVelocity
+            )
+        )
     }
 
     fun stop() {
@@ -194,7 +203,10 @@ class SwerveDrive(private val config: SwerveDriveConfig) : SubsystemBase() {
     )
 
     companion object {
-        fun vector2dToTargetAngle(x: Double, y: Double): Angle = Radians.of(atan2(y, x)) - Radians.of(PI / 2.0)
+        fun vector2dToTargetAngle(x: Double, y: Double, lastAngle: Angle): Angle {
+            return if (x.absoluteValue >= 0.6 || y.absoluteValue >= 0.6) -(Radians.of(atan2(y, x)) - Radians.of(PI / 2.0))
+            else lastAngle
+        }
     }
 
 }

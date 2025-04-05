@@ -5,8 +5,8 @@ import edu.wpi.first.math.geometry.Pose2d
 import edu.wpi.first.math.kinematics.ChassisSpeeds
 import edu.wpi.first.networktables.NetworkTableInstance
 import edu.wpi.first.networktables.StructPublisher
-import edu.wpi.first.units.Units.Degrees
-import edu.wpi.first.units.Units.Hertz
+import edu.wpi.first.units.Units.*
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard
 import edu.wpi.first.wpilibj2.command.Command
 import edu.wpi.first.wpilibj2.command.Commands
 import net.tecdroid.autonomous.AutoComposer
@@ -58,8 +58,9 @@ class RobotContainer {
 
         swerve.defaultCommand = Commands.run(
             {
-                swerve.driveDirected(swerve.vector2dToLinearVelocity(controller.leftY, controller.leftX),
-                    SwerveDrive.vector2dToTargetAngle(controller.rightX, controller.rightY))
+                val targetVelocity = swerve.vector2dToLinearVelocity(controller.leftY, controller.leftX)
+                val targetAngle = SwerveDrive.vector2dToTargetAngle(controller.rightX, controller.rightY, swerve.lastDirection)
+                swerve.driveDirected(targetVelocity, targetAngle)
             },
             swerve
         )
