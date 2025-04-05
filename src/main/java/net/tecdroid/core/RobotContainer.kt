@@ -5,8 +5,8 @@ import edu.wpi.first.math.geometry.Pose2d
 import edu.wpi.first.math.kinematics.ChassisSpeeds
 import edu.wpi.first.networktables.NetworkTableInstance
 import edu.wpi.first.networktables.StructPublisher
-import edu.wpi.first.units.Units.Degrees
-import edu.wpi.first.units.Units.Hertz
+import edu.wpi.first.units.Units.*
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard
 import edu.wpi.first.wpilibj2.command.Command
 import edu.wpi.first.wpilibj2.command.Commands
 import net.tecdroid.autonomous.AutoComposer
@@ -36,22 +36,6 @@ class RobotContainer {
     )
     private val autoComposer = AutoComposer(swerve, limelightController, arm)
 
-    // Swerve Control
-    private val accelerationPeriod = 0.1.seconds
-    private val decelerationPeriod = accelerationPeriod
-
-    private val da = accelerationPeriod.asFrequency()
-    private val dd = -decelerationPeriod.asFrequency()
-
-    private val longitudinalRateLimiter = SlewRateLimiter(da.`in`(Hertz), dd.`in`(Hertz), 0.0)
-    private val transversalRateLimiter = SlewRateLimiter(da.`in`(Hertz), dd.`in`(Hertz), 0.0)
-    private val angularRateLimiter = SlewRateLimiter(da.`in`(Hertz), dd.`in`(Hertz), 0.0)
-
-    var vx = { swerve.maxLinearVelocity * longitudinalRateLimiter.calculate(controller.leftY * 0.85) }
-    var vy = { swerve.maxLinearVelocity * transversalRateLimiter.calculate(controller.leftX * 0.85) }
-    var vw = { swerve.maxAngularVelocity * angularRateLimiter.calculate(controller.rightX * 0.85) }
-
-
     // Advantage Scope log publisher
     private val robotPosePublisher: StructPublisher<Pose2d> = NetworkTableInstance.getDefault()
         .getStructTopic("RobotPose", Pose2d.struct).publish()
@@ -73,7 +57,11 @@ class RobotContainer {
         controller.start().onTrue(swerve.zeroHeadingCommand())
 
         swerve.defaultCommand = Commands.run(
-            { swerve.driveFieldOriented(ChassisSpeeds(vx(), vy(), vw())) },
+            {
+                val targetVelocity = swerve.vector2dToLinearVelocity(controller.leftY, controller.leftX)
+                val targetAngle = SwerveDrive.vector2dToTargetAngle(controller.rightX, controller.rightY, swerve.lastDirection)
+                swerve.driveDirected(targetVelocity, targetAngle)
+            },
             swerve
         )
 
