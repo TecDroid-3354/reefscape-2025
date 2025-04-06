@@ -8,8 +8,8 @@
       },
       "prevControl": null,
       "nextControl": {
-        "x": 3.88981952501454,
-        "y": 5.810104331433548
+        "x": 4.49695081473282,
+        "y": 5.686508909730397
       },
       "isLocked": false,
       "linkedName": null
@@ -20,12 +20,12 @@
         "y": 5.8
       },
       "prevControl": {
-        "x": 4.338010952941623,
-        "y": 5.769056168184434
+        "x": 4.280381949500819,
+        "y": 5.800026810285404
       },
       "nextControl": {
-        "x": 3.5785472812003376,
-        "y": 5.823168750933501
+        "x": 0.559867151807178,
+        "y": 5.799761990543218
       },
       "isLocked": false,
       "linkedName": null
@@ -36,20 +36,25 @@
         "y": 5.8
       },
       "prevControl": {
-        "x": 1.723773450142471,
-        "y": 5.817174483621797
+        "x": 1.5085770537376915,
+        "y": 5.790497888240292
       },
       "nextControl": null,
       "isLocked": false,
       "linkedName": null
     }
   ],
-  "rotationTargets": [],
+  "rotationTargets": [
+    {
+      "waypointRelativePos": 1.45299145299145,
+      "rotationDegrees": 180.0
+    }
+  ],
   "constraintZones": [
     {
-      "name": "Constraints Zone",
+      "name": "takeGroundCoral",
       "minWaypointRelativePos": 2.0,
-      "maxWaypointRelativePos": 1.4626168224299065,
+      "maxWaypointRelativePos": 1.278816199376947,
       "constraints": {
         "maxVelocity": 0.5,
         "maxAcceleration": 0.5,
@@ -78,7 +83,7 @@
   "folder": "NEW LEFT AUTO",
   "idealStartingState": {
     "velocity": 0,
-    "rotation": -120.96375653207345
+    "rotation": 59.335435419520124
   },
   "useDefaultConstraints": true
 }
