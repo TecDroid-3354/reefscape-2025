@@ -2,6 +2,7 @@
 
 package net.tecdroid.systems
 
+import edu.wpi.first.math.kinematics.ChassisSpeeds
 import edu.wpi.first.units.Units.*
 import edu.wpi.first.units.measure.Angle
 import edu.wpi.first.units.measure.Distance
@@ -13,6 +14,7 @@ import edu.wpi.first.wpilibj2.command.Command
 import edu.wpi.first.wpilibj2.command.Commands
 import edu.wpi.first.wpilibj2.command.SequentialCommandGroup
 import net.tecdroid.input.CompliantXboxController
+import net.tecdroid.subsystems.drivetrain.SwerveDrive
 import net.tecdroid.subsystems.elevator.Elevator
 import net.tecdroid.subsystems.elevator.ElevatorConfig
 import net.tecdroid.subsystems.elevatorjoint.ElevatorJoint
@@ -124,7 +126,7 @@ enum class ArmOrders(val order: ArmOrder) {
     WJE(ArmOrder(ArmWrist, ArmJoint, ArmElevator))
 }
 
-class ArmSystem(wristConfig: WristConfig, elevatorConfig: ElevatorConfig, elevatorJointConfig: ElevatorJointConfig, intakeConfig: IntakeConfig) : Sendable {
+class ArmSystem(wristConfig: WristConfig, elevatorConfig: ElevatorConfig, elevatorJointConfig: ElevatorJointConfig, intakeConfig: IntakeConfig, val drive: SwerveDrive) : Sendable {
     val wrist = Wrist(wristConfig)
     val elevator = Elevator(elevatorConfig)
     val joint = ElevatorJoint(elevatorJointConfig)
@@ -198,10 +200,12 @@ class ArmSystem(wristConfig: WristConfig, elevatorConfig: ElevatorConfig, elevat
                     ArmPoses.L4.pose,
                     ArmOrders.JEW.order
                 ),
-                setPoseCommand(
-                    ArmPoses.Barge.pose,
-                    ArmOrders.JEW.order
-                ).andThen({ setIsLow(false) }),
+                drive.driveDirectedCommand(
+                    drive.speeds, 0.0.degrees).andThen(
+                    setPoseCommand(
+                        ArmPoses.Barge.pose,
+                        ArmOrders.JEW.order
+                    ).andThen({ setIsLow(false) })),
                 pollIsCoralMode
             )
         )
@@ -249,7 +253,8 @@ class ArmSystem(wristConfig: WristConfig, elevatorConfig: ElevatorConfig, elevat
         )
 
         controller.povRight().onTrue(
-            setPoseCommand(ArmPoses.Processor.pose, ArmOrders.EWJ.order)
+            setPoseCommand(ArmPoses.Processor.pose, ArmOrders.EWJ.order).andThen(
+                drive.driveDirectedCommand(drive.speeds, (-90.0).degrees))
         )
 
         controller.back().onTrue(setPoseCommand(ArmPoses.Passive.pose, ArmOrders.JEW.order))

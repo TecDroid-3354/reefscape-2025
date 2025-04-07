@@ -173,6 +173,10 @@ class SwerveDrive(private val config: SwerveDriveConfig) : SubsystemBase() {
         return Commands.runOnce({ driveFieldOriented(chassisSpeeds) }, this)
     }
 
+    fun driveDirectedCommand(chassisSpeeds: ChassisSpeeds, angle: Angle) : Command {
+        return Commands.runOnce({ driveDirected(chassisSpeeds, angle) }, this)
+    }
+
     fun stopCommand(): Command = Commands.runOnce({ stop() }, this)
 
     fun setHeadingCommand(angle: Angle): Command = Commands.runOnce({ heading = angle }, this)
