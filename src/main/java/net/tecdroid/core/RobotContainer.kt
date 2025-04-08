@@ -12,6 +12,8 @@ import edu.wpi.first.wpilibj2.command.Commands
 import net.tecdroid.autonomous.AutoComposer
 import net.tecdroid.constants.GenericConstants.driverControllerId
 import net.tecdroid.input.CompliantXboxController
+import net.tecdroid.subsystems.climber.climberElevator.climberElevatorConfig
+import net.tecdroid.subsystems.climber.climberIntake.climberIntakeConfig
 import net.tecdroid.subsystems.drivetrain.SwerveDrive
 import net.tecdroid.subsystems.drivetrain.swerveDriveConfiguration
 import net.tecdroid.subsystems.elevator.elevatorConfig
@@ -19,6 +21,7 @@ import net.tecdroid.subsystems.elevatorjoint.elevatorJointConfig
 import net.tecdroid.subsystems.intake.intakeConfig
 import net.tecdroid.subsystems.wrist.wristConfig
 import net.tecdroid.systems.ArmSystem
+import net.tecdroid.systems.ClimberSystem
 import net.tecdroid.util.degrees
 import net.tecdroid.util.seconds
 import net.tecdroid.vision.limelight.systems.LimeLightChoice
@@ -29,6 +32,7 @@ class RobotContainer {
     private val controller = CompliantXboxController(driverControllerId)
     private val swerve = SwerveDrive(swerveDriveConfiguration)
     private val arm = ArmSystem(wristConfig, elevatorConfig, elevatorJointConfig, intakeConfig)
+    private val climber = ClimberSystem(climberIntakeConfig, climberElevatorConfig)
     private val limelightController = LimelightController(
         swerve,
         { chassisSpeeds -> swerve.driveRobotOriented(chassisSpeeds) },
@@ -62,6 +66,7 @@ class RobotContainer {
         swerve.heading = 0.0.degrees
 
         arm.assignCommandsToController(controller)
+        climber.assignCommandsToController(controller)
     }
 
 

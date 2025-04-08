@@ -9,6 +9,8 @@ import edu.wpi.first.units.measure.AngularVelocity
 import edu.wpi.first.units.measure.Voltage
 import edu.wpi.first.wpilibj.DigitalInput
 import edu.wpi.first.wpilibj.DriverStation
+import edu.wpi.first.wpilibj2.command.Command
+import edu.wpi.first.wpilibj2.command.Commands
 import edu.wpi.first.wpilibj2.command.button.Trigger
 import net.tecdroid.subsystems.util.generic.TdSubsystem
 
@@ -52,4 +54,12 @@ class ClimberIntake(private val config: ClimberIntakeConfig) : TdSubsystem("Clim
         motorController.clearStickyFaults()
         motorController.configurator.apply(talonConfig)
     }
+
+    fun coast(): Command = Commands.runOnce({
+        motorController.setNeutralMode(NeutralModeValue.Coast)
+    })
+
+    fun brake(): Command = Commands.runOnce({
+        motorController.setNeutralMode(NeutralModeValue.Brake)
+    })
 }

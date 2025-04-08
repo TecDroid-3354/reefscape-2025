@@ -14,6 +14,8 @@ import edu.wpi.first.units.measure.LinearVelocity
 import edu.wpi.first.units.measure.Voltage
 import edu.wpi.first.util.sendable.SendableBuilder
 import edu.wpi.first.wpilibj.DigitalInput
+import edu.wpi.first.wpilibj2.command.Command
+import edu.wpi.first.wpilibj2.command.Commands
 import net.tecdroid.subsystems.climber.climberIntake.ClimberIntakeConfig
 import net.tecdroid.subsystems.util.generic.*
 
@@ -112,5 +114,11 @@ class ClimberElevator(private val config: ClimberElevatorConfig) :
         }
     }
 
+    fun coast(): Command = Commands.runOnce({
+        motorController.setNeutralMode(NeutralModeValue.Coast)
+    })
 
+    fun brake(): Command = Commands.runOnce({
+        motorController.setNeutralMode(NeutralModeValue.Brake)
+    })
 }

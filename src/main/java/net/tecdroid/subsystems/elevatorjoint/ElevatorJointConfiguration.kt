@@ -54,7 +54,7 @@ val elevatorJointConfig = ElevatorJointConfig(
     ),
 
     motionTargets = AngularMotionTargets(
-        cruiseVelocity = 0.2.rotations.per(Second   ),
+        cruiseVelocity = 0.2.rotations.per(Second),
         accelerationTimePeriod = 0.25.seconds,
         jerkTimePeriod = 0.1.seconds
     )
