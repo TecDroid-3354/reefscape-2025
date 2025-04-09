@@ -29,8 +29,9 @@ class ClimberElevator(private val config: ClimberElevatorConfig) :
     private val motorController = TalonFX(config.motorControllerId.id)
     private var target: Angle
 
-    private val topLimitSwitch = DigitalInput(100000); // TODO check channel
-    private val bottomLimitSwitch = DigitalInput(100001); // TODO check channel
+    // Reference ids from config
+    private val topLimitSwitch = DigitalInput(config.topLimitSwitchId.id); // TODO check channel
+    private val bottomLimitSwitch = DigitalInput(config.bottomLimitSwitchId.id); // TODO check channel
 
     fun isTopLimitSwitchPressed() = topLimitSwitch.get()
     fun isBottomLimitSwitchPressed() = bottomLimitSwitch.get()
@@ -52,7 +53,6 @@ class ClimberElevator(private val config: ClimberElevatorConfig) :
     override val power: Double
         get() = motorController.get()
 
-
     override val displacement: Distance
         get() = config.shaftDiameter.angularDisplacementToLinearDisplacement(config.reduction.apply(motorPosition))
 
@@ -67,6 +67,7 @@ class ClimberElevator(private val config: ClimberElevatorConfig) :
     }
 
     override fun setDisplacement(targetDisplacement: Distance) {
+        // This is ok. Didn't know you were using MeasureLimits
         val clampedDisplacement = config.measureLimits.coerceIn(targetDisplacement) as Distance
         val targetAngle = config.shaftDiameter.linearDisplacementToAngularDisplacement(clampedDisplacement)
         val transformedAngle = config.reduction.unapply(targetAngle)

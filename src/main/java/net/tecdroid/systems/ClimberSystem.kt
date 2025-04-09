@@ -36,10 +36,15 @@ enum class ClimberPoses(var pose: ClimberPose) {
     ))
 }
 
+enum class ClimberTarget {
+    Top, Bottom
+}
+
 class ClimberSystem(climberIntakeConfig: ClimberIntakeConfig, climberElevatorConfig: ClimberElevatorConfig) : Sendable {
     private val climberIntake = ClimberIntake(climberIntakeConfig)
     private val climberElevator = ClimberElevator(climberElevatorConfig)
     private var targetVoltage = 0.0.volts
+    private val elevatorDisplacementVoltage = 10.0.volts
 
     private fun setClimberElevatorDisplacement(displacement: Distance) : Command = climberElevator.setDisplacementCommand(displacement)
     private fun enableClimberIntake() : Command = climberIntake.setVoltageCommand({ 12.0.volts }) // TODO: CHECK VOLT NUMBER
@@ -51,6 +56,13 @@ class ClimberSystem(climberIntakeConfig: ClimberIntakeConfig, climberElevatorCon
                 .until( {climberElevator.isTopLimitSwitchPressed() || climberElevator.isBottomLimitSwitchPressed()} ),
             Commands.runOnce({ targetVoltage = pose.targetVoltage })
         )
+    }
+
+    fun sendTo(target: ClimberTarget): Command = when (target) {
+        ClimberTarget.Top ->
+            climberElevator.setVoltageCommand { elevatorDisplacementVoltage }.until { climberElevator.isTopLimitSwitchPressed() }
+        ClimberTarget.Bottom ->
+            climberElevator.setVoltageCommand { -elevatorDisplacementVoltage }.until { climberElevator.isBottomLimitSwitchPressed() }
     }
 
     override fun initSendable(builder: SendableBuilder) {

@@ -27,7 +27,10 @@ data class ClimberElevatorConfig (
 
     val measureLimits: MeasureLimits<DistanceUnit>,
     val controlGains: ControlGains,
-    val motionTargets: LinearMotionTargets
+    val motionTargets: LinearMotionTargets,
+
+    val topLimitSwitchId: NumericId,
+    val bottomLimitSwitchId: NumericId,
 )
 
 public val climberElevatorConfig = ClimberElevatorConfig(
@@ -60,7 +63,10 @@ public val climberElevatorConfig = ClimberElevatorConfig(
         cruiseVelocity = 0.2.meters.per(Second),
         accelerationTimePeriod = 0.25.seconds,
         jerkTimePeriod = 0.1.seconds
-    )
+    ),
+
+    topLimitSwitchId = NumericId(-1),
+    bottomLimitSwitchId = NumericId(-1),
 )
 
 /* reductions from the past climber

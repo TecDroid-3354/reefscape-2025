@@ -6,6 +6,7 @@ import com.ctre.phoenix6.hardware.TalonFX
 import com.ctre.phoenix6.signals.NeutralModeValue
 import edu.wpi.first.units.measure.Angle
 import edu.wpi.first.units.measure.AngularVelocity
+import edu.wpi.first.units.measure.Time
 import edu.wpi.first.units.measure.Voltage
 import edu.wpi.first.wpilibj.DigitalInput
 import edu.wpi.first.wpilibj.DriverStation
@@ -13,6 +14,7 @@ import edu.wpi.first.wpilibj2.command.Command
 import edu.wpi.first.wpilibj2.command.Commands
 import edu.wpi.first.wpilibj2.command.button.Trigger
 import net.tecdroid.subsystems.util.generic.TdSubsystem
+import net.tecdroid.util.volts
 
 class ClimberIntake(private val config: ClimberIntakeConfig) : TdSubsystem("ClimberIntake") {
     private val motorController = TalonFX(config.motorControllerId.id)
@@ -37,6 +39,10 @@ class ClimberIntake(private val config: ClimberIntakeConfig) : TdSubsystem("Clim
         val request = VoltageOut(voltage)
         motorController.setControl(request)
     }
+
+    fun enableFor(voltage: Voltage, time: Time) = setVoltageCommand { voltage }
+                                                . withTimeout(time)
+                                                . andThen(setVoltageCommand { 0.0.volts })
 
     private fun configureMotorInterface() {
         val talonConfig = TalonFXConfiguration()
