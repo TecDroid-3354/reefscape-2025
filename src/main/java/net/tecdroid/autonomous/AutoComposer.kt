@@ -34,22 +34,11 @@ enum class AutonomousCoralChoice(val str: String) {
 }
 
 class AutoComposer(private val drive: SwerveDrive, private val limelightController: LimelightController, private val armSystem: ArmSystem) {
-    private val pathplanner = PathPlannerAutonomous(drive)
+    private val pathplanner = PathPlannerAutonomous(drive, limelightController, armSystem)
     private val autoChooser = SendableChooser<Command>()
 
     init {
-        val tab = Shuffleboard.getTab("Driver Tab")
-        autoChooser.setDefaultOption("None", Commands.none())
 
-        autoChooser.addOption("Straight Forward", pathplanner.resetPoseAndGetPathFollowingCommand("Straightforward"))
-
-        // Complete autos
-        autoChooser.addOption("RightAuto", rightCompleteAuto())
-        autoChooser.addOption("LeftAuto", leftCompleteAuto())
-        autoChooser.addOption("CenterAuto", centerCompleteAuto())
-
-        tab.add("Autonomous Chooser", autoChooser)
-        SmartDashboard.putData("Autonomous Chooser", autoChooser)
     }
 
     fun getRoutine(side: AutonomousSide, direction: AutonomousDirection, coralChoice: AutonomousCoralChoice, llChoice: LimeLightChoice): Command {

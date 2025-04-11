@@ -10,8 +10,7 @@ import edu.wpi.first.units.Units.Degrees
 import edu.wpi.first.units.Units.Hertz
 import edu.wpi.first.wpilibj2.command.Command
 import edu.wpi.first.wpilibj2.command.Commands
-import frc.robot.LimelightHelpers
-import net.tecdroid.autonomous.AutoComposer
+import net.tecdroid.autonomous.PathPlannerAutonomous
 import net.tecdroid.constants.GenericConstants.driverControllerId
 import net.tecdroid.input.CompliantXboxController
 import net.tecdroid.subsystems.drivetrain.SwerveDrive
@@ -36,7 +35,7 @@ class RobotContainer {
         { chassisSpeeds -> swerve.driveRobotOriented(chassisSpeeds) },
         { swerve.heading.`in`(Degrees) }, swerve.maxSpeeds.times(0.75)
     )
-    private val autoComposer = AutoComposer(swerve, limelightController, arm)
+    private val pathPlannerAutonoumus = PathPlannerAutonomous(swerve, limelightController, arm)
 
     // Swerve Control
     private val accelerationPeriod = 0.1.seconds
@@ -99,6 +98,6 @@ class RobotContainer {
     }
 
     val autonomousCommand: Command
-        get() = autoComposer.selectedAutonomousRoutine
+        get() = pathPlannerAutonoumus.selectedAutonomousRoutine
 
 }

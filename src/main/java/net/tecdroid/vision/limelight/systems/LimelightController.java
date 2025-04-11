@@ -211,7 +211,7 @@ public class LimelightController {
 
     public void updatePoseLeftLimelight(SwerveDrivePoseEstimator poseEstimator) {
         boolean doRejectUpdate = false;
-        LimelightHelpers.PoseEstimate mt1 = LimelightHelpers.getBotPoseEstimate_wpiBlue(StringConstantsKt.leftLimelightName);
+        LimelightHelpers.PoseEstimate mt1 = leftLimelight.getRobotPoseEstimateWpiBlueMT1();
 
         if(mt1.tagCount == 1 && mt1.rawFiducials.length == 1)
         {
@@ -241,7 +241,7 @@ public class LimelightController {
 
     public void updatePoseRightLimelight(SwerveDrivePoseEstimator poseEstimator) {
         boolean doRejectUpdate = false;
-        LimelightHelpers.PoseEstimate mt1 = LimelightHelpers.getBotPoseEstimate_wpiBlue(StringConstantsKt.rightLimelightName);
+        LimelightHelpers.PoseEstimate mt1 = rightLimelight.getRobotPoseEstimateWpiBlueMT1();
 
         if(mt1.tagCount == 1 && mt1.rawFiducials.length == 1)
         {

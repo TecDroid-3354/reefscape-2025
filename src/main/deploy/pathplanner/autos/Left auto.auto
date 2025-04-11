@@ -5,57 +5,116 @@
     "data": {
       "commands": [
         {
+          "type": "parallel",
+          "data": {
+            "commands": [
+              {
+                "type": "path",
+                "data": {
+                  "pathName": "C1-Right-bargeToReef"
+                }
+              },
+              {
+                "type": "named",
+                "data": {
+                  "name": "ArmL2PoseWJE"
+                }
+              }
+            ]
+          }
+        },
+        {
+          "type": "named",
+          "data": {
+            "name": "AlignAndScoreRightBranch"
+          }
+        },
+        {
+          "type": "sequential",
+          "data": {
+            "commands": [
+              {
+                "type": "parallel",
+                "data": {
+                  "commands": [
+                    {
+                      "type": "named",
+                      "data": {
+                        "name": "ArmCoralStationPose"
+                      }
+                    },
+                    {
+                      "type": "path",
+                      "data": {
+                        "pathName": "C2-Right-reefToCoralStation"
+                      }
+                    }
+                  ]
+                }
+              },
+              {
+                "type": "named",
+                "data": {
+                  "name": "EnableIntakeUntilHasCoral"
+                }
+              }
+            ]
+          }
+        },
+        {
           "type": "path",
           "data": {
-            "pathName": "C1-Left-bargeToReef"
+            "pathName": "C2-Right-coralStationToReef"
           }
         },
         {
-          "type": "wait",
+          "type": "named",
           "data": {
-            "waitTime": 2.0
+            "name": "AlignAndScoreRightBranch"
           }
         },
         {
-          "type": "path",
+          "type": "sequential",
           "data": {
-            "pathName": "C2-Left-reefToCoralStation"
-          }
-        },
-        {
-          "type": "wait",
-          "data": {
-            "waitTime": 2.0
-          }
-        },
-        {
-          "type": "path",
-          "data": {
-            "pathName": "C2-Left-coralStationToReef"
-          }
-        },
-        {
-          "type": "wait",
-          "data": {
-            "waitTime": 2.0
-          }
-        },
-        {
-          "type": "path",
-          "data": {
-            "pathName": "C3-Left-reefToCoralStation"
-          }
-        },
-        {
-          "type": "wait",
-          "data": {
-            "waitTime": 1.0
+            "commands": [
+              {
+                "type": "parallel",
+                "data": {
+                  "commands": [
+                    {
+                      "type": "named",
+                      "data": {
+                        "name": "ArmCoralStationPose"
+                      }
+                    },
+                    {
+                      "type": "path",
+                      "data": {
+                        "pathName": "C3-Right-reefToCoralStation"
+                      }
+                    }
+                  ]
+                }
+              },
+              {
+                "type": "named",
+                "data": {
+                  "name": "EnableIntakeUntilHasCoral"
+                }
+              }
+            ]
           }
         },
         {
           "type": "path",
           "data": {
-            "pathName": "C3-Left-coralStationToReef"
+            "pathName": "C3-Right-coralStationToReef"
+          }
+        },
+        {
+          "type": "named",
+          "data": {
+            "name": "AlignAndScoreLeftBranch"
           }
         }
       ]
