@@ -74,8 +74,6 @@ class RobotContainer {
 
         controller.rightTrigger().whileTrue(limelightController.alignRobotAllAxis(LimeLightChoice.Right, 0.175, 0.0))
         controller.leftTrigger().whileTrue(limelightController.alignRobotAllAxis(LimeLightChoice.Left, 0.175, 0.0))
-
-        // controller.x().onTrue(arm.joint.setAngleCommand(0.20.rotations)).onFalse(arm.joint.setAngleCommand(0.24.rotations))
     }
 
     private fun advantageScopeLogs() {
