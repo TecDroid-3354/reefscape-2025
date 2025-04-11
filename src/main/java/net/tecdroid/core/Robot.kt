@@ -18,7 +18,6 @@ class Robot : TimedRobot() {
     override fun robotPeriodic() {
         CommandScheduler.getInstance().run()
         container.robotPeriodic()
-        container.arm.joint.setVoltage((container.controller.rightTriggerAxis - container.controller.leftTriggerAxis).volts * 1.0)
     }
 
     override fun disabledInit() {

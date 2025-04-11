@@ -47,70 +47,70 @@ enum class ArmPoses(var pose: ArmPose) {
     Passive(ArmPose(
         wristPosition         = 0.17.rotations,
         elevatorDisplacement  = 0.01.meters,
-        elevatorJointPosition = 0.26.rotations,
+        elevatorJointPosition = 0.24.rotations,
         targetVoltage = 0.0.volts
     )),
 
     L2(ArmPose(
         wristPosition         = 0.3528.rotations,
         elevatorDisplacement  = 0.0367.meters,
-        elevatorJointPosition = 0.2615.rotations,
+        elevatorJointPosition = 0.25.rotations,
         targetVoltage = 9.0.volts
     )),
 
     L3(ArmPose(
         wristPosition         = 0.3528.rotations,
         elevatorDisplacement  = 0.4281.meters,
-        elevatorJointPosition = 0.2615.rotations,
+        elevatorJointPosition = 0.25.rotations,
         targetVoltage = 9.0.volts
     )),
 
     L4(ArmPose(
         wristPosition         = 0.3528.rotations,
         elevatorDisplacement  = 1.0283.meters,
-        elevatorJointPosition = 0.2610.rotations + 1.5.degrees,
+        elevatorJointPosition = 0.25.rotations + 1.5.degrees,
         targetVoltage = 9.0.volts
     )),
 
     CoralStation(ArmPose(
         wristPosition         = 0.3601.rotations - 2.0.degrees,
         elevatorDisplacement  = 0.01.meters,
-        elevatorJointPosition = 0.1822.rotations + 2.0.degrees,
+        elevatorJointPosition = 0.1622.rotations + 2.0.degrees,
         targetVoltage = 9.0.volts
     )),
 
     A1(ArmPose(
         wristPosition         = 0.2798.rotations,
         elevatorDisplacement  = 0.1457.meters,
-        elevatorJointPosition = 0.1972.rotations - 1.5.degrees,
+        elevatorJointPosition = 0.1772.rotations - 1.5.degrees,
         targetVoltage = 12.0.volts
     )),
 
     A2(ArmPose(
         wristPosition         = 0.2628.rotations,
         elevatorDisplacement  = 0.4920.meters,
-        elevatorJointPosition = 0.2168.rotations - 1.5.degrees,
+        elevatorJointPosition = 0.1968.rotations - 1.5.degrees,
         targetVoltage = 12.0.volts
     )),
 
     Processor(ArmPose(
         wristPosition         = 0.3705.rotations,
         elevatorDisplacement  = 0.0150.meters,
-        elevatorJointPosition = 0.0615.rotations,
+        elevatorJointPosition = 0.0415.rotations,
         targetVoltage = 8.0.volts
     )),
 
     AlgaeFloorIntake(ArmPose(
         wristPosition         = 0.3705.rotations - 24.0.degrees,
         elevatorDisplacement  = 0.0150.meters,
-        elevatorJointPosition = 0.0615.rotations,
+        elevatorJointPosition = 0.0415.rotations,
         targetVoltage = 8.0.volts
     )),
 
     Barge(ArmPose(
         wristPosition         = 0.3476.rotations,
         elevatorDisplacement  = 1.0420.meters,
-        elevatorJointPosition = 0.2549.rotations,
+        elevatorJointPosition = 0.2349.rotations,
         targetVoltage = 8.0.volts
     ))
 }

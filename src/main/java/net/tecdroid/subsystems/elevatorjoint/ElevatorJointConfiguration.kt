@@ -35,7 +35,7 @@ val elevatorJointConfig = ElevatorJointConfig(
 
     absoluteEncoderPort = NumericId(0),
     absoluteEncoderIsInverted = true,
-    absoluteEncoderOffset = 0.334.rotations,
+    absoluteEncoderOffset = 0.325.rotations,
 
     reduction = Reduction(360.0),
 
@@ -55,8 +55,8 @@ val elevatorJointConfig = ElevatorJointConfig(
     ),
 
     motionTargets = AngularMotionTargets(
-        cruiseVelocity = 0.05.rotations.per(Second), // 0.277.rotations.per(Second   ),
-        accelerationTimePeriod = 1.0.seconds, // 0.25.seconds,
+        cruiseVelocity = 0.277.rotations.per(Second   ),
+        accelerationTimePeriod = 0.25.seconds,
         jerkTimePeriod = 0.1.seconds
     )
 )

@@ -21,18 +21,15 @@ import net.tecdroid.subsystems.elevatorjoint.elevatorJointConfig
 import net.tecdroid.subsystems.intake.intakeConfig
 import net.tecdroid.subsystems.wrist.wristConfig
 import net.tecdroid.systems.ArmSystem
-import net.tecdroid.util.degrees
-import net.tecdroid.util.rotations
-import net.tecdroid.util.seconds
-import net.tecdroid.util.volts
+import net.tecdroid.util.*
 import net.tecdroid.vision.limelight.systems.LimeLightChoice
 import net.tecdroid.vision.limelight.systems.LimelightController
 
 
 class RobotContainer {
-    val controller = CompliantXboxController(driverControllerId)
+    private val controller = CompliantXboxController(driverControllerId)
     private val swerve = SwerveDrive(swerveDriveConfiguration)
-    val arm = ArmSystem(wristConfig, elevatorConfig, elevatorJointConfig, intakeConfig)
+    private val arm = ArmSystem(wristConfig, elevatorConfig, elevatorJointConfig, intakeConfig)
     private val limelightController = LimelightController(
         swerve,
         { chassisSpeeds -> swerve.driveRobotOriented(chassisSpeeds) },
@@ -49,7 +46,7 @@ class RobotContainer {
         arm.publishShuffleBoardData()
         swerve.heading = 0.0.degrees
 
-//        arm.assignCommandsToController(controller)
+        arm.assignCommandsToController(controller)
     }
 
 
@@ -62,9 +59,9 @@ class RobotContainer {
 
         swerve.defaultCommand = Commands.run(
             {
-                val vx = MathUtil.applyDeadband(controller.leftY, 0.15) * 0.85
-                val vy = MathUtil.applyDeadband(controller.leftX, 0.15) * 0.85
-                val vw = MathUtil.applyDeadband(controller.rightX, 0.15) * 0.85
+                val vx = MathUtil.applyDeadband(controller.leftY, 0.05) * 0.85
+                val vy = MathUtil.applyDeadband(controller.leftX, 0.05) * 0.85
+                val vw = MathUtil.applyDeadband(controller.rightX, 0.05) * 0.85
 
                 val targetXVelocity = swerve.maxLinearVelocity * vx
                 val targetYVelocity = swerve.maxLinearVelocity * vy
