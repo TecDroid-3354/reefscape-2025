@@ -85,7 +85,7 @@ class ElevatorJoint(private val config: ElevatorJointConfig) :
 
         with(talonConfig) {
             MotorOutput
-                .withNeutralMode(NeutralModeValue.Brake)
+                .withNeutralMode(NeutralModeValue.Coast)
                 .withInverted(config.motorDirection.toInvertedValue())
 
             CurrentLimits

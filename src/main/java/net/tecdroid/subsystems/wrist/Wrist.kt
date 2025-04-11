@@ -80,7 +80,7 @@ class Wrist(private val config: WristConfig) :
 
         with(talonConfig) {
             MotorOutput
-                .withNeutralMode(NeutralModeValue.Brake)
+                .withNeutralMode(NeutralModeValue.Coast)
                 .withInverted(config.motorDirection.toInvertedValue())
 
             CurrentLimits

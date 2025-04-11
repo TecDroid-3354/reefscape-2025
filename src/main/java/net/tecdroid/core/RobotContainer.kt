@@ -8,6 +8,7 @@ import edu.wpi.first.networktables.StructPublisher
 import edu.wpi.first.units.Units.*
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard
 import edu.wpi.first.wpilibj2.command.Command
+import edu.wpi.first.wpilibj2.command.CommandScheduler
 import edu.wpi.first.wpilibj2.command.Commands
 import net.tecdroid.autonomous.AutoComposer
 import net.tecdroid.constants.GenericConstants.driverControllerId
@@ -45,7 +46,7 @@ class RobotContainer {
         arm.publishShuffleBoardData()
         swerve.heading = 0.0.degrees
 
-        arm.assignCommandsToController(controller)
+//        arm.assignCommandsToController(controller)
     }
 
 
