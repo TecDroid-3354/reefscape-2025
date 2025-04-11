@@ -27,8 +27,8 @@ data class ElevatorJointConfig(
 )
 
 val elevatorJointConfig = ElevatorJointConfig(
-    leadMotorControllerId = NumericId(51),
-    followerMotorControllerId = NumericId(52),
+    leadMotorControllerId = NumericId(55),
+    followerMotorControllerId = NumericId(56),
     motorDirection = Counterclockwise,
     motorCurrentLimit = 40.0.amps,
 
