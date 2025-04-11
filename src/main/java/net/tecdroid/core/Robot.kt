@@ -4,6 +4,7 @@ import edu.wpi.first.wpilibj.DriverStation
 import edu.wpi.first.wpilibj.TimedRobot
 import edu.wpi.first.wpilibj2.command.Command
 import edu.wpi.first.wpilibj2.command.CommandScheduler
+import net.tecdroid.util.volts
 
 class Robot : TimedRobot() {
     private val container = RobotContainer()
@@ -17,6 +18,7 @@ class Robot : TimedRobot() {
     override fun robotPeriodic() {
         CommandScheduler.getInstance().run()
         container.robotPeriodic()
+        container.arm.joint.setVoltage((container.controller.rightTriggerAxis - container.controller.leftTriggerAxis).volts * 1.0)
     }
 
     override fun disabledInit() {

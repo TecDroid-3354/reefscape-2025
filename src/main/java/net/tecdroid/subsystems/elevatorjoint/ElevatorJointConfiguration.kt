@@ -7,6 +7,7 @@ import edu.wpi.first.units.measure.Current
 import net.tecdroid.mechanical.Reduction
 import net.tecdroid.safety.MeasureLimits
 import net.tecdroid.util.*
+import net.tecdroid.util.RotationalDirection.Clockwise
 import net.tecdroid.util.RotationalDirection.Counterclockwise
 import net.tecdroid.util.amps
 import net.tecdroid.util.rotations
@@ -27,8 +28,8 @@ data class ElevatorJointConfig(
 )
 
 val elevatorJointConfig = ElevatorJointConfig(
-    leadMotorControllerId = NumericId(51),
-    followerMotorControllerId = NumericId(52),
+    leadMotorControllerId = NumericId(55),
+    followerMotorControllerId = NumericId(56),
     motorDirection = Counterclockwise,
     motorCurrentLimit = 40.0.amps,
 
@@ -54,8 +55,8 @@ val elevatorJointConfig = ElevatorJointConfig(
     ),
 
     motionTargets = AngularMotionTargets(
-        cruiseVelocity = 0.277.rotations.per(Second   ),
-        accelerationTimePeriod = 0.25.seconds,
+        cruiseVelocity = 0.05.rotations.per(Second), // 0.277.rotations.per(Second   ),
+        accelerationTimePeriod = 1.0.seconds, // 0.25.seconds,
         jerkTimePeriod = 0.1.seconds
     )
 )

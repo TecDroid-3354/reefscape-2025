@@ -1,5 +1,6 @@
 package net.tecdroid.core
 
+import edu.wpi.first.math.MathUtil
 import edu.wpi.first.math.filter.SlewRateLimiter
 import edu.wpi.first.math.geometry.Pose2d
 import edu.wpi.first.math.kinematics.ChassisSpeeds
@@ -21,15 +22,17 @@ import net.tecdroid.subsystems.intake.intakeConfig
 import net.tecdroid.subsystems.wrist.wristConfig
 import net.tecdroid.systems.ArmSystem
 import net.tecdroid.util.degrees
+import net.tecdroid.util.rotations
 import net.tecdroid.util.seconds
+import net.tecdroid.util.volts
 import net.tecdroid.vision.limelight.systems.LimeLightChoice
 import net.tecdroid.vision.limelight.systems.LimelightController
 
 
 class RobotContainer {
-    private val controller = CompliantXboxController(driverControllerId)
+    val controller = CompliantXboxController(driverControllerId)
     private val swerve = SwerveDrive(swerveDriveConfiguration)
-    private val arm = ArmSystem(wristConfig, elevatorConfig, elevatorJointConfig, intakeConfig)
+    val arm = ArmSystem(wristConfig, elevatorConfig, elevatorJointConfig, intakeConfig)
     private val limelightController = LimelightController(
         swerve,
         { chassisSpeeds -> swerve.driveRobotOriented(chassisSpeeds) },
@@ -59,9 +62,15 @@ class RobotContainer {
 
         swerve.defaultCommand = Commands.run(
             {
-                val targetVelocity = swerve.vector2dToLinearVelocity(controller.leftY, controller.leftX)
-                val targetAngle = SwerveDrive.vector2dToTargetAngle(controller.rightX, controller.rightY, swerve.lastDirection)
-                swerve.driveDirected(targetVelocity, targetAngle)
+                val vx = MathUtil.applyDeadband(controller.leftY, 0.15) * 0.85
+                val vy = MathUtil.applyDeadband(controller.leftX, 0.15) * 0.85
+                val vw = MathUtil.applyDeadband(controller.rightX, 0.15) * 0.85
+
+                val targetXVelocity = swerve.maxLinearVelocity * vx
+                val targetYVelocity = swerve.maxLinearVelocity * vy
+                val targetAngularVelocity = swerve.maxAngularVelocity * vw
+
+                swerve.driveFieldOriented(ChassisSpeeds(targetXVelocity, targetYVelocity, targetAngularVelocity))
             },
             swerve
         )
@@ -69,12 +78,11 @@ class RobotContainer {
         controller.rightTrigger().whileTrue(limelightController.alignRobotAllAxis(LimeLightChoice.Right, 0.175, 0.0))
         controller.leftTrigger().whileTrue(limelightController.alignRobotAllAxis(LimeLightChoice.Left, 0.175, 0.0))
 
-        controller.povRight()
+        // controller.x().onTrue(arm.joint.setAngleCommand(0.20.rotations)).onFalse(arm.joint.setAngleCommand(0.24.rotations))
     }
 
     private fun advantageScopeLogs() {
         robotPosePublisher.set(swerve.pose)
-
     }
 
     fun robotPeriodic() {

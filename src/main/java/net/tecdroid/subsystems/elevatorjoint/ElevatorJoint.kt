@@ -85,7 +85,7 @@ class ElevatorJoint(private val config: ElevatorJointConfig) :
 
         with(talonConfig) {
             MotorOutput
-                .withNeutralMode(NeutralModeValue.Coast)
+                .withNeutralMode(NeutralModeValue.Brake)
                 .withInverted(config.motorDirection.toInvertedValue())
 
             CurrentLimits
@@ -113,7 +113,7 @@ class ElevatorJoint(private val config: ElevatorJointConfig) :
         leadMotorController.configurator.apply(talonConfig)
         followerMotorController.configurator.apply(talonConfig)
 
-        followerMotorController.setControl(Follower(leadMotorController.deviceID, true))
+        followerMotorController.setControl(Follower(leadMotorController.deviceID, false))
     }
 
     override fun initSendable(builder: SendableBuilder) {
