@@ -27,14 +27,14 @@ data class ElevatorJointConfig(
 )
 
 val elevatorJointConfig = ElevatorJointConfig(
-    leadMotorControllerId = NumericId(51),
-    followerMotorControllerId = NumericId(52),
+    leadMotorControllerId = NumericId(55),
+    followerMotorControllerId = NumericId(56),
     motorDirection = Counterclockwise,
     motorCurrentLimit = 40.0.amps,
 
     absoluteEncoderPort = NumericId(0),
     absoluteEncoderIsInverted = true,
-    absoluteEncoderOffset = (0.334).rotations,
+    absoluteEncoderOffset = (0.325).rotations,
 
     reduction = Reduction(360.0),
 
@@ -54,7 +54,7 @@ val elevatorJointConfig = ElevatorJointConfig(
     ),
 
     motionTargets = AngularMotionTargets(
-        cruiseVelocity = 0.277.rotations.per(Second   ),
+        cruiseVelocity = 0.277.rotations.per(Second),
         accelerationTimePeriod = 0.25.seconds,
         jerkTimePeriod = 0.1.seconds
     )
