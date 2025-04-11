@@ -1,14 +1,16 @@
 package net.tecdroid.core
 
+import edu.wpi.first.math.MathUtil
 import edu.wpi.first.math.filter.SlewRateLimiter
 import edu.wpi.first.math.geometry.Pose2d
 import edu.wpi.first.math.geometry.Translation2d
 import edu.wpi.first.math.kinematics.ChassisSpeeds
 import edu.wpi.first.networktables.NetworkTableInstance
 import edu.wpi.first.networktables.StructPublisher
-import edu.wpi.first.units.Units.Degrees
-import edu.wpi.first.units.Units.Hertz
+import edu.wpi.first.units.Units.*
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard
 import edu.wpi.first.wpilibj2.command.Command
+import edu.wpi.first.wpilibj2.command.CommandScheduler
 import edu.wpi.first.wpilibj2.command.Commands
 import net.tecdroid.autonomous.PathPlannerAutonomous
 import net.tecdroid.constants.GenericConstants.driverControllerId
@@ -20,8 +22,7 @@ import net.tecdroid.subsystems.elevatorjoint.elevatorJointConfig
 import net.tecdroid.subsystems.intake.intakeConfig
 import net.tecdroid.subsystems.wrist.wristConfig
 import net.tecdroid.systems.ArmSystem
-import net.tecdroid.util.degrees
-import net.tecdroid.util.seconds
+import net.tecdroid.util.*
 import net.tecdroid.vision.limelight.systems.LimeLightChoice
 import net.tecdroid.vision.limelight.systems.LimelightController
 
@@ -36,22 +37,6 @@ class RobotContainer {
         { swerve.heading.`in`(Degrees) }, swerve.maxSpeeds.times(0.75)
     )
     private val pathPlannerAutonoumus = PathPlannerAutonomous(swerve, limelightController, arm)
-
-    // Swerve Control
-    private val accelerationPeriod = 0.1.seconds
-    private val decelerationPeriod = accelerationPeriod
-
-    private val da = accelerationPeriod.asFrequency()
-    private val dd = -decelerationPeriod.asFrequency()
-
-    private val longitudinalRateLimiter = SlewRateLimiter(da.`in`(Hertz), dd.`in`(Hertz), 0.0)
-    private val transversalRateLimiter = SlewRateLimiter(da.`in`(Hertz), dd.`in`(Hertz), 0.0)
-    private val angularRateLimiter = SlewRateLimiter(da.`in`(Hertz), dd.`in`(Hertz), 0.0)
-
-    var vx = { swerve.maxLinearVelocity * longitudinalRateLimiter.calculate(controller.leftY * 0.85) }
-    var vy = { swerve.maxLinearVelocity * transversalRateLimiter.calculate(controller.leftX * 0.85) }
-    var vw = { swerve.maxAngularVelocity * angularRateLimiter.calculate(controller.rightX * 0.85) }
-
 
     // Advantage Scope log publisher
     private val robotPosePublisher: StructPublisher<Pose2d> = NetworkTableInstance.getDefault()
@@ -76,14 +61,22 @@ class RobotContainer {
         controller.start().onTrue(swerve.zeroHeadingCommand())
 
         swerve.defaultCommand = Commands.run(
-            { swerve.driveFieldOriented(ChassisSpeeds(vx(), vy(), vw())) },
+            {
+                val vx = MathUtil.applyDeadband(controller.leftY, 0.05) * 0.85
+                val vy = MathUtil.applyDeadband(controller.leftX, 0.05) * 0.85
+                val vw = MathUtil.applyDeadband(controller.rightX, 0.05) * 0.85
+
+                val targetXVelocity = swerve.maxLinearVelocity * vx
+                val targetYVelocity = swerve.maxLinearVelocity * vy
+                val targetAngularVelocity = swerve.maxAngularVelocity * vw
+
+                swerve.driveFieldOriented(ChassisSpeeds(targetXVelocity, targetYVelocity, targetAngularVelocity))
+            },
             swerve
         )
 
         controller.rightTrigger().whileTrue(limelightController.alignRobotAllAxis(LimeLightChoice.Right, 0.175, 0.0))
         controller.leftTrigger().whileTrue(limelightController.alignRobotAllAxis(LimeLightChoice.Left, 0.175, 0.0))
-
-        controller.povRight()
     }
 
     private fun advantageScopeLogs() {
