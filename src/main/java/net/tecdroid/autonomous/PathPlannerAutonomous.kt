@@ -58,6 +58,9 @@ class PathPlannerAutonomous(val drive: SwerveDrive, private val limelightControl
         registerNamedCommand("ArmL4Pose",
             armSystem.setPoseAutoCommand(ArmPoses.L4.pose, ArmOrders.JEW.order))
 
+        registerNamedCommand("ArmL3Pose",
+            armSystem.setPoseAutoCommand(ArmPoses.L3.pose, ArmOrders.WEJ.order))
+
         registerNamedCommand("ArmL2PoseWJE",
             armSystem.setPoseAutoCommand(ArmPoses.L2.pose, ArmOrders.WJE.order))
 
@@ -86,7 +89,7 @@ class PathPlannerAutonomous(val drive: SwerveDrive, private val limelightControl
                 ParallelCommandGroup(
                     limelightController.alignRobotAllAxis(LimeLightChoice.Right, 0.19, 0.0)
                         .until { limelightController.isAtSetPoint(LimeLightChoice.Right, 0.19, 0.0) },
-                    armSystem.setPoseAutoCommand(ArmPoses.L4.pose, ArmOrders.JEW.order).beforeStarting(Commands.waitTime(0.1.seconds)),
+                    armSystem.setPoseAutoCommand(ArmPoses.L4.pose, ArmOrders.JEW.order),
                 ),
                 drive.stopCommand(),
                 Commands.waitTime(0.3.seconds),
@@ -102,7 +105,7 @@ class PathPlannerAutonomous(val drive: SwerveDrive, private val limelightControl
                 ParallelCommandGroup(
                     limelightController.alignRobotAllAxis(LimeLightChoice.Left, 0.19, 0.0)
                         .until { limelightController.isAtSetPoint(LimeLightChoice.Left, 0.19, 0.0) },
-                    armSystem.setPoseAutoCommand(ArmPoses.L4.pose, ArmOrders.JEW.order).beforeStarting(Commands.waitTime(0.1.seconds)),
+                    armSystem.setPoseAutoCommand(ArmPoses.L4.pose, ArmOrders.JEW.order),
                 ),
                 drive.stopCommand(),
                 Commands.waitTime(0.3.seconds),
