@@ -180,6 +180,12 @@
           "data": {
             "name": "AlignAndScoreLeftBranch"
           }
+        },
+        {
+          "type": "named",
+          "data": {
+            "name": "ArmL2PoseJEW"
+          }
         }
       ]
     }
