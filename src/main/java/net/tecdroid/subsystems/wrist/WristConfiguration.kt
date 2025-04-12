@@ -42,8 +42,8 @@ val wristConfig = WristConfig(
     measureLimits = MeasureLimits(
         absoluteMinimum = 0.0.rotations,
         relativeMinimum = 0.021.rotations,
-        relativeMaximum = 0.3704.rotations,
-        absoluteMaximum = 0.3748.rotations,
+        relativeMaximum = 0.3704.rotations + 2.0.degrees,
+        absoluteMaximum = 0.3848.rotations,
     ),
 
     controlGains = ControlGains(

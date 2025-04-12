@@ -18,7 +18,7 @@ import net.tecdroid.subsystems.elevatorjoint.elevatorJointConfig
 import net.tecdroid.subsystems.intake.intakeConfig
 import net.tecdroid.subsystems.wrist.wristConfig
 import net.tecdroid.systems.ArmSystem
-import net.tecdroid.util.*
+import net.tecdroid.util.degrees
 import net.tecdroid.vision.limelight.systems.LimeLightChoice
 import net.tecdroid.vision.limelight.systems.LimelightController
 
@@ -26,7 +26,7 @@ import net.tecdroid.vision.limelight.systems.LimelightController
 class RobotContainer {
     private val controller = CompliantXboxController(driverControllerId)
     private val swerve = SwerveDrive(swerveDriveConfiguration)
-    private val arm = ArmSystem(wristConfig, elevatorConfig, elevatorJointConfig, intakeConfig)
+    private val arm = ArmSystem(wristConfig, elevatorConfig, elevatorJointConfig, intakeConfig, swerve, controller)
     private val limelightController = LimelightController(
         swerve,
         { chassisSpeeds -> swerve.driveRobotOriented(chassisSpeeds) },
@@ -42,9 +42,9 @@ class RobotContainer {
 
     init {
         limelightController.shuffleboardData()
-        arm.publishShuffleBoardData()
         swerve.heading = 0.0.degrees
 
+        arm.publishShuffleBoardData()
         arm.assignCommandsToController(controller)
     }
 
@@ -66,13 +66,16 @@ class RobotContainer {
                 val targetYVelocity = swerve.maxLinearVelocity * vy
                 val targetAngularVelocity = swerve.maxAngularVelocity * vw
 
+                SmartDashboard.putNumber("!x", targetAngularVelocity.`in`(DegreesPerSecond))
+                SmartDashboard.putNumber("!c", controller.rightX)
+
                 swerve.driveFieldOriented(ChassisSpeeds(targetXVelocity, targetYVelocity, targetAngularVelocity))
             },
             swerve
         )
 
-        controller.rightTrigger().whileTrue(limelightController.alignRobotAllAxis(LimeLightChoice.Right, 0.175, 0.0))
-        controller.leftTrigger().whileTrue(limelightController.alignRobotAllAxis(LimeLightChoice.Left, 0.175, 0.0))
+        controller.rightTrigger().whileTrue(limelightController.alignRobotAllAxis(LimeLightChoice.Right, 0.215, 0.045))
+        controller.leftTrigger().whileTrue(limelightController.alignRobotAllAxis(LimeLightChoice.Left, 0.215, -0.045))
     }
 
     private fun advantageScopeLogs() {
