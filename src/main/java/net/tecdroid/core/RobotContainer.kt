@@ -1,16 +1,12 @@
 package net.tecdroid.core
 
 import edu.wpi.first.math.MathUtil
-import edu.wpi.first.math.filter.SlewRateLimiter
 import edu.wpi.first.math.geometry.Pose2d
-import edu.wpi.first.math.geometry.Translation2d
 import edu.wpi.first.math.kinematics.ChassisSpeeds
 import edu.wpi.first.networktables.NetworkTableInstance
 import edu.wpi.first.networktables.StructPublisher
 import edu.wpi.first.units.Units.*
-import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard
 import edu.wpi.first.wpilibj2.command.Command
-import edu.wpi.first.wpilibj2.command.CommandScheduler
 import edu.wpi.first.wpilibj2.command.Commands
 import net.tecdroid.autonomous.PathPlannerAutonomous
 import net.tecdroid.constants.GenericConstants.driverControllerId
@@ -36,7 +32,7 @@ class RobotContainer {
         { chassisSpeeds -> swerve.driveRobotOriented(chassisSpeeds) },
         { swerve.heading.`in`(Degrees) }, swerve.maxSpeeds.times(0.75)
     )
-    private val pathPlannerAutonoumus = PathPlannerAutonomous(swerve, limelightController, arm)
+    private val pathPlannerAutonomous = PathPlannerAutonomous(swerve, limelightController, arm)
 
     // Advantage Scope log publisher
     private val robotPosePublisher: StructPublisher<Pose2d> = NetworkTableInstance.getDefault()
@@ -91,6 +87,6 @@ class RobotContainer {
     }
 
     val autonomousCommand: Command
-        get() = pathPlannerAutonoumus.selectedAutonomousRoutine
+        get() = pathPlannerAutonomous.selectedAutonomousRoutine
 
 }

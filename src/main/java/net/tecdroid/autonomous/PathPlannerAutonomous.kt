@@ -67,6 +67,14 @@ class PathPlannerAutonomous(val drive: SwerveDrive, private val limelightControl
 
         // Score Commands
         registerNamedCommand("AlignAndScoreRightBranch",
+            limelightController.alignRobotAllAxis(LimeLightChoice.Right, 0.19, 0.0)
+                .until { limelightController.isAtSetPoint(LimeLightChoice.Right, 0.19, 0.0) })
+
+        registerNamedCommand("AlignAndScoreLeftBranch",
+            limelightController.alignRobotAllAxis(LimeLightChoice.Right, 0.19, 0.0)
+                .until { limelightController.isAtSetPoint(LimeLightChoice.Right, 0.19, 0.0) })
+
+        /*registerNamedCommand("AlignAndScoreRightBranch",
             Commands.sequence(
                 ParallelCommandGroup(
                     limelightController.alignRobotAllAxis(LimeLightChoice.Right, 0.19, 0.0)
@@ -79,7 +87,8 @@ class PathPlannerAutonomous(val drive: SwerveDrive, private val limelightControl
                 armSystem.enableIntakeAuto(),
                 Commands.waitUntil { !armSystem.intake.hasCoral() },
                 Commands.waitTime(0.5.seconds),
-                armSystem.disableIntake()
+                armSystem.disableIntake(),
+                armSystem.setPoseCommand(ArmPoses.L3.pose, ArmOrders.WJE.order))
             ))
 
         registerNamedCommand("AlignAndScoreLeftBranch",
@@ -95,8 +104,9 @@ class PathPlannerAutonomous(val drive: SwerveDrive, private val limelightControl
                 armSystem.enableIntakeAuto(),
                 Commands.waitUntil { !armSystem.intake.hasCoral() },
                 Commands.waitTime(0.5.seconds),
-                armSystem.disableIntake()
-            ))
+                armSystem.disableIntake(),
+                armSystem.setPoseCommand(ArmPoses.L3.pose, ArmOrders.WJE.order))
+            ))*/
     }
 
     private fun autoChooserOptions() {
