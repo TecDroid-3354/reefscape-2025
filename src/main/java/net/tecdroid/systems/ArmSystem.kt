@@ -86,9 +86,10 @@ enum class ArmPoses(var pose: ArmPose) {
         elevatorDisplacement  = 0.01.meters,
         elevatorJointPosition = 0.1622.rotations + 5.0.degrees,
         targetVoltage = 9.0.volts,
-        Optional.of { pose ->
+        Optional.empty()
+        /*Optional.of { pose ->
             0.0.degrees // TODO: Logic
-        }
+        }*/
     )),
 
     A1(ArmPose(
@@ -208,6 +209,15 @@ class ArmSystem(wristConfig: WristConfig, elevatorConfig: ElevatorConfig, elevat
                     swerve.currentCommand.cancel()
                 })
             })
+        )
+    }
+
+    fun setPoseAutoCommand(pose: ArmPose, order: ArmOrder) : Command {
+        return SequentialCommandGroup(
+            Commands.runOnce({ targetVoltage = pose.targetVoltage }),
+            getCommandFor(pose, order.first),
+            getCommandFor(pose, order.second),
+            getCommandFor(pose, order.third),
         )
     }
 

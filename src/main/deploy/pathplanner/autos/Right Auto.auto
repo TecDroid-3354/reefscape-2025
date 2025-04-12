@@ -53,9 +53,28 @@
                 }
               },
               {
+                "type": "wait",
+                "data": {
+                  "waitTime": 0.1
+                }
+              }
+            ]
+          }
+        },
+        {
+          "type": "parallel",
+          "data": {
+            "commands": [
+              {
                 "type": "named",
                 "data": {
                   "name": "EnableIntakeUntilHasCoral"
+                }
+              },
+              {
+                "type": "named",
+                "data": {
+                  "name": "StopMotors"
                 }
               }
             ]
@@ -97,9 +116,28 @@
                 }
               },
               {
+                "type": "wait",
+                "data": {
+                  "waitTime": 0.1
+                }
+              }
+            ]
+          }
+        },
+        {
+          "type": "parallel",
+          "data": {
+            "commands": [
+              {
                 "type": "named",
                 "data": {
                   "name": "EnableIntakeUntilHasCoral"
+                }
+              },
+              {
+                "type": "named",
+                "data": {
+                  "name": "StopMotors"
                 }
               }
             ]

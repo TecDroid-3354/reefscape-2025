@@ -48,65 +48,74 @@ class PathPlannerAutonomous(val drive: SwerveDrive, private val limelightControl
     }
 
     private fun namedCommandsInit() {
+        // Stop motors
+        registerNamedCommand("StopMotors",
+            drive.stopCommand())
         // Arm
         registerNamedCommand("ArmCoralStationPose",
-            armSystem.setPoseCommand(ArmPoses.CoralStation.pose, ArmOrders.EJW.order))
+            armSystem.setPoseAutoCommand(ArmPoses.CoralStation.pose, ArmOrders.EJW.order))
 
         registerNamedCommand("ArmL4Pose",
-            armSystem.setPoseCommand(ArmPoses.L4.pose, ArmOrders.JEW.order))
+            armSystem.setPoseAutoCommand(ArmPoses.L4.pose, ArmOrders.JEW.order))
 
         registerNamedCommand("ArmL2PoseWJE",
-            armSystem.setPoseCommand(ArmPoses.L2.pose, ArmOrders.WJE.order))
+            armSystem.setPoseAutoCommand(ArmPoses.L2.pose, ArmOrders.WJE.order))
 
         registerNamedCommand("ArmL2PoseJEW",
-            armSystem.setPoseCommand(ArmPoses.L2.pose, ArmOrders.WJE.order))
+            armSystem.setPoseAutoCommand(ArmPoses.L2.pose, ArmOrders.WJE.order))
 
         // Intake
         registerNamedCommand("EnableIntakeUntilHasCoral",
-            armSystem.enableIntake().until({ armSystem.intake.hasCoral() }).andThen(armSystem.disableIntake()))
+            Commands.sequence(
+                armSystem.enableIntakeAuto(),
+                Commands.waitUntil { armSystem.intake.hasCoral() },
+                armSystem.disableIntake()
+            ))
 
         // Score Commands
-        registerNamedCommand("AlignAndScoreRightBranch",
+        /*registerNamedCommand("AlignAndScoreRightBranch",
             limelightController.alignRobotAllAxis(LimeLightChoice.Right, 0.19, 0.0)
                 .until { limelightController.isAtSetPoint(LimeLightChoice.Right, 0.19, 0.0) })
 
         registerNamedCommand("AlignAndScoreLeftBranch",
-            limelightController.alignRobotAllAxis(LimeLightChoice.Right, 0.19, 0.0)
-                .until { limelightController.isAtSetPoint(LimeLightChoice.Right, 0.19, 0.0) })
+            limelightController.alignRobotAllAxis(LimeLightChoice.Left, 0.19, 0.0)
+                .until { limelightController.isAtSetPoint(LimeLightChoice.Left, 0.19, 0.0) })*/
 
-        /*registerNamedCommand("AlignAndScoreRightBranch",
+        registerNamedCommand("AlignAndScoreRightBranch",
             Commands.sequence(
                 ParallelCommandGroup(
                     limelightController.alignRobotAllAxis(LimeLightChoice.Right, 0.19, 0.0)
                         .until { limelightController.isAtSetPoint(LimeLightChoice.Right, 0.19, 0.0) },
-                    armSystem.setPoseCommand(ArmPoses.L4.pose, ArmOrders.JEW.order).beforeStarting(Commands.waitTime(0.5.seconds)),
+                    armSystem.setPoseAutoCommand(ArmPoses.L4.pose, ArmOrders.JEW.order).beforeStarting(Commands.waitTime(0.5.seconds)),
                 ),
-
+                drive.stopCommand(),
                 Commands.waitTime(0.5.seconds),
 
                 armSystem.enableIntakeAuto(),
                 Commands.waitUntil { !armSystem.intake.hasCoral() },
                 Commands.waitTime(0.5.seconds),
                 armSystem.disableIntake(),
-                armSystem.setPoseCommand(ArmPoses.L3.pose, ArmOrders.WJE.order))
-            ))
+                armSystem.setPoseAutoCommand(ArmPoses.L3.pose, ArmOrders.WJE.order),
+                Commands.waitTime(0.5.seconds))
+            )
 
         registerNamedCommand("AlignAndScoreLeftBranch",
             Commands.sequence(
                 ParallelCommandGroup(
                     limelightController.alignRobotAllAxis(LimeLightChoice.Left, 0.19, 0.0)
                         .until { limelightController.isAtSetPoint(LimeLightChoice.Left, 0.19, 0.0) },
-                    armSystem.setPoseCommand(ArmPoses.L4.pose, ArmOrders.JEW.order).beforeStarting(Commands.waitTime(0.5.seconds)),
+                    armSystem.setPoseAutoCommand(ArmPoses.L4.pose, ArmOrders.JEW.order).beforeStarting(Commands.waitTime(0.5.seconds)),
                 ),
-
+                drive.stopCommand(),
                 Commands.waitTime(0.5.seconds),
 
                 armSystem.enableIntakeAuto(),
                 Commands.waitUntil { !armSystem.intake.hasCoral() },
                 Commands.waitTime(0.5.seconds),
                 armSystem.disableIntake(),
-                armSystem.setPoseCommand(ArmPoses.L3.pose, ArmOrders.WJE.order))
-            ))*/
+                armSystem.setPoseAutoCommand(ArmPoses.L3.pose, ArmOrders.WJE.order),
+                Commands.waitTime(0.5.seconds))
+            )
     }
 
     private fun autoChooserOptions() {
@@ -119,6 +128,7 @@ class PathPlannerAutonomous(val drive: SwerveDrive, private val limelightControl
         autoChooser.addOption("RightAuto", PathPlannerAuto("Right Auto"))
         autoChooser.addOption("LeftAuto", PathPlannerAuto("Left Auto"))
         autoChooser.addOption("CenterAuto", PathPlannerAuto("Center Auto"))
+        autoChooser.addOption("TestAuto", PathPlannerAuto("Test Auto"))
 
         tab.add("Autonomous Chooser", autoChooser)
         SmartDashboard.putData("Autonomous Chooser", autoChooser)
