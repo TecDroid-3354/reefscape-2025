@@ -17,7 +17,7 @@
               {
                 "type": "named",
                 "data": {
-                  "name": "ArmL3Pose"
+                  "name": "ArmL3PoseWJE"
                 }
               }
             ]
@@ -81,9 +81,22 @@
           }
         },
         {
-          "type": "path",
+          "type": "parallel",
           "data": {
-            "pathName": "C2-Left-coralStationToReef"
+            "commands": [
+              {
+                "type": "path",
+                "data": {
+                  "pathName": "C2-Left-coralStationToReef"
+                }
+              },
+              {
+                "type": "named",
+                "data": {
+                  "name": "ArmL3PoseEWJ"
+                }
+              }
+            ]
           }
         },
         {
@@ -144,9 +157,22 @@
           }
         },
         {
-          "type": "path",
+          "type": "parallel",
           "data": {
-            "pathName": "C3-Left-coralStationToReef"
+            "commands": [
+              {
+                "type": "path",
+                "data": {
+                  "pathName": "C3-Left-coralStationToReef"
+                }
+              },
+              {
+                "type": "named",
+                "data": {
+                  "name": "ArmL3PoseEWJ"
+                }
+              }
+            ]
           }
         },
         {

@@ -58,8 +58,11 @@ class PathPlannerAutonomous(val drive: SwerveDrive, private val limelightControl
         registerNamedCommand("ArmL4Pose",
             armSystem.setPoseAutoCommand(ArmPoses.L4.pose, ArmOrders.JEW.order))
 
-        registerNamedCommand("ArmL3Pose",
-            armSystem.setPoseAutoCommand(ArmPoses.L3.pose, ArmOrders.WEJ.order))
+        registerNamedCommand("ArmL3PoseWJE",
+        armSystem.setPoseAutoCommand(ArmPoses.L3.pose, ArmOrders.WEJ.order))
+
+        registerNamedCommand("ArmL3PoseEWJ",
+            armSystem.setPoseAutoCommand(ArmPoses.L3.pose, ArmOrders.EWJ.order))
 
         registerNamedCommand("ArmL2PoseWJE",
             armSystem.setPoseAutoCommand(ArmPoses.L2.pose, ArmOrders.WJE.order))
