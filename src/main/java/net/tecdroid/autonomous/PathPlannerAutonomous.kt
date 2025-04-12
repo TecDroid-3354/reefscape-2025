@@ -118,7 +118,7 @@ class PathPlannerAutonomous(val drive: SwerveDrive, private val limelightControl
             )
     }
 
-    private fun autoChooserOptions() {
+    private fun () {
         val tab = Shuffleboard.getTab("Driver Tab")
         autoChooser.setDefaultOption("None", Commands.none())
 
