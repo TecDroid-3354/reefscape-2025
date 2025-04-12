@@ -66,9 +66,6 @@ class RobotContainer {
                 val targetYVelocity = swerve.maxLinearVelocity * vy
                 val targetAngularVelocity = swerve.maxAngularVelocity * vw
 
-                SmartDashboard.putNumber("!x", targetAngularVelocity.`in`(DegreesPerSecond))
-                SmartDashboard.putNumber("!c", controller.rightX)
-
                 swerve.driveFieldOriented(ChassisSpeeds(targetXVelocity, targetYVelocity, targetAngularVelocity))
             },
             swerve
