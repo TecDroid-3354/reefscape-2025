@@ -57,7 +57,7 @@ class AutoComposer(private val drive: SwerveDrive, private val limelightControll
             AutonomousDirection.ReefToCoralStation -> SequentialCommandGroup(
                 ParallelCommandGroup(
                     pathplanner.getPathFollowingCommand("${coralChoice.str}-${side.str}-${direction.str}").beforeStarting(Commands.waitTime(0.5.seconds)),
-                    armSystem.setPoseCommand(ArmPoses.CoralStation.pose, ArmOrders.EJW.order),
+                    armSystem.setPoseCommandForAuto(ArmPoses.CoralStation.pose, ArmOrders.EJW.order),
                 ),
 
                 armSystem.enableIntakeAuto(),
@@ -68,14 +68,14 @@ class AutoComposer(private val drive: SwerveDrive, private val limelightControll
             AutonomousDirection.CoralStationToReef, AutonomousDirection.BargeToReef -> SequentialCommandGroup(
                 (if (direction == AutonomousDirection.BargeToReef)
                     pathplanner.resetPoseAndGetPathFollowingCommand("${coralChoice.str}-${side.str}-${direction.str}")
-                        .alongWith(armSystem.setPoseCommand(ArmPoses.L2.pose, ArmOrders.WJE.order))
+                        .alongWith(armSystem.setPoseCommandForAuto(ArmPoses.L2.pose, ArmOrders.WJE.order))
                 else
                      pathplanner.getPathFollowingCommand("${coralChoice.str}-${side.str}-${direction.str}")),
 
                 ParallelCommandGroup(
                     limelightController.alignRobotAllAxis(llChoice, 0.19, 0.0)
                         .until { limelightController.isAtSetPoint(llChoice, 0.19, 0.0) },
-                    armSystem.setPoseCommand(ArmPoses.L4.pose, ArmOrders.JEW.order).beforeStarting(Commands.waitTime(0.5.seconds)),
+                    armSystem.setPoseCommandForAuto(ArmPoses.L4.pose, ArmOrders.JEW.order).beforeStarting(Commands.waitTime(0.5.seconds)),
                 ),
 
                 Commands.waitTime(0.5.seconds),

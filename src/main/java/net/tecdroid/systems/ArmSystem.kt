@@ -12,6 +12,7 @@ import edu.wpi.first.units.measure.Distance
 import edu.wpi.first.units.measure.Voltage
 import edu.wpi.first.util.sendable.Sendable
 import edu.wpi.first.util.sendable.SendableBuilder
+import edu.wpi.first.wpilibj.DriverStation
 import edu.wpi.first.wpilibj.shuffleboard.Shuffleboard
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard
 import edu.wpi.first.wpilibj2.command.Command
@@ -195,7 +196,7 @@ class ArmSystem(wristConfig: WristConfig, elevatorConfig: ElevatorConfig, elevat
             getCommandFor(pose, order.first),
             getCommandFor(pose, order.second),
             getCommandFor(pose, order.third),
-            if (pose.targetAngle.isPresent) Commands.run({
+            if (pose.targetAngle.isPresent && DriverStation.isTeleop()) Commands.run({
                 val vx = MathUtil.applyDeadband(controller.leftY, 0.05) * 0.85
                 val vy = MathUtil.applyDeadband(controller.leftX, 0.05) * 0.85
 
@@ -208,6 +209,22 @@ class ArmSystem(wristConfig: WristConfig, elevatorConfig: ElevatorConfig, elevat
                     swerve.currentCommand.cancel()
                 })
             })
+        )
+    }
+
+
+    fun setPoseCommandForAuto(pose: ArmPose, order: ArmOrder) : Command {
+        return SequentialCommandGroup(
+            Commands.runOnce({
+                targetVoltage = pose.targetVoltage
+                isScoring = when (pose) {
+                    ArmPoses.L2.pose, ArmPoses.L3.pose, ArmPoses.L4.pose -> true
+                    else -> false
+                }
+            }),
+            getCommandFor(pose, order.first),
+            getCommandFor(pose, order.second),
+            getCommandFor(pose, order.third),
         )
     }
 
