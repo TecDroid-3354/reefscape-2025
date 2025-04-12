@@ -95,11 +95,11 @@ class PathPlannerAutonomous(val drive: SwerveDrive, private val limelightControl
                     armSystem.setPoseAutoCommand(ArmPoses.L4.pose, ArmOrders.JEW.order),
                 ),
                 drive.stopCommand(),
-                Commands.waitTime(0.3.seconds),
+                Commands.waitTime(0.25.seconds),
 
                 armSystem.enableIntakeAuto(),
                 Commands.waitUntil { !armSystem.intake.hasCoral() },
-                Commands.waitTime(0.3.seconds),
+                Commands.waitTime(0.25.seconds),
                 armSystem.disableIntake())
             )
 
@@ -111,11 +111,11 @@ class PathPlannerAutonomous(val drive: SwerveDrive, private val limelightControl
                     armSystem.setPoseAutoCommand(ArmPoses.L4.pose, ArmOrders.JEW.order),
                 ),
                 drive.stopCommand(),
-                Commands.waitTime(0.3.seconds),
+                Commands.waitTime(0.25.seconds),
 
                 armSystem.enableIntakeAuto(),
                 Commands.waitUntil { !armSystem.intake.hasCoral() },
-                Commands.waitTime(0.3.seconds),
+                Commands.waitTime(0.25.seconds),
                 armSystem.disableIntake())
             )
     }
