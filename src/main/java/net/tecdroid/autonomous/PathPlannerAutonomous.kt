@@ -86,17 +86,15 @@ class PathPlannerAutonomous(val drive: SwerveDrive, private val limelightControl
                 ParallelCommandGroup(
                     limelightController.alignRobotAllAxis(LimeLightChoice.Right, 0.19, 0.0)
                         .until { limelightController.isAtSetPoint(LimeLightChoice.Right, 0.19, 0.0) },
-                    armSystem.setPoseAutoCommand(ArmPoses.L4.pose, ArmOrders.JEW.order).beforeStarting(Commands.waitTime(0.5.seconds)),
+                    armSystem.setPoseAutoCommand(ArmPoses.L4.pose, ArmOrders.JEW.order).beforeStarting(Commands.waitTime(0.1.seconds)),
                 ),
                 drive.stopCommand(),
-                Commands.waitTime(0.5.seconds),
+                Commands.waitTime(0.3.seconds),
 
                 armSystem.enableIntakeAuto(),
                 Commands.waitUntil { !armSystem.intake.hasCoral() },
-                Commands.waitTime(0.5.seconds),
-                armSystem.disableIntake(),
-                armSystem.setPoseAutoCommand(ArmPoses.L3.pose, ArmOrders.WJE.order),
-                Commands.waitTime(0.5.seconds))
+                Commands.waitTime(0.3.seconds),
+                armSystem.disableIntake())
             )
 
         registerNamedCommand("AlignAndScoreLeftBranch",
@@ -104,17 +102,15 @@ class PathPlannerAutonomous(val drive: SwerveDrive, private val limelightControl
                 ParallelCommandGroup(
                     limelightController.alignRobotAllAxis(LimeLightChoice.Left, 0.19, 0.0)
                         .until { limelightController.isAtSetPoint(LimeLightChoice.Left, 0.19, 0.0) },
-                    armSystem.setPoseAutoCommand(ArmPoses.L4.pose, ArmOrders.JEW.order).beforeStarting(Commands.waitTime(0.5.seconds)),
+                    armSystem.setPoseAutoCommand(ArmPoses.L4.pose, ArmOrders.JEW.order).beforeStarting(Commands.waitTime(0.1.seconds)),
                 ),
                 drive.stopCommand(),
-                Commands.waitTime(0.5.seconds),
+                Commands.waitTime(0.3.seconds),
 
                 armSystem.enableIntakeAuto(),
                 Commands.waitUntil { !armSystem.intake.hasCoral() },
-                Commands.waitTime(0.5.seconds),
-                armSystem.disableIntake(),
-                armSystem.setPoseAutoCommand(ArmPoses.L3.pose, ArmOrders.WJE.order),
-                Commands.waitTime(0.5.seconds))
+                Commands.waitTime(0.3.seconds),
+                armSystem.disableIntake())
             )
     }
 
