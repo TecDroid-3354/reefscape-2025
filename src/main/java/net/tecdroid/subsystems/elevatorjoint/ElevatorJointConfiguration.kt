@@ -42,8 +42,8 @@ val elevatorJointConfig = ElevatorJointConfig(
     measureLimits = MeasureLimits(
         absoluteMinimum = 0.011.rotations,
         relativeMinimum = 0.025.rotations,
-        relativeMaximum = 0.268.rotations,
-        absoluteMaximum = 0.2682.rotations,
+        relativeMaximum = 0.268.rotations + 1.5.degrees,
+        absoluteMaximum = 0.2682.rotations + 1.5.degrees,
     ),
 
     controlGains = ControlGains(

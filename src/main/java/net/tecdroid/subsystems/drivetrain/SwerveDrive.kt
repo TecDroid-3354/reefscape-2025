@@ -79,6 +79,7 @@ class SwerveDrive(private val config: SwerveDriveConfig) : SubsystemBase() {
     override fun periodic() {
         poseEstimator.update(heading.toRotation2d(), modulePositions.toTypedArray())
         field.robotPose = pose
+        SmartDashboard.putNumber("VW", speeds.omegaRadiansPerSecond)
     }
 
      // Core //
@@ -97,6 +98,7 @@ class SwerveDrive(private val config: SwerveDriveConfig) : SubsystemBase() {
         val speeds = transformSpeeds(chassisSpeeds)
         val desiredStates = kinematics.toSwerveModuleStates(speeds)
         setModuleTargetStates(*desiredStates)
+        SmartDashboard.putNumber("PASSIN", chassisSpeeds.omegaRadiansPerSecond)
     }
 
     fun driveFieldOriented(chassisSpeeds: ChassisSpeeds) {
@@ -180,6 +182,7 @@ class SwerveDrive(private val config: SwerveDriveConfig) : SubsystemBase() {
     fun zeroHeadingCommand(): Command = Commands.runOnce({ zeroHeading() }, this)
 
     fun transformSpeeds(speeds: ChassisSpeeds): ChassisSpeeds {
+        SmartDashboard.putNumber("RPASSIN", speeds.omegaRadiansPerSecond)
         val maxMagnitude = sqrt(maxSpeeds.vxMetersPerSecond * maxSpeeds.vxMetersPerSecond + maxSpeeds.vyMetersPerSecond * maxSpeeds.vyMetersPerSecond)
         val currentMagnitude = sqrt(speeds.vxMetersPerSecond * speeds.vxMetersPerSecond + speeds.vyMetersPerSecond * speeds.vyMetersPerSecond)
 
@@ -194,6 +197,7 @@ class SwerveDrive(private val config: SwerveDriveConfig) : SubsystemBase() {
         newSpeeds.vxMetersPerSecond = xRateLimiter.calculate(newSpeeds.vxMetersPerSecond)
         newSpeeds.vyMetersPerSecond = yRateLimiter.calculate(newSpeeds.vyMetersPerSecond)
         newSpeeds.omegaRadiansPerSecond = wRateLimiter.calculate(newSpeeds.omegaRadiansPerSecond)
+
 
         return newSpeeds
     }
