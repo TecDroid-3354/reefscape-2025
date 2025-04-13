@@ -17,7 +17,7 @@
               {
                 "type": "named",
                 "data": {
-                  "name": "ArmL2PoseWJE"
+                  "name": "ArmL3PoseWJE"
                 }
               }
             ]
@@ -53,18 +53,50 @@
                 }
               },
               {
-                "type": "named",
+                "type": "wait",
                 "data": {
-                  "name": "EnableIntakeUntilHasCoral"
+                  "waitTime": 0.1
                 }
               }
             ]
           }
         },
         {
-          "type": "path",
+          "type": "parallel",
           "data": {
-            "pathName": "C2-Right-coralStationToReef"
+            "commands": [
+              {
+                "type": "named",
+                "data": {
+                  "name": "EnableIntakeUntilHasCoral"
+                }
+              },
+              {
+                "type": "named",
+                "data": {
+                  "name": "StopMotors"
+                }
+              }
+            ]
+          }
+        },
+        {
+          "type": "parallel",
+          "data": {
+            "commands": [
+              {
+                "type": "path",
+                "data": {
+                  "pathName": "C2-Right-coralStationToReef"
+                }
+              },
+              {
+                "type": "named",
+                "data": {
+                  "name": "ArmL3PoseEWJ"
+                }
+              }
+            ]
           }
         },
         {
@@ -97,24 +129,62 @@
                 }
               },
               {
-                "type": "named",
+                "type": "wait",
                 "data": {
-                  "name": "EnableIntakeUntilHasCoral"
+                  "waitTime": 0.1
                 }
               }
             ]
           }
         },
         {
-          "type": "path",
+          "type": "parallel",
           "data": {
-            "pathName": "C3-Right-coralStationToReef"
+            "commands": [
+              {
+                "type": "named",
+                "data": {
+                  "name": "EnableIntakeUntilHasCoral"
+                }
+              },
+              {
+                "type": "named",
+                "data": {
+                  "name": "StopMotors"
+                }
+              }
+            ]
+          }
+        },
+        {
+          "type": "parallel",
+          "data": {
+            "commands": [
+              {
+                "type": "path",
+                "data": {
+                  "pathName": "C3-Right-coralStationToReef"
+                }
+              },
+              {
+                "type": "named",
+                "data": {
+                  "name": "ArmL3PoseEWJ"
+                }
+              }
+            ]
           }
         },
         {
           "type": "named",
           "data": {
             "name": "AlignAndScoreLeftBranch"
+          }
+        },
+        {
+          "type": "named",
+          "data": {
+            "name": "ArmL2PoseJEW"
           }
         }
       ]

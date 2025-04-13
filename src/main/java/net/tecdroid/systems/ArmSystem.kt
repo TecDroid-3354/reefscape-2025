@@ -84,7 +84,7 @@ enum class ArmPoses(var pose: ArmPose) {
     CoralStation(ArmPose(
         wristPosition         = 0.3601.rotations + 2.5.degrees,
         elevatorDisplacement  = 0.01.meters,
-        elevatorJointPosition = 0.1622.rotations + 7.0.degrees,
+        elevatorJointPosition = 0.1622.rotations + 10.0.degrees,
         targetVoltage = 9.0.volts,
         Optional.empty()
         /*Optional.of { pose ->
@@ -111,7 +111,7 @@ enum class ArmPoses(var pose: ArmPose) {
     Processor(ArmPose(
         wristPosition         = 0.3705.rotations,
         elevatorDisplacement  = 0.0150.meters,
-        elevatorJointPosition = 0.0415.rotations,
+        elevatorJointPosition = 0.0415.rotations + 5.0.degrees,
         targetVoltage = 8.0.volts,
         Optional.of { -90.0.degrees }
     )),
@@ -175,7 +175,7 @@ class ArmSystem(wristConfig: WristConfig, elevatorConfig: ElevatorConfig, elevat
     fun enableIntakeAuto() : Command = intake.setVoltageCommand { 7.0.volts }
     fun enableOuttake() : Command = intake.setVoltageCommand { -targetVoltage }
     fun disableIntake() : Command = Commands.either(intake.setVoltageCommand { 0.0.volts },
-        intake.setVoltageCommand { 1.0.volts }
+        intake.setVoltageCommand { 1.5.volts }
     ) { isCoralMode }
 
     private fun getCommandFor(pose: ArmPose, member: ArmMember) : Command = when (member) {
@@ -184,7 +184,7 @@ class ArmSystem(wristConfig: WristConfig, elevatorConfig: ElevatorConfig, elevat
         ArmJoint -> joint.setAngleCommand(pose.elevatorJointPosition).andThen(Commands.waitUntil { joint.getPositionError() < 25.0.rotations })
     }
 
-    fun setPoseCommand(pose: ArmPose, order: ArmOrder) : Command {
+    /*fun setPoseCommand(pose: ArmPose, order: ArmOrder) : Command {
         return SequentialCommandGroup(
             Commands.runOnce({
                 targetVoltage = pose.targetVoltage
@@ -210,6 +210,20 @@ class ArmSystem(wristConfig: WristConfig, elevatorConfig: ElevatorConfig, elevat
                 })
             })
         )
+    }*/
+
+    fun setPoseCommand(pose: ArmPose, order: ArmOrder) : Command {
+        return SequentialCommandGroup(
+            Commands.runOnce({
+                targetVoltage = pose.targetVoltage
+                isScoring = when (pose) {
+                    ArmPoses.L2.pose, ArmPoses.L3.pose, ArmPoses.L4.pose -> true
+                    else -> false
+                }
+            }),
+            getCommandFor(pose, order.first),
+            getCommandFor(pose, order.second),
+            getCommandFor(pose, order.third),)
     }
 
     fun setPoseAutoCommand(pose: ArmPose, order: ArmOrder) : Command {
@@ -294,11 +308,17 @@ class ArmSystem(wristConfig: WristConfig, elevatorConfig: ElevatorConfig, elevat
             )
         )
         controller.povDown().onTrue(
-            setPoseCommand(ArmPoses.AlgaeFloorIntake.pose, ArmOrders.EWJ.order)
+            Commands.sequence(
+                setPoseCommand(ArmPoses.AlgaeFloorIntake.pose, ArmOrders.EWJ.order),
+                Commands.runOnce({ isCoralMode = false })
+            )
         )
 
         controller.povRight().onTrue(
-            setPoseCommand(ArmPoses.Processor.pose, ArmOrders.EWJ.order)
+            Commands.sequence(
+                setPoseCommand(ArmPoses.Processor.pose, ArmOrders.EWJ.order),
+                Commands.runOnce({ isCoralMode = false })
+            )
         )
 
         controller.back().onTrue(setPoseCommand(ArmPoses.Passive.pose, ArmOrders.JEW.order))
