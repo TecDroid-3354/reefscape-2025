@@ -184,6 +184,12 @@ class ArmSystem(wristConfig: WristConfig, elevatorConfig: ElevatorConfig, elevat
         ArmJoint -> joint.setAngleCommand(pose.elevatorJointPosition).andThen(Commands.waitUntil { joint.getPositionError() < 25.0.rotations })
     }
 
+    private fun getCommandFor(pose: ArmPose, member: ArmMember, slot: Int) : Command = when (member) {
+        ArmWrist -> wrist.setAngleCommand(pose.wristPosition, slot).andThen(Commands.waitUntil { wrist.getPositionError() < 50.0.rotations })
+        ArmElevator -> elevator.setDisplacementCommand(pose.elevatorDisplacement).andThen(Commands.waitUntil { elevator.getPositionError() < 25.0.rotations })
+        ArmJoint -> joint.setAngleCommand(pose.elevatorJointPosition, slot).andThen(Commands.waitUntil { joint.getPositionError() < 25.0.rotations })
+    }
+
     /*fun setPoseCommand(pose: ArmPose, order: ArmOrder) : Command {
         return SequentialCommandGroup(
             Commands.runOnce({
@@ -223,7 +229,21 @@ class ArmSystem(wristConfig: WristConfig, elevatorConfig: ElevatorConfig, elevat
             }),
             getCommandFor(pose, order.first),
             getCommandFor(pose, order.second),
-            getCommandFor(pose, order.third),)
+            getCommandFor(pose, order.third))
+    }
+
+    fun setPoseCommand(pose: ArmPose, order: ArmOrder, slot: Int) : Command {
+        return SequentialCommandGroup(
+            Commands.runOnce({
+                targetVoltage = pose.targetVoltage
+                isScoring = when (pose) {
+                    ArmPoses.L2.pose, ArmPoses.L3.pose, ArmPoses.L4.pose -> true
+                    else -> false
+                }
+            }),
+            getCommandFor(pose, order.first, slot),
+            getCommandFor(pose, order.second, slot),
+            getCommandFor(pose, order.third, slot))
     }
 
     fun setPoseAutoCommand(pose: ArmPose, order: ArmOrder) : Command {
@@ -309,14 +329,14 @@ class ArmSystem(wristConfig: WristConfig, elevatorConfig: ElevatorConfig, elevat
         )
         controller.povDown().onTrue(
             Commands.sequence(
-                setPoseCommand(ArmPoses.AlgaeFloorIntake.pose, ArmOrders.EWJ.order),
+                setPoseCommand(ArmPoses.AlgaeFloorIntake.pose, ArmOrders.EWJ.order, 1),
                 Commands.runOnce({ isCoralMode = false })
             )
         )
 
         controller.povRight().onTrue(
             Commands.sequence(
-                setPoseCommand(ArmPoses.Processor.pose, ArmOrders.EWJ.order),
+                setPoseCommand(ArmPoses.Processor.pose, ArmOrders.EWJ.order, 1),
                 Commands.runOnce({ isCoralMode = false })
             )
         )
@@ -328,9 +348,14 @@ class ArmSystem(wristConfig: WristConfig, elevatorConfig: ElevatorConfig, elevat
                 enableIntake(),
                 Commands.either(
                     setPoseCommand(
-                        ArmPoses.CoralStation.pose,
+                        ArmPoses.L2.pose,
                         ArmOrders.EJW.order
-                    ).andThen({ setIsLow(true) }),
+                    ).andThen(
+                        setPoseCommand(
+                            ArmPoses.CoralStation.pose,
+                            ArmOrders.EJW.order
+                        ).andThen({ setIsLow(true) })
+                    ),
                     Commands.none(),
                     pollIsCoralMode
                 ),

@@ -24,6 +24,7 @@ data class ElevatorJointConfig(
     val measureLimits: MeasureLimits<AngleUnit>,
     val controlGains: ControlGains,
     val motionTargets: AngularMotionTargets,
+    val algaeMotionTargets: AngularMotionTargets,
     val absoluteEncoderOffset: Angle
 )
 
@@ -58,5 +59,11 @@ val elevatorJointConfig = ElevatorJointConfig(
         cruiseVelocity = 0.277.rotations.per(Second),
         accelerationTimePeriod = 0.25.seconds,
         jerkTimePeriod = 0.1.seconds
+    ),
+
+    algaeMotionTargets = AngularMotionTargets(
+        cruiseVelocity = 0.1.rotations.per(Second),
+        accelerationTimePeriod = 1.0.seconds,
+        jerkTimePeriod = 0.3.seconds
     )
 )
