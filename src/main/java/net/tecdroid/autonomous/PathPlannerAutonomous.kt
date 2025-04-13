@@ -102,7 +102,7 @@ class PathPlannerAutonomous(val drive: SwerveDrive, private val limelightControl
                     armSystem.setPoseAutoCommand(ArmPoses.L4.pose, ArmOrders.JEW.order),
                 ),
                 drive.stopCommand(),
-                Commands.waitTime(0.2.seconds),
+                Commands.waitTime(0.1.seconds),
 
                 armSystem.enableIntake(),
                 Commands.waitUntil { !armSystem.intake.hasCoral() },
