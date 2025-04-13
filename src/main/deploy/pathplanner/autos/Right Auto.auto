@@ -17,10 +17,16 @@
               {
                 "type": "named",
                 "data": {
-                  "name": "ArmL3PoseWJE"
+                  "name": "ArmL2PoseJEW"
                 }
               }
             ]
+          }
+        },
+        {
+          "type": "named",
+          "data": {
+            "name": "ArmL3PoseEWJ"
           }
         },
         {
