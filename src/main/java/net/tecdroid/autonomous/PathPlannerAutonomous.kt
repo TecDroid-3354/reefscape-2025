@@ -78,6 +78,11 @@ class PathPlannerAutonomous(val drive: SwerveDrive, private val limelightControl
                 armSystem.disableIntake()
             ))
 
+        registerNamedCommand("EnableIntake",
+            armSystem.enableIntake())
+
+        // Score commands
+
         registerNamedCommand("AlignAndScoreRightBranch",
             Commands.sequence(
                 ParallelCommandGroup(
@@ -86,7 +91,6 @@ class PathPlannerAutonomous(val drive: SwerveDrive, private val limelightControl
                     armSystem.setPoseAutoCommand(ArmPoses.L4.pose, ArmOrders.JEW.order),
                 ),
                 drive.stopCommand(),
-                Commands.waitTime(0.2.seconds),
 
                 armSystem.enableIntake(),
                 Commands.waitUntil { !armSystem.intake.hasCoral() },
@@ -100,9 +104,7 @@ class PathPlannerAutonomous(val drive: SwerveDrive, private val limelightControl
                     limelightController.alignRobotAllAxis(LimeLightChoice.Left, 0.215, -0.035)
                         .until { limelightController.isAtSetPoint(LimeLightChoice.Left, 0.215, -0.035) },
                     armSystem.setPoseAutoCommand(ArmPoses.L4.pose, ArmOrders.JEW.order),
-                ),
-                drive.stopCommand(),
-                Commands.waitTime(0.1.seconds),
+                ).andThen(drive.stopCommand()),
 
                 armSystem.enableIntake(),
                 Commands.waitUntil { !armSystem.intake.hasCoral() },

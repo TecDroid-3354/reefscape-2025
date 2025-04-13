@@ -17,16 +17,10 @@
               {
                 "type": "named",
                 "data": {
-                  "name": "ArmL2PoseJEW"
+                  "name": "ArmL3PoseEWJ"
                 }
               }
             ]
-          }
-        },
-        {
-          "type": "named",
-          "data": {
-            "name": "ArmL3PoseEWJ"
           }
         },
         {
@@ -53,6 +47,12 @@
                       "type": "path",
                       "data": {
                         "pathName": "C2-Left-reefToCoralStation"
+                      }
+                    },
+                    {
+                      "type": "named",
+                      "data": {
+                        "name": "EnableIntake"
                       }
                     }
                   ]
@@ -129,6 +129,12 @@
                       "type": "path",
                       "data": {
                         "pathName": "C3-Left-reefToCoralStation"
+                      }
+                    },
+                    {
+                      "type": "named",
+                      "data": {
+                        "name": "EnableIntake"
                       }
                     }
                   ]
