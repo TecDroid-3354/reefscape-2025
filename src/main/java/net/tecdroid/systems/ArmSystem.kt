@@ -60,23 +60,23 @@ enum class ArmPoses(var pose: ArmPose) {
     L2(ArmPose(
         wristPosition         = 0.3528.rotations,
         elevatorDisplacement  = 0.0367.meters,
-        elevatorJointPosition = 0.25.rotations + 1.5.degrees,
-        targetVoltage = 9.0.volts,
+        elevatorJointPosition = 0.25.rotations,
+        targetVoltage = 7.0.volts,
         Optional.empty()
     )),
 
     L3(ArmPose(
         wristPosition         = 0.3528.rotations,
         elevatorDisplacement  = 0.4281.meters,
-        elevatorJointPosition = 0.25.rotations + 1.5.degrees,
-        targetVoltage = 9.0.volts,
+        elevatorJointPosition = 0.25.rotations + 3.5.degrees,
+        targetVoltage = 7.0.volts,
         Optional.empty()
     )),
 
     L4(ArmPose(
         wristPosition         = 0.3528.rotations,
         elevatorDisplacement  = 1.0283.meters,
-        elevatorJointPosition = 0.25.rotations + 1.5.degrees,
+        elevatorJointPosition = 0.25.rotations + 3.5.degrees,
         targetVoltage = 9.0.volts,
         Optional.empty()
     )),
@@ -84,7 +84,7 @@ enum class ArmPoses(var pose: ArmPose) {
     CoralStation(ArmPose(
         wristPosition         = 0.3601.rotations + 2.5.degrees,
         elevatorDisplacement  = 0.01.meters,
-        elevatorJointPosition = 0.1622.rotations + 10.0.degrees,
+        elevatorJointPosition = 0.1622.rotations + 10.5.degrees,
         targetVoltage = 9.0.volts,
         Optional.empty()
         /*Optional.of { pose ->
@@ -172,7 +172,6 @@ class ArmSystem(wristConfig: WristConfig, elevatorConfig: ElevatorConfig, elevat
     fun setWristAngle(angle: Angle) : Command = wrist.setAngleCommand(angle)
 
     fun enableIntake() : Command = intake.setVoltageCommand { targetVoltage }
-    fun enableIntakeAuto() : Command = intake.setVoltageCommand { 7.0.volts }
     fun enableOuttake() : Command = intake.setVoltageCommand { -targetVoltage }
     fun disableIntake() : Command = Commands.either(intake.setVoltageCommand { 0.0.volts },
         intake.setVoltageCommand { 1.5.volts }
@@ -347,15 +346,14 @@ class ArmSystem(wristConfig: WristConfig, elevatorConfig: ElevatorConfig, elevat
             Commands.either(
                 enableIntake(),
                 Commands.either(
-                    setPoseCommand(
-                        ArmPoses.L2.pose,
-                        ArmOrders.EJW.order
-                    ).andThen(
+                    Commands.sequence(
                         setPoseCommand(
                             ArmPoses.CoralStation.pose,
                             ArmOrders.EJW.order
-                        ).andThen({ setIsLow(true) })
-                    ),
+                        ),
+                        Commands.runOnce({ setIsLow(true) })
+                    )
+                    ,
                     Commands.none(),
                     pollIsCoralMode
                 ),

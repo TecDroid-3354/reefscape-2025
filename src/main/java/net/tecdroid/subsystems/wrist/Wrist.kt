@@ -66,7 +66,7 @@ class Wrist(private val config: WristConfig) :
             val request = DynamicMotionMagicVoltage(transformedAngle,
                 config.reduction.unapply(config.algaeMotionTargets.cruiseVelocity),
                 config.reduction.unapply(config.algaeMotionTargets.acceleration),
-                config.reduction.unapply(config.algaeMotionTargets.jerk)).withSlot(slot)
+                config.reduction.unapply(config.algaeMotionTargets.jerk)).withSlot(1)
             motorController.setControl(request)
         } else {
             val request = MotionMagicVoltage(transformedAngle).withSlot(0)
