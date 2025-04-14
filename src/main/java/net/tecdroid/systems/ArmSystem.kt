@@ -66,7 +66,7 @@ enum class ArmPoses(var pose: ArmPose) {
     )),
 
     L3(ArmPose(
-        wristPosition         = 0.3528.rotations,
+        wristPosition         = 0.3528.rotations - 0.5.degrees,
         elevatorDisplacement  = 0.4281.meters,
         elevatorJointPosition = 0.25.rotations + 3.5.degrees,
         targetVoltage = 7.0.volts,
@@ -90,6 +90,14 @@ enum class ArmPoses(var pose: ArmPose) {
         /*Optional.of { pose ->
             0.0.degrees // TODO: Logic
         }*/
+    )),
+
+    FloorIntake(ArmPose(
+        wristPosition         = 0.3705.rotations - 24.0.degrees,
+        elevatorDisplacement  = 0.0150.meters,
+        elevatorJointPosition = 0.0355.rotations,
+        targetVoltage = 8.0.volts,
+        Optional.empty()
     )),
 
     A1(ArmPose(
@@ -118,6 +126,13 @@ enum class ArmPoses(var pose: ArmPose) {
 
     AlgaeFloorIntake(ArmPose(
         wristPosition         = 0.3705.rotations - 24.0.degrees,
+        elevatorDisplacement  = 0.0150.meters,
+        elevatorJointPosition = 0.0415.rotations,
+        targetVoltage = 8.0.volts,
+        Optional.empty()
+    )),
+    coralFloorIntake(ArmPose(
+        wristPosition         = 0.35.rotations,
         elevatorDisplacement  = 0.0150.meters,
         elevatorJointPosition = 0.0415.rotations,
         targetVoltage = 8.0.volts,
@@ -337,6 +352,7 @@ class ArmSystem(wristConfig: WristConfig, elevatorConfig: ElevatorConfig, elevat
                 pollIsCoralMode
             )
         )
+
         controller.povDown().onTrue(
             Commands.sequence(
                 enableIntake(2.0),
