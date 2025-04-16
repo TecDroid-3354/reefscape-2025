@@ -357,7 +357,7 @@ class ArmSystem(wristConfig: WristConfig, elevatorConfig: ElevatorConfig, elevat
             Commands.sequence(
                 enableIntake(3.0),
                 setPoseCommand(ArmPoses.AlgaeFloorIntake.pose, ArmOrders.EWJ.order, 1),
-                disableIntake(),
+                disableIntake()
             )
         )
 
@@ -365,7 +365,7 @@ class ArmSystem(wristConfig: WristConfig, elevatorConfig: ElevatorConfig, elevat
             Commands.sequence(
                 enableIntake(3.0),
                 setPoseCommand(ArmPoses.Processor.pose, ArmOrders.EWJ.order, 1),
-                disableIntake(),
+                disableIntake()
             )
         )
 

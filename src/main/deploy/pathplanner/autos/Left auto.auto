@@ -17,7 +17,7 @@
               {
                 "type": "named",
                 "data": {
-                  "name": "ArmL3PoseWJE"
+                  "name": "ArmL3PoseEWJ"
                 }
               }
             ]
@@ -47,6 +47,12 @@
                       "type": "path",
                       "data": {
                         "pathName": "C2-Right-reefToCoralStation"
+                      }
+                    },
+                    {
+                      "type": "named",
+                      "data": {
+                        "name": "EnableIntake"
                       }
                     }
                   ]
@@ -123,6 +129,12 @@
                       "type": "path",
                       "data": {
                         "pathName": "C3-Right-reefToCoralStation"
+                      }
+                    },
+                    {
+                      "type": "named",
+                      "data": {
+                        "name": "EnableIntake"
                       }
                     }
                   ]

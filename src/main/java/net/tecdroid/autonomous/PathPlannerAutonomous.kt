@@ -68,7 +68,7 @@ class PathPlannerAutonomous(val drive: SwerveDrive, private val limelightControl
             armSystem.setPoseAutoCommand(ArmPoses.L2.pose, ArmOrders.WJE.order))
 
         registerNamedCommand("ArmL2PoseJEW",
-            armSystem.setPoseAutoCommand(ArmPoses.L2.pose, ArmOrders.WJE.order))
+            armSystem.setPoseAutoCommand(ArmPoses.L2.pose, ArmOrders.JEW.order))
 
         // Intake
         registerNamedCommand("EnableIntakeUntilHasCoral",
@@ -123,7 +123,6 @@ class PathPlannerAutonomous(val drive: SwerveDrive, private val limelightControl
         autoChooser.addOption("RightAuto", PathPlannerAuto("Right Auto"))
         autoChooser.addOption("LeftAuto", PathPlannerAuto("Left Auto"))
         autoChooser.addOption("CenterAuto", PathPlannerAuto("Center Auto"))
-        autoChooser.addOption("TestAuto", PathPlannerAuto("Test Auto"))
 
         tab.add("Autonomous Chooser", autoChooser)
         SmartDashboard.putData("Autonomous Chooser", autoChooser)
