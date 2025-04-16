@@ -81,8 +81,17 @@ class RobotContainer {
 
     fun robotPeriodic() {
         advantageScopeLogs()
-        limelightController.updatePoseLeftLimelight(swerve.poseEstimator)
-        limelightController.updatePoseRightLimelight(swerve.poseEstimator)
+        try {
+            limelightController.updatePoseLeftLimelight(swerve.poseEstimator)
+        } catch (e: Exception) {
+            System.out.println("left limelight pose update error")
+        }
+
+        try {
+            limelightController.updatePoseRightLimelight(swerve.poseEstimator)
+        } catch (e: Exception) {
+            System.out.println("Right limelight update error")
+        }
 
     }
 

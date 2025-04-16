@@ -50,9 +50,9 @@ data class ArmOrder(
 
 enum class ArmPoses(var pose: ArmPose) {
     Passive(ArmPose(
-        wristPosition         = 0.17.rotations,
+        wristPosition         = 0.021.rotations + 5.0.degrees,
         elevatorDisplacement  = 0.01.meters,
-        elevatorJointPosition = 0.24.rotations,
+        elevatorJointPosition = 0.25.rotations + 3.5.degrees,
         targetVoltage = 0.0.volts,
         Optional.empty()
     )),
