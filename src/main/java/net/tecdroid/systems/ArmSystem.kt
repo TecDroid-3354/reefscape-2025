@@ -355,19 +355,17 @@ class ArmSystem(wristConfig: WristConfig, elevatorConfig: ElevatorConfig, elevat
 
         controller.povDown().onTrue(
             Commands.sequence(
-                enableIntake(2.0),
+                enableIntake(3.0),
                 setPoseCommand(ArmPoses.AlgaeFloorIntake.pose, ArmOrders.EWJ.order, 1),
                 disableIntake(),
-                Commands.runOnce({ isCoralMode = false })
             )
         )
 
         controller.povRight().onTrue(
             Commands.sequence(
-                enableIntake(2.0),
+                enableIntake(3.0),
                 setPoseCommand(ArmPoses.Processor.pose, ArmOrders.EWJ.order, 1),
                 disableIntake(),
-                Commands.runOnce({ isCoralMode = false })
             )
         )
 
