@@ -2,6 +2,7 @@ package net.tecdroid.vision.limelight.systems;
 
 import com.ctre.phoenix6.StatusSignal;
 import com.ctre.phoenix6.hardware.Pigeon2;
+import edu.wpi.first.cameraserver.CameraServer;
 import edu.wpi.first.math.VecBuilder;
 import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.estimator.SwerveDrivePoseEstimator;
@@ -86,9 +87,20 @@ public class LimelightController {
 
     }
 
-    private static double clamp(double max, double min, double v)
-    {
-        return Math.max(min, Math.min(max, v));
+    public void limelightsStream() {
+        ShuffleboardTab driverTab = Shuffleboard.getTab("Driver Tab");
+
+        try {
+            // Left Stream
+            CameraServer.startAutomaticCapture("limelight-left", "http://limelight.local:5800/stream.mjpg");
+
+            // Right Stream
+            CameraServer.startAutomaticCapture("limelight-right", "http://limelight.local:5800/stream.mjpg");
+
+            driverTab.add("limelight-left", CameraServer.getServer("limelight-left"));
+            driverTab.add("limelight-right", CameraServer.getServer("limelight-right"));
+
+        } catch (Exception ignored) {}
     }
 
     public LimelightController(Subsystem requiredSubsystem, Consumer<ChassisSpeeds> drive, DoubleSupplier yaw, ChassisSpeeds maxSpeeds) {
@@ -99,6 +111,11 @@ public class LimelightController {
 
         angleDictionaryValues();
         limelightConfiguration();
+        limelightsStream();
+    }
+
+    private static double clamp(double max, double min, double v) {
+        return Math.max(min, Math.min(max, v));
     }
 
     public boolean isAtSetPoint(LimeLightChoice choice, double xSetPoint, double ySetPoint) {

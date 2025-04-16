@@ -92,14 +92,6 @@ enum class ArmPoses(var pose: ArmPose) {
         }*/
     )),
 
-    FloorIntake(ArmPose(
-        wristPosition         = 0.3705.rotations - 24.0.degrees,
-        elevatorDisplacement  = 0.0150.meters,
-        elevatorJointPosition = 0.0355.rotations,
-        targetVoltage = 8.0.volts,
-        Optional.empty()
-    )),
-
     A1(ArmPose(
         wristPosition         = 0.2798.rotations,
         elevatorDisplacement  = 0.1457.meters,
@@ -131,11 +123,12 @@ enum class ArmPoses(var pose: ArmPose) {
         targetVoltage = 8.0.volts,
         Optional.empty()
     )),
+
     coralFloorIntake(ArmPose(
-        wristPosition         = 0.35.rotations,
-        elevatorDisplacement  = 0.0150.meters,
-        elevatorJointPosition = 0.0415.rotations,
-        targetVoltage = 8.0.volts,
+        wristPosition         = 0.358.rotations,
+        elevatorDisplacement  = 0.01.meters,
+        elevatorJointPosition = 0.0153.rotations,
+        targetVoltage = 9.0.volts,
         Optional.empty()
     )),
 
@@ -366,6 +359,13 @@ class ArmSystem(wristConfig: WristConfig, elevatorConfig: ElevatorConfig, elevat
                 enableIntake(3.0),
                 setPoseCommand(ArmPoses.Processor.pose, ArmOrders.EWJ.order, 1),
                 disableIntake()
+            )
+        )
+
+        controller.povUp().onTrue(
+            Commands.sequence(
+                setPoseCommand(ArmPoses.coralFloorIntake.pose, ArmOrders.EWJ.order),
+                Commands.runOnce({isCoralMode = true})
             )
         )
 
