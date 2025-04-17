@@ -111,6 +111,23 @@ class PathPlannerAutonomous(val drive: SwerveDrive, private val limelightControl
                 Commands.waitTime(0.35.seconds),
                 armSystem.disableIntake())
             )
+
+        registerNamedCommand("AlignAndScoreRightBranchIdFilter",
+            Commands.sequence(
+                Commands.runOnce({limelightController.setFilterIds(arrayOf(20, 19, 11, 6));}),
+                ParallelCommandGroup(
+                    limelightController.alignRobotAllAxis(LimeLightChoice.Right, 0.215, -0.035)
+                        .until { limelightController.isAtSetPoint(LimeLightChoice.Right, 0.215, -0.035) },
+                    armSystem.setPoseAutoCommand(ArmPoses.L4.pose, ArmOrders.JEW.order),
+                ).andThen(drive.stopCommand()),
+
+                Commands.runOnce({limelightController.setFilterIds(arrayOf(21, 20, 19, 18, 17, 22, 10, 11, 6, 7, 8, 9));}),
+
+                armSystem.enableIntake(),
+                Commands.waitUntil { !armSystem.intake.hasCoral() },
+                Commands.waitTime(0.35.seconds),
+                armSystem.disableIntake())
+        )
     }
 
     private fun autoChooserOptions() {

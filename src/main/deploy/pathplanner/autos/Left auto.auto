@@ -26,7 +26,7 @@
         {
           "type": "named",
           "data": {
-            "name": "AlignAndScoreRightBranch"
+            "name": "AlignAndScoreRightBranchIdFilter"
           }
         },
         {
@@ -108,7 +108,7 @@
         {
           "type": "named",
           "data": {
-            "name": "AlignAndScoreRightBranch"
+            "name": "AlignAndScoreLeftBranch"
           }
         },
         {
@@ -190,7 +190,7 @@
         {
           "type": "named",
           "data": {
-            "name": "AlignAndScoreLeftBranch"
+            "name": "AlignAndScoreRightBranch"
           }
         },
         {

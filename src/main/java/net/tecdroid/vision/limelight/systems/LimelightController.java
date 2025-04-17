@@ -3,6 +3,8 @@ package net.tecdroid.vision.limelight.systems;
 import com.ctre.phoenix6.StatusSignal;
 import com.ctre.phoenix6.hardware.Pigeon2;
 import edu.wpi.first.cameraserver.CameraServer;
+import edu.wpi.first.cscore.HttpCamera;
+import edu.wpi.first.cscore.MjpegServer;
 import edu.wpi.first.math.VecBuilder;
 import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.estimator.SwerveDrivePoseEstimator;
@@ -28,6 +30,8 @@ import net.tecdroid.vision.limelight.Limelight;
 import net.tecdroid.vision.limelight.LimelightAprilTagDetector;
 import net.tecdroid.vision.limelight.LimelightConfig;
 
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.function.Consumer;
@@ -58,6 +62,9 @@ public class LimelightController {
     private final DoubleSupplier yaw;
 
     private final ChassisSpeeds maxSpeeds;
+
+    private HttpCamera leftStream = new HttpCamera("lll", "http://10.33.54.201:5800");
+    private HttpCamera rightStream = new HttpCamera("llr", "http://10.33.54.203:5800");
 
     private void angleDictionaryValues() {
         // Blue
@@ -91,14 +98,11 @@ public class LimelightController {
         ShuffleboardTab driverTab = Shuffleboard.getTab("Driver Tab");
 
         try {
-            // Left Stream
-            CameraServer.startAutomaticCapture("limelight-left", "http://limelight.local:5800/stream.mjpg");
+            MjpegServer leftServer = CameraServer.startAutomaticCapture(leftStream);
+            MjpegServer rightServer = CameraServer.startAutomaticCapture(rightStream);
 
-            // Right Stream
-            CameraServer.startAutomaticCapture("limelight-right", "http://limelight.local:5800/stream.mjpg");
-
-            driverTab.add("limelight-left", CameraServer.getServer("limelight-left"));
-            driverTab.add("limelight-right", CameraServer.getServer("limelight-right"));
+            driverTab.add("Left Limelight", leftServer);
+            driverTab.add("Right Limelight", rightServer);
 
         } catch (Exception ignored) {}
     }
@@ -111,7 +115,7 @@ public class LimelightController {
 
         angleDictionaryValues();
         limelightConfiguration();
-        limelightsStream();
+        //limelightsStream();
     }
 
     private static double clamp(double max, double min, double v) {
@@ -153,6 +157,11 @@ public class LimelightController {
     public boolean hasTarget(LimeLightChoice choice) {
         Limelight limelight = (choice == LimeLightChoice.Right) ? rightLimelight : leftLimelight;
         return limelight.getHasTarget();
+    }
+
+    public void setFilterIds(Integer[] targetIds) {
+        rightLimelight.setIdFilter(targetIds);
+        leftLimelight.setIdFilter(targetIds);
     }
 
     // Obtain a yaw between the range [0, 360]

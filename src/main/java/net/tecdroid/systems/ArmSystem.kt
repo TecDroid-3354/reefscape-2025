@@ -57,6 +57,14 @@ enum class ArmPoses(var pose: ArmPose) {
         Optional.empty()
     )),
 
+    L1(ArmPose(
+        wristPosition         = 0.1764.rotations,
+        elevatorDisplacement  = 0.01.meters,
+        elevatorJointPosition = 0.21.rotations,
+        targetVoltage = 6.0.volts,
+        Optional.empty()
+    )),
+
     L2(ArmPose(
         wristPosition         = 0.3528.rotations,
         elevatorDisplacement  = 0.0367.meters,
@@ -68,7 +76,7 @@ enum class ArmPoses(var pose: ArmPose) {
     L3(ArmPose(
         wristPosition         = 0.3528.rotations - 0.5.degrees,
         elevatorDisplacement  = 0.4281.meters,
-        elevatorJointPosition = 0.25.rotations + 3.5.degrees,
+        elevatorJointPosition = 0.263.rotations, //elevatorJointPosition = 0.25.rotations + 3.5.degrees,
         targetVoltage = 7.0.volts,
         Optional.empty()
     )),
@@ -369,7 +377,7 @@ class ArmSystem(wristConfig: WristConfig, elevatorConfig: ElevatorConfig, elevat
             )
         )
 
-        controller.back().onTrue(setPoseCommand(ArmPoses.Passive.pose, ArmOrders.JEW.order))
+        controller.back().onTrue(setPoseCommand(ArmPoses.L1.pose, ArmOrders.JEW.order))
 
        /* controller.rightBumper().onTrue(
             Commands.either(
