@@ -5,34 +5,15 @@
     "data": {
       "commands": [
         {
-          "type": "parallel",
+          "type": "path",
           "data": {
-            "commands": [
-              {
-                "type": "path",
-                "data": {
-                  "pathName": "C1-Center-bargeToReef"
-                }
-              },
-              {
-                "type": "named",
-                "data": {
-                  "name": "ArmL3PoseEWJ"
-                }
-              }
-            ]
+            "pathName": "C1-Center-bargeToReef"
           }
         },
         {
           "type": "named",
           "data": {
             "name": "AlignAndScoreRightBranch"
-          }
-        },
-        {
-          "type": "named",
-          "data": {
-            "name": "ArmL2PoseJEW"
           }
         }
       ]

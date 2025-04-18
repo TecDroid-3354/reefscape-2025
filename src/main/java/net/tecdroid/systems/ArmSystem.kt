@@ -58,10 +58,10 @@ enum class ArmPoses(var pose: ArmPose) {
     )),
 
     L1(ArmPose(
-        wristPosition         = 0.1764.rotations,
+        wristPosition         = 0.3528.rotations - 55.0.degrees,
         elevatorDisplacement  = 0.01.meters,
-        elevatorJointPosition = 0.21.rotations,
-        targetVoltage = 6.0.volts,
+        elevatorJointPosition = 0.263.rotations,
+        targetVoltage = 3.5.volts,
         Optional.empty()
     )),
 
@@ -69,7 +69,7 @@ enum class ArmPoses(var pose: ArmPose) {
         wristPosition         = 0.3528.rotations,
         elevatorDisplacement  = 0.0367.meters,
         elevatorJointPosition = 0.25.rotations + 3.5.degrees,
-        targetVoltage = 7.0.volts,
+        targetVoltage = 8.0.volts,
         Optional.empty()
     )),
 
@@ -92,7 +92,7 @@ enum class ArmPoses(var pose: ArmPose) {
     CoralStation(ArmPose(
         wristPosition         = 0.3601.rotations + 2.5.degrees,
         elevatorDisplacement  = 0.01.meters,
-        elevatorJointPosition = 0.1622.rotations + 10.5.degrees,
+        elevatorJointPosition = 0.1622.rotations + 10.0.degrees,
         targetVoltage = 9.0.volts,
         Optional.empty()
         /*Optional.of { pose ->

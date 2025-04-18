@@ -37,8 +37,6 @@ class RobotContainer {
     // Advantage Scope log publisher
     private val robotPosePublisher: StructPublisher<Pose2d> = NetworkTableInstance.getDefault()
         .getStructTopic("RobotPose", Pose2d.struct).publish()
-    private val mt2PosePublisher: StructPublisher<Pose2d> = NetworkTableInstance.getDefault()
-        .getStructTopic("mt2RobotPose", Pose2d.struct).publish()
 
     init {
         limelightController.shuffleboardData()
@@ -82,7 +80,7 @@ class RobotContainer {
     }
 
     fun robotPeriodic() {
-        advantageScopeLogs()
+        //advantageScopeLogs()
         try {
             limelightController.updatePoseLeftLimelight(swerve.poseEstimator)
         } catch (e: Exception) {

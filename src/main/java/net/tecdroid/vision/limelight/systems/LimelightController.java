@@ -101,8 +101,8 @@ public class LimelightController {
             MjpegServer leftServer = CameraServer.startAutomaticCapture(leftStream);
             MjpegServer rightServer = CameraServer.startAutomaticCapture(rightStream);
 
-            driverTab.add("Left Limelight", leftServer);
-            driverTab.add("Right Limelight", rightServer);
+            driverTab.add("Left Limelight", leftStream);
+            driverTab.add("Right Limelight", rightStream);
 
         } catch (Exception ignored) {}
     }
