@@ -89,7 +89,7 @@ class PathPlannerAutonomous(val drive: SwerveDrive, private val limelightControl
                     limelightController.alignRobotAllAxis(LimeLightChoice.Right, 0.215, 0.035)
                         .until { limelightController.isAtSetPoint(LimeLightChoice.Right, 0.215, 0.035) },
                     armSystem.setPoseAutoCommand(ArmPoses.L4.pose, ArmOrders.JEW.order),
-                ),
+                ).withTimeout(2.5),
                 drive.stopCommand(),
 
                 armSystem.enableIntake(),
@@ -104,7 +104,9 @@ class PathPlannerAutonomous(val drive: SwerveDrive, private val limelightControl
                     limelightController.alignRobotAllAxis(LimeLightChoice.Left, 0.215, -0.035)
                         .until { limelightController.isAtSetPoint(LimeLightChoice.Left, 0.215, -0.035) },
                     armSystem.setPoseAutoCommand(ArmPoses.L4.pose, ArmOrders.JEW.order),
-                ).andThen(drive.stopCommand()),
+                ).withTimeout(2.5),
+
+                drive.stopCommand(),
 
                 armSystem.enableIntake(),
                 Commands.waitUntil { !armSystem.intake.hasCoral() },
@@ -119,7 +121,9 @@ class PathPlannerAutonomous(val drive: SwerveDrive, private val limelightControl
                     limelightController.alignRobotAllAxis(LimeLightChoice.Right, 0.215, -0.035)
                         .until { limelightController.isAtSetPoint(LimeLightChoice.Right, 0.215, -0.035) },
                     armSystem.setPoseAutoCommand(ArmPoses.L4.pose, ArmOrders.JEW.order),
-                ).andThen(drive.stopCommand()),
+                ).withTimeout(2.5),
+
+                drive.stopCommand(),
 
                 Commands.runOnce({limelightController.setFilterIds(arrayOf(21, 20, 19, 18, 17, 22, 10, 11, 6, 7, 8, 9));}),
 
@@ -142,12 +146,13 @@ class PathPlannerAutonomous(val drive: SwerveDrive, private val limelightControl
         //autoChooser.addOption("CenterAuto", PathPlannerAuto("Center Auto"))
         autoChooser.addOption("CenterAuto",
             Commands.sequence(
+                Commands.waitTime(1.5.seconds),
                 Commands.runOnce({limelightController.setFilterIds(arrayOf(10, 21));}),
                 ParallelCommandGroup(
                     limelightController.alignRobotAllAxis(LimeLightChoice.Right, 0.215, 0.035)
                         .until { limelightController.isAtSetPoint(LimeLightChoice.Right, 0.215, 0.035) },
                     armSystem.setPoseAutoCommand(ArmPoses.L4.pose, ArmOrders.JEW.order),
-                ),
+                ).withTimeout(2.5),
                 drive.stopCommand(),
 
                 Commands.runOnce({limelightController.setFilterIds(arrayOf(21, 20, 19, 18, 17, 22, 10, 11, 6, 7, 8, 9));}),
@@ -155,7 +160,8 @@ class PathPlannerAutonomous(val drive: SwerveDrive, private val limelightControl
                 armSystem.enableIntake(),
                 Commands.waitUntil { !armSystem.intake.hasCoral() },
                 Commands.waitTime(0.35.seconds),
-                armSystem.disableIntake()))
+                armSystem.disableIntake(),
+                armSystem.setPoseAutoCommand(ArmPoses.L2.pose, ArmOrders.JEW.order)))
 
         tab.add("Autonomous Chooser", autoChooser)
         SmartDashboard.putData("Autonomous Chooser", autoChooser)

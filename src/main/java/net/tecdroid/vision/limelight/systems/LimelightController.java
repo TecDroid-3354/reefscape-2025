@@ -132,6 +132,15 @@ public class LimelightController {
         return hasTarget(choice) && (xDisplacement <= positionTolerance && yDisplacement <= positionTolerance);
     }
 
+    public boolean isAtSetPoint(LimeLightChoice choice, double xSetPoint, double ySetPoint, double positionTolerance) {
+        Pose3d robotPose = getTargetPositionInCameraSpace(choice);
+
+        double xDisplacement = Math.abs(xSetPoint - robotPose.getTranslation().getZ());
+        double yDisplacement = Math.abs(ySetPoint - robotPose.getTranslation().getX());
+
+        return hasTarget(choice) && (xDisplacement <= positionTolerance && yDisplacement <= positionTolerance);
+    }
+
     private Pose3d getTargetPositionInCameraSpace(LimeLightChoice choice) {
         LimelightAprilTagDetector limelight = (choice == LimeLightChoice.Right) ? rightLimelight : leftLimelight;
         return limelight.getTargetPositionInCameraSpace();

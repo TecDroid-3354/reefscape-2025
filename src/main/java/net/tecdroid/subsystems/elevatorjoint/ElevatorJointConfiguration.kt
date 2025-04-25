@@ -36,7 +36,7 @@ val elevatorJointConfig = ElevatorJointConfig(
 
     absoluteEncoderPort = NumericId(0),
     absoluteEncoderIsInverted = true,
-    absoluteEncoderOffset = 0.325.rotations - 2.5.degrees,
+    absoluteEncoderOffset = 0.325.rotations - 0.5.degrees,
 
     reduction = Reduction(360.0),
 
