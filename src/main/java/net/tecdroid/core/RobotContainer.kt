@@ -6,6 +6,7 @@ import edu.wpi.first.math.kinematics.ChassisSpeeds
 import edu.wpi.first.networktables.NetworkTableInstance
 import edu.wpi.first.networktables.StructPublisher
 import edu.wpi.first.units.Units.*
+import edu.wpi.first.wpilibj.sysid.SysIdRoutineLog.State
 import edu.wpi.first.wpilibj2.command.Command
 import edu.wpi.first.wpilibj2.command.Commands
 import net.tecdroid.autonomous.PathPlannerAutonomous
@@ -18,6 +19,7 @@ import net.tecdroid.subsystems.elevatorjoint.elevatorJointConfig
 import net.tecdroid.subsystems.intake.intakeConfig
 import net.tecdroid.subsystems.wrist.wristConfig
 import net.tecdroid.systems.ArmSystem
+import net.tecdroid.util.States
 import net.tecdroid.util.degrees
 import net.tecdroid.vision.limelight.systems.LimeLightChoice
 import net.tecdroid.vision.limelight.systems.LimelightController
@@ -26,7 +28,8 @@ import net.tecdroid.vision.limelight.systems.LimelightController
 class RobotContainer {
     private val controller = CompliantXboxController(driverControllerId)
     private val swerve = SwerveDrive(swerveDriveConfiguration)
-    private val arm = ArmSystem(wristConfig, elevatorConfig, elevatorJointConfig, intakeConfig, swerve, controller)
+    val state = net.tecdroid.util.State(States.IntakeState)
+    private val arm = ArmSystem(wristConfig, elevatorConfig, elevatorJointConfig, intakeConfig, swerve, controller, state)
     private val limelightController = LimelightController(
         swerve,
         { chassisSpeeds -> swerve.driveRobotOriented(chassisSpeeds) },
@@ -43,7 +46,9 @@ class RobotContainer {
         swerve.heading = 0.0.degrees
 
         arm.publishShuffleBoardData()
-        arm.assignCommandsToController(controller)
+        arm.assignCommandsCoralState(controller)
+
+        controller.povLeft().onTrue(Commands.runOnce({ state.toggleCoralModeAndAlgaeMode() }))
     }
 
 

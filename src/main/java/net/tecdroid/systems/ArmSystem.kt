@@ -12,6 +12,7 @@ import edu.wpi.first.units.measure.Distance
 import edu.wpi.first.units.measure.Voltage
 import edu.wpi.first.util.sendable.Sendable
 import edu.wpi.first.util.sendable.SendableBuilder
+import edu.wpi.first.wpilibj.DigitalInput
 import edu.wpi.first.wpilibj.shuffleboard.Shuffleboard
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard
 import edu.wpi.first.wpilibj2.command.Command
@@ -133,7 +134,7 @@ enum class ArmPoses(var pose: ArmPose) {
     )),
 
     coralFloorIntake(ArmPose(
-        wristPosition         = 0.358.rotations,
+        wristPosition         = 0.358.rotations - 0.5.degrees,
         elevatorDisplacement  = 0.01.meters,
         elevatorJointPosition = 0.0153.rotations,
         targetVoltage = 9.0.volts,
@@ -158,42 +159,43 @@ enum class ArmOrders(val order: ArmOrder) {
     WJE(ArmOrder(ArmWrist, ArmJoint, ArmElevator))
 }
 
-class ArmSystem(wristConfig: WristConfig, elevatorConfig: ElevatorConfig, elevatorJointConfig: ElevatorJointConfig, intakeConfig: IntakeConfig, val swerve: SwerveDrive, val controller: CompliantXboxController) : Sendable {
+
+class ArmSystem(wristConfig: WristConfig, elevatorConfig: ElevatorConfig, elevatorJointConfig: ElevatorJointConfig,
+                intakeConfig: IntakeConfig, val swerve: SwerveDrive, val controller: CompliantXboxController,
+                val state: State) : Sendable {
     val wrist = Wrist(wristConfig)
     val elevator = Elevator(elevatorConfig)
     val joint = ElevatorJoint(elevatorJointConfig)
     val intake = Intake(intakeConfig)
+    private val sensor = DigitalInput(3)
+
     private var targetVoltage = 0.0.volts
 
     var isScoring = false
 
-    var isCoralMode = true
-    var pollIsCoralMode = { isCoralMode }
-
-    fun toggleCoralMode() {
-        isCoralMode = !isCoralMode
-    }
-
     // To change the position orders according to the position of the entire arm
     private var isLow = { false }
-    fun setIsLow(value: Boolean) { isLow = { value } }
+    fun setIsLow(value: Boolean) {
+        isLow = { value }
+    }
 
     init {
         wrist.matchRelativeEncodersToAbsoluteEncoders()
         joint.matchRelativeEncodersToAbsoluteEncoders()
     }
 
-    fun setJointAngle(angle: Angle) : Command = joint.setAngleCommand(angle)
-    fun setElevatorDisplacement(displacement: Distance) : Command = elevator.setDisplacementCommand(displacement)
-    fun setWristAngle(angle: Angle) : Command = wrist.setAngleCommand(angle)
+    fun setJointAngle(angle: Angle): Command = joint.setAngleCommand(angle)
+    fun setElevatorDisplacement(displacement: Distance): Command = elevator.setDisplacementCommand(displacement)
+    fun setWristAngle(angle: Angle): Command = wrist.setAngleCommand(angle)
 
-    fun enableIntake() : Command = intake.setVoltageCommand { targetVoltage }
-    fun enableIntake(voltage: Double) : Command = intake.setVoltageCommand { voltage.volts }
-    fun enableOuttake() : Command = intake.setVoltageCommand { -targetVoltage }
+    fun enableIntake(): Command = intake.setVoltageCommand { targetVoltage }
+    fun enableIntake(voltage: Double): Command = intake.setVoltageCommand { voltage.volts }
+    fun enableOuttake(): Command = intake.setVoltageCommand { -targetVoltage }
 
-    fun disableIntake() : Command = Commands.either(intake.setVoltageCommand { 0.0.volts },
-        intake.setVoltageCommand { 1.5.volts }
-    ) { isCoralMode }
+    // Passive intake in case of Algae State
+    fun disableIntake() : Command = Commands.either(intake.setVoltageCommand { 1.5.volts },
+        intake.setVoltageCommand { 0.0.volts }
+    , state.isState(States.AlgaeState))
 
     private fun getCommandFor(pose: ArmPose, member: ArmMember) : Command = when (member) {
         ArmWrist -> wrist.setAngleCommand(pose.wristPosition).andThen(Commands.waitUntil { wrist.getPositionError() < 50.0.rotations })
@@ -206,34 +208,6 @@ class ArmSystem(wristConfig: WristConfig, elevatorConfig: ElevatorConfig, elevat
         ArmElevator -> elevator.setDisplacementCommand(pose.elevatorDisplacement).andThen(Commands.waitUntil { elevator.getPositionError() < 25.0.rotations })
         ArmJoint -> joint.setAngleCommand(pose.elevatorJointPosition, slot).andThen(Commands.waitUntil { joint.getPositionError() < 25.0.rotations })
     }
-
-    /*fun setPoseCommand(pose: ArmPose, order: ArmOrder) : Command {
-        return SequentialCommandGroup(
-            Commands.runOnce({
-                targetVoltage = pose.targetVoltage
-                isScoring = when (pose) {
-                    ArmPoses.L2.pose, ArmPoses.L3.pose, ArmPoses.L4.pose -> true
-                    else -> false
-                }
-            }),
-            getCommandFor(pose, order.first),
-            getCommandFor(pose, order.second),
-            getCommandFor(pose, order.third),
-            if (pose.targetAngle.isPresent) Commands.run({
-                val vx = MathUtil.applyDeadband(controller.leftY, 0.05) * 0.85
-                val vy = MathUtil.applyDeadband(controller.leftX, 0.05) * 0.85
-
-                val targetXVelocity = swerve.maxLinearVelocity * vx
-                val targetYVelocity = swerve.maxLinearVelocity * vy
-
-                swerve.driveDirected(ChassisSpeeds(targetXVelocity, targetYVelocity, RadiansPerSecond.zero()), pose.targetAngle.get()(swerve.pose))
-            }, swerve) else Commands.runOnce({
-                Commands.runOnce({
-                    swerve.currentCommand.cancel()
-                })
-            })
-        )
-    }*/
 
     fun setPoseCommand(pose: ArmPose, order: ArmOrder) : Command {
         return SequentialCommandGroup(
@@ -285,72 +259,108 @@ class ArmSystem(wristConfig: WristConfig, elevatorConfig: ElevatorConfig, elevat
 
     fun publishShuffleBoardData() {
         val tab = Shuffleboard.getTab("Driver Tab")
-        tab.addBoolean("Is Coral Mode") { isCoralMode }
+        tab.addBoolean("Is Algae State", state.isState(States.AlgaeState))
         tab.addDouble("Target Voltage") { targetVoltage.`in`(Volts) }
     }
 
-    fun assignCommandsToController(controller: CompliantXboxController) {
-        controller.povLeft().onTrue(Commands.runOnce({ toggleCoralMode() }))
-
+    fun assignCommandsCoralState(controller: CompliantXboxController) {
         controller.y().onTrue(
-            Commands.either(
-                setPoseCommand(
-                    ArmPoses.L4.pose,
-                    ArmOrders.JEW.order
-                ),
-                Commands.sequence(
-                    enableIntake(2.0),
-                    setPoseCommand(
-                        ArmPoses.Barge.pose,
-                        ArmOrders.JEW.order
-                    ).andThen({ setIsLow(false) }),
-                    disableIntake()),
-                pollIsCoralMode
+            setPoseCommand(
+                ArmPoses.L4.pose,
+                ArmOrders.JEW.order
             )
         )
 
         controller.b().onTrue(
-            Commands.either(
-                setPoseCommand(
-                    ArmPoses.L3.pose,
-                    ArmOrders.JEW.order
-                ),
-                Commands.sequence(
-                    enableIntake(2.0),
-                    setPoseCommand(
-                    ArmPoses.A2.pose,
-                    if (isLow()) ArmOrders.JWE.order else ArmOrders.EWJ.order
-                ).andThen({ setIsLow(false) }),
-                    disableIntake()),
-                pollIsCoralMode
+            setPoseCommand(
+                ArmPoses.L3.pose,
+                ArmOrders.JEW.order
             )
         )
 
         controller.a().onTrue(
-            Commands.either(
-                setPoseCommand(
-                    ArmPoses.L2.pose,
-                    ArmOrders.EJW.order
-                ),
-                Commands.sequence(
-                    enableIntake(2.0),
-                    setPoseCommand(
-                        ArmPoses.A1.pose,
-                        if (isLow()) ArmOrders.JWE.order else ArmOrders.EWJ.order
-                    ).andThen({ setIsLow(false) }),
-                    disableIntake()),
-                pollIsCoralMode
+            setPoseCommand(
+                ArmPoses.L2.pose,
+                ArmOrders.EJW.order
             )
         )
 
         controller.x().onTrue(
-            Commands.either(
+            setPoseCommand(
+                ArmPoses.CoralStation.pose,
+                ArmOrders.EJW.order
+            ).andThen({ setIsLow(true) })
+        )
+
+        controller.povDown().onTrue(
+            Commands.sequence(
+                enableIntake(3.0),
+                setPoseCommand(ArmPoses.AlgaeFloorIntake.pose, ArmOrders.EWJ.order, 1),
+                disableIntake(),
+                Commands.runOnce({ state.changeState(States.AlgaeState) })
+            )
+        )
+
+        controller.povRight().onTrue(
+            Commands.sequence(
+                enableIntake(3.0),
+                setPoseCommand(ArmPoses.Processor.pose, ArmOrders.EWJ.order, 1),
+                disableIntake(),
+                Commands.runOnce({ state.changeState(States.AlgaeState) })
+            )
+        )
+
+        controller.povUp().onTrue(
+            Commands.sequence(
+                setPoseCommand(ArmPoses.coralFloorIntake.pose, ArmOrders.EWJ.order)
+            )
+        )
+
+        controller.back().onTrue(setPoseCommand(ArmPoses.L1.pose, ArmOrders.JEW.order))
+
+         controller.rightBumper().onTrue(enableIntake()).onFalse(disableIntake())
+
+        controller.leftBumper().onTrue(enableOuttake()).onFalse(disableIntake())
+    }
+
+    fun assignCommandsAlgaeState(controller: CompliantXboxController) {
+        controller.y().onTrue(
+            Commands.sequence(
+                enableIntake(2.0),
+                setPoseCommand(
+                    ArmPoses.Barge.pose,
+                    ArmOrders.JEW.order
+                ).andThen({ setIsLow(false) }),
+                disableIntake())
+        )
+
+        controller.b().onTrue(
+            Commands.sequence(
+                enableIntake(2.0),
+                setPoseCommand(
+                    ArmPoses.A2.pose,
+                    if (isLow()) ArmOrders.JWE.order else ArmOrders.EWJ.order
+                ).andThen({ setIsLow(false) }),
+                disableIntake())
+        )
+
+        controller.a().onTrue(
+            Commands.sequence(
+                enableIntake(2.0),
+                setPoseCommand(
+                    ArmPoses.A1.pose,
+                    if (isLow()) ArmOrders.JWE.order else ArmOrders.EWJ.order
+                ).andThen({ setIsLow(false) }),
+                disableIntake())
+        )
+
+        controller.x().onTrue(
+            Commands.sequence(
                 setPoseCommand(
                     ArmPoses.CoralStation.pose,
                     ArmOrders.EJW.order
-                ).andThen({ setIsLow(true) }),
-                Commands.none(),
-                pollIsCoralMode
+                ),
+                Commands.runOnce({ state.changeState(States.IntakeState) })
             )
         )
 
@@ -373,49 +383,15 @@ class ArmSystem(wristConfig: WristConfig, elevatorConfig: ElevatorConfig, elevat
         controller.povUp().onTrue(
             Commands.sequence(
                 setPoseCommand(ArmPoses.coralFloorIntake.pose, ArmOrders.EWJ.order),
-                Commands.runOnce({isCoralMode = true})
+                Commands.runOnce({ state.changeState(States.IntakeState) })
             )
         )
 
         controller.back().onTrue(setPoseCommand(ArmPoses.L1.pose, ArmOrders.JEW.order))
 
-       /* controller.rightBumper().onTrue(
-            Commands.either(
-                enableIntake(),
-                Commands.either(
-                    Commands.sequence(
-                        setPoseCommand(
-                            ArmPoses.CoralStation.pose,
-                            ArmOrders.EJW.order
-                        ),
-                        Commands.runOnce({ setIsLow(true) })
-                    )
-                    ,
-                    Commands.none(),
-                    pollIsCoralMode
-                ),
-                { intake.hasCoral() || !isScoring })
-        ).onFalse(disableIntake())*/
-
-         controller.rightBumper().onTrue(enableIntake()).onFalse(disableIntake())
+        controller.rightBumper().onTrue(enableIntake()).onFalse(disableIntake())
 
         controller.leftBumper().onTrue(enableOuttake()).onFalse(disableIntake())
-    }
-
-    fun breakMode(): Command {
-        return Commands.sequence(
-            wrist.brake(),
-            elevator.brake(),
-            joint.brake()
-        )
-    }
-
-    fun coastMode(): Command {
-        return Commands.sequence(
-            wrist.coast(),
-            elevator.coast(),
-            joint.coast()
-        )
     }
 
 }
