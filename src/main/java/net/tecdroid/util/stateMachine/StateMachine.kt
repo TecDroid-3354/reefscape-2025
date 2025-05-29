@@ -6,8 +6,9 @@ import edu.wpi.first.wpilibj2.command.SubsystemBase
 import java.util.function.BooleanSupplier
 
 enum class States(var config: StateConfig) {
-    ScoreState(StateConfig()),
+    CoralState(StateConfig()),
     AlgaeState(StateConfig()),
+    ScoreState(StateConfig()),
     IntakeState(StateConfig());
 
     /**
@@ -71,14 +72,6 @@ class StateMachine(private var currentState: States,
         changeStateCommand = command
     }
 
-    fun toggleCoralModeAndAlgaeMode() {
-        if (isState(States.IntakeState).invoke()) {
-            changeState(States.AlgaeState)
-        } else if (isState(States.AlgaeState).invoke()) {
-            changeState(States.IntakeState)
-        }
-    }
-
     // Condition system
     private val conditions = mutableListOf<Pair<() -> Boolean, States>>()
 
@@ -87,8 +80,10 @@ class StateMachine(private var currentState: States,
     }
 
     fun assess() {
+        // Check all the conditions
         for ((condition, state) in conditions) {
-            if (condition()) {
+            // Check if we are not trying to change to the same state
+            if (state != currentState && condition()) {
                 changeState(state)
             }
         }

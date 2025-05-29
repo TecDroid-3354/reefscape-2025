@@ -266,12 +266,22 @@ class ArmSystem(wristConfig: WristConfig, elevatorConfig: ElevatorConfig, elevat
     }
 
     fun assignCommands(controller: CompliantXboxController) {
-        //controller.povLeft().onTrue(Commands.runOnce({ state.toggleCoralModeAndAlgaeMode() }))
+        controller.povLeft().onTrue(
+            when(stateMachine.getCurrentState()) {
+                States.CoralState -> Commands.runOnce({ stateMachine.changeState(States.AlgaeState) })
+                States.ScoreState -> Commands.runOnce({ stateMachine.changeState(States.AlgaeState) })
+                States.IntakeState -> Commands.runOnce({ stateMachine.changeState(States.AlgaeState) })
+                States.AlgaeState -> Commands.runOnce({ stateMachine.changeState(States.IntakeState) })
+            }
+        )
 
         // Y
         controller.y().onTrue(
             when(stateMachine.getCurrentState()){
+                States.CoralState -> setPoseCommand(ArmPoses.L4.pose, ArmOrders.JEW.order)
                 States.IntakeState -> setPoseCommand(ArmPoses.L4.pose, ArmOrders.JEW.order)
+                    .andThen({stateMachine.changeState(States.CoralState)})
+
                 States.ScoreState -> setPoseCommand(ArmPoses.L4.pose, ArmOrders.JEW.order)
                 States.AlgaeState -> Commands.sequence(
                                         enableIntake(2.0),
@@ -286,7 +296,10 @@ class ArmSystem(wristConfig: WristConfig, elevatorConfig: ElevatorConfig, elevat
         // B
         controller.b().onTrue(
             when(stateMachine.getCurrentState()){
+                States.CoralState -> setPoseCommand(ArmPoses.L3.pose, ArmOrders.JEW.order)
                 States.IntakeState -> setPoseCommand(ArmPoses.L3.pose, ArmOrders.JEW.order)
+                                        .andThen({stateMachine.changeState(States.CoralState)})
+
                 States.ScoreState -> setPoseCommand(ArmPoses.L3.pose, ArmOrders.JEW.order)
                 States.AlgaeState -> Commands.sequence(
                                     enableIntake(2.0),
@@ -300,7 +313,10 @@ class ArmSystem(wristConfig: WristConfig, elevatorConfig: ElevatorConfig, elevat
         // A
         controller.a().onTrue(
             when(stateMachine.getCurrentState()){
+                States.CoralState -> setPoseCommand(ArmPoses.L2.pose, ArmOrders.EJW.order)
                 States.IntakeState -> setPoseCommand(ArmPoses.L2.pose, ArmOrders.EJW.order)
+                                        .andThen({stateMachine.changeState(States.CoralState)})
+
                 States.ScoreState -> setPoseCommand(ArmPoses.L2.pose, ArmOrders.EJW.order)
                 States.AlgaeState -> Commands.sequence(
                                     enableIntake(2.0),
@@ -314,10 +330,16 @@ class ArmSystem(wristConfig: WristConfig, elevatorConfig: ElevatorConfig, elevat
         // X
         controller.x().onTrue(
             when(stateMachine.getCurrentState()){
+                States.CoralState -> setPoseCommand(ArmPoses.CoralStation.pose, ArmOrders.EJW.order)
+                        .andThen({ setIsLow(true) })
+                        .andThen(Commands.runOnce({ stateMachine.changeState(States.IntakeState)}))
+
                 States.IntakeState -> setPoseCommand(ArmPoses.CoralStation.pose, ArmOrders.EJW.order)
                                         .andThen({ setIsLow(true) })
+
                 States.ScoreState -> setPoseCommand(ArmPoses.CoralStation.pose, ArmOrders.EJW.order)
                                         .andThen({ setIsLow(true) })
+
                 States.AlgaeState -> Commands.sequence(
                                         setPoseCommand(
                                             ArmPoses.CoralStation.pose,
