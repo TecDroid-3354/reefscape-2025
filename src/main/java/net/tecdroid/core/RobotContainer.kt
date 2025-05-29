@@ -28,7 +28,7 @@ import net.tecdroid.vision.limelight.systems.LimelightController
 class RobotContainer {
     private val controller = CompliantXboxController(driverControllerId)
     private val swerve = SwerveDrive(swerveDriveConfiguration)
-    val stateMachine = StateMachine(States.IntakeState)
+    private val stateMachine = StateMachine(States.IntakeState)
     private val arm = ArmSystem(wristConfig, elevatorConfig, elevatorJointConfig, intakeConfig, swerve, controller, stateMachine)
     private val limelightController = LimelightController(
         swerve,

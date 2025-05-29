@@ -1,9 +1,9 @@
 package net.tecdroid.util.stateMachine
 
+import edu.wpi.first.wpilibj.DriverStation
 import edu.wpi.first.wpilibj2.command.Command
 import edu.wpi.first.wpilibj2.command.Commands
 import edu.wpi.first.wpilibj2.command.SubsystemBase
-import java.util.function.BooleanSupplier
 
 enum class States(var config: StateConfig) {
     CoralState(StateConfig()),
@@ -19,6 +19,13 @@ enum class States(var config: StateConfig) {
     fun setConfig(config: StateConfig) {
         this.config = config
     }
+}
+
+enum class Phase() {
+    Teleop,
+    Simulation,
+    Autonomous,
+    All
 }
 
 /**
@@ -64,22 +71,50 @@ class StateMachine(private var currentState: States,
         }
     }
 
+    /**
+     * @return The current state
+     */
     fun getCurrentState() : States = currentState
 
+    /**
+     * Verify if the current state its equal to the param one
+     * @param state state to compare
+     * @return If the param state its equal to the current one
+     */
     fun isState(state: States): () -> Boolean = { currentState == state }
 
+    /**
+     * Change the command that its always executed when you change to another state
+     * @param command Change command
+     */
     fun setChangeCommand(command: Command) {
         changeStateCommand = command
     }
 
     // Condition system
-    private val conditions = mutableListOf<Pair<() -> Boolean, States>>()
+    private val generalConditions = mutableListOf<Pair<() -> Boolean, States>>()
+    private val teleopConditions = mutableListOf<Pair<() -> Boolean, States>>()
+    private val simulationConditions = mutableListOf<Pair<() -> Boolean, States>>()
+    private val autoConditions = mutableListOf<Pair<() -> Boolean, States>>()
 
-    fun addCondition(condition: () -> Boolean, state: States) {
-        conditions.add(condition to state)
+    /**
+     * Add a condition that if true, it change the state. This condition is
+     * evaluated periodically depending on his phase execution
+     * @param condition Condition that change the state
+     * @param state Target State
+     * @param executionPhase Phase in which you will evaluate the condition
+     */
+
+    fun addCondition(condition: () -> Boolean, state: States, executionPhase: Phase) {
+        when(executionPhase) {
+            Phase.Teleop -> teleopConditions.add(condition to state)
+            Phase.Simulation -> simulationConditions.add(condition to state)
+            Phase.Autonomous -> autoConditions.add(condition to state)
+            Phase.All -> generalConditions.add(condition to state)
+        }
     }
 
-    fun assess() {
+    private fun assess(conditions : MutableList<Pair<() -> Boolean, States>>) {
         // Check all the conditions
         for ((condition, state) in conditions) {
             // Check if we are not trying to change to the same state
@@ -90,6 +125,16 @@ class StateMachine(private var currentState: States,
     }
 
     override fun periodic() {
-        assess()
+        // Evaluate each condition depending on his execute phase
+        if (DriverStation.isAutonomous()) {
+            assess(autoConditions)
+            assess(generalConditions)
+        } else if (DriverStation.isTeleop()) {
+            assess(teleopConditions)
+            assess(generalConditions)
+        } else if (DriverStation.isTest()) {
+            assess(simulationConditions)
+            assess(generalConditions)
+        }
     }
 }
