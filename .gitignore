@@ -136,6 +136,7 @@ $RECYCLE.BIN/
 *.lnk
 
 ### Gradle ###
+src/main/java/frc/robot/BuildInfo.java
 .gradle
 /build/
 

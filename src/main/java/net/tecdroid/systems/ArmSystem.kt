@@ -25,6 +25,7 @@ import net.tecdroid.subsystems.elevatorjoint.ElevatorJoint
 import net.tecdroid.subsystems.elevatorjoint.ElevatorJointConfig
 import net.tecdroid.subsystems.intake.Intake
 import net.tecdroid.subsystems.intake.IntakeConfig
+import net.tecdroid.subsystems.intake.IntakeIO
 import net.tecdroid.subsystems.wrist.Wrist
 import net.tecdroid.subsystems.wrist.WristConfig
 import net.tecdroid.systems.ArmMember.*
@@ -141,11 +142,11 @@ enum class ArmOrders(val order: ArmOrder) {
     WJE(ArmOrder(ArmWrist, ArmJoint, ArmElevator))
 }
 
-class ArmSystem(wristConfig: WristConfig, elevatorConfig: ElevatorConfig, elevatorJointConfig: ElevatorJointConfig, intakeConfig: IntakeConfig, val swerve: SwerveDrive, val controller: CompliantXboxController) : Sendable {
+class ArmSystem(wristConfig: WristConfig, elevatorConfig: ElevatorConfig, elevatorJointConfig: ElevatorJointConfig, intakeIO: IntakeIO, val swerve: SwerveDrive, val controller: CompliantXboxController) : Sendable {
     val wrist = Wrist(wristConfig)
     val elevator = Elevator(elevatorConfig)
     val joint = ElevatorJoint(elevatorJointConfig)
-    val intake = Intake(intakeConfig)
+    val intake = Intake(intakeIO)
     private var targetVoltage = 0.0.volts
 
     var isScoring = false

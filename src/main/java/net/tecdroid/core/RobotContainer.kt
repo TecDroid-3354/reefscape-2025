@@ -18,6 +18,7 @@ import net.tecdroid.subsystems.drivetrain.SwerveDrive
 import net.tecdroid.subsystems.drivetrain.swerveDriveConfiguration
 import net.tecdroid.subsystems.elevator.elevatorConfig
 import net.tecdroid.subsystems.elevatorjoint.elevatorJointConfig
+import net.tecdroid.subsystems.intake.IntakeIOPhoenix6
 import net.tecdroid.subsystems.intake.intakeConfig
 import net.tecdroid.subsystems.wrist.wristConfig
 import net.tecdroid.systems.ArmSystem
@@ -29,7 +30,13 @@ import net.tecdroid.vision.limelight.systems.LimelightController
 class RobotContainer {
     private val controller = CompliantXboxController(driverControllerId)
     private val swerve = SwerveDrive(swerveDriveConfiguration)
-    private val arm = ArmSystem(wristConfig, elevatorConfig, elevatorJointConfig, intakeConfig, swerve, controller)
+    private val arm = ArmSystem(
+        wristConfig,
+        elevatorConfig,
+        elevatorJointConfig,
+        IntakeIOPhoenix6(intakeConfig),
+        swerve,
+        controller)
     private val limelightController = LimelightController(
         swerve,
         { chassisSpeeds -> swerve.driveRobotOriented(chassisSpeeds) },
