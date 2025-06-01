@@ -7,31 +7,38 @@ import edu.wpi.first.units.Units.Volts
 import edu.wpi.first.units.measure.Angle
 import edu.wpi.first.units.measure.AngularVelocity
 import edu.wpi.first.units.measure.Voltage
-import edu.wpi.first.wpilibj.RobotBase
 import edu.wpi.first.wpilibj.simulation.DCMotorSim
-import net.tecdroid.core.Robot
 import net.tecdroid.util.amps
-import net.tecdroid.util.milliseconds
 import net.tecdroid.util.volts
 
+/**
+ * [IntakeIO] interface layer adapted for simulation.
+ * Sensor is not taken into account, not sure how would that affect the simulation. Need to test.
+ */
 class IntakeIOSimulation: IntakeIO {
     /**
-     * Instantiates a simulated motor controller.
+     * Instantiates a simulated motor controller. In the [LinearSystemId], 2nd & 3rd parameters are invented.
      */
     private val motorController = DCMotorSim(
-        LinearSystemId.createDCMotorSystem(DCMotor.getKrakenX60(1), 0.004, 1.0),
+        LinearSystemId.createDCMotorSystem(DCMotor.getKrakenX60(1), 0.5, 1.0),
         DCMotor.getKrakenX60(1)
     )
 
     private var appliedVolts = 0.0.volts
 
+    /**
+     * Updates the [appliedVolts] of this class, which will be sent to the simulated motor in the next cycle.
+     * @param voltage Desired voltage. this value will be clamped within [[-12V, 12V]]
+     */
     override fun setVoltage(voltage: Voltage) {
         appliedVolts = MathUtil.clamp(voltage.`in`(Volts), -12.0, 12.0).volts
     }
 
     /**
-     * Updates the inputs during simulation.
+     * Updates the inputs during simulation. The desired [appliedVolts] are passed to the motor controller here
+     * to ensure those are updated before the motor controller's update.
      * Properties isMotorConnected and motorTemperature are not updated during simulation.
+     * @param inputs Initialized inputs object used within the subsystem.
      */
     override fun updateInputs(inputs: IntakeIO.IntakeIOInputs) {
         motorController.inputVoltage = appliedVolts.`in`(Volts)

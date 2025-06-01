@@ -13,13 +13,13 @@ import edu.wpi.first.wpilibj2.command.Command
 import edu.wpi.first.wpilibj2.command.Commands
 import net.tecdroid.autonomous.AutoComposer
 import net.tecdroid.constants.GenericConstants.driverControllerId
+import net.tecdroid.core.RobotConstants.currentMode
 import net.tecdroid.input.CompliantXboxController
 import net.tecdroid.subsystems.drivetrain.SwerveDrive
 import net.tecdroid.subsystems.drivetrain.swerveDriveConfiguration
 import net.tecdroid.subsystems.elevator.elevatorConfig
 import net.tecdroid.subsystems.elevatorjoint.elevatorJointConfig
-import net.tecdroid.subsystems.intake.IntakeIOPhoenix6
-import net.tecdroid.subsystems.intake.intakeConfig
+import net.tecdroid.subsystems.intake.*
 import net.tecdroid.subsystems.wrist.wristConfig
 import net.tecdroid.systems.ArmSystem
 import net.tecdroid.util.degrees
@@ -30,11 +30,17 @@ import net.tecdroid.vision.limelight.systems.LimelightController
 class RobotContainer {
     private val controller = CompliantXboxController(driverControllerId)
     private val swerve = SwerveDrive(swerveDriveConfiguration)
+    private val intake = when (currentMode) {
+        RobotMode.REAL -> Intake(IntakeIOPhoenix6(intakeConfig))
+        RobotMode.SIMULATION -> Intake(IntakeIOSimulation())
+        RobotMode.REPLAY -> Intake(object: IntakeIO{}) // No need for an implementation of IO layer during replay.
+    }
+
     private val arm = ArmSystem(
         wristConfig,
         elevatorConfig,
         elevatorJointConfig,
-        IntakeIOPhoenix6(intakeConfig),
+        intake,
         swerve,
         controller)
     private val limelightController = LimelightController(

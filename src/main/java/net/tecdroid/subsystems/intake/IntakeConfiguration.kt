@@ -6,6 +6,7 @@ import net.tecdroid.util.amps
 import net.tecdroid.util.*
 
 data class IntakeConfig(
+    val sensorPort: NumericId,
     val motorControllerId: NumericId,
     val motorDirection: RotationalDirection,
     val motorCurrentLimit: Current,
@@ -13,6 +14,7 @@ data class IntakeConfig(
 )
 
 public val intakeConfig = IntakeConfig(
+    sensorPort = NumericId(3),
     motorControllerId = NumericId(62),
     motorDirection = RotationalDirection.Clockwise,
     motorCurrentLimit = 30.0.amps,
