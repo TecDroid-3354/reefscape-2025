@@ -10,7 +10,7 @@ import edu.wpi.first.wpilibj2.command.Commands
  * @param endCommand Command executed when we end the state
  */
 data class StateConfig(
-    val initialCommand : Command = Commands.none(),
-    val defaultCommand : Command = Commands.none(),
-    val endCommand : Command = Commands.none()
+    var initialCommand : Command = Commands.none(),
+    var defaultCommand : Command = Commands.none(),
+    var endCommand : Command = Commands.none()
 )

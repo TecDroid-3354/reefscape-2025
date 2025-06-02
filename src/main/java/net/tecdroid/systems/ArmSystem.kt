@@ -262,6 +262,7 @@ class ArmSystem(wristConfig: WristConfig, elevatorConfig: ElevatorConfig, elevat
     fun publishShuffleBoardData() {
         val tab = Shuffleboard.getTab("Driver Tab")
         tab.addBoolean("Is Algae State", stateMachine.isState(States.AlgaeState))
+        tab.add("State", stateMachine.getCurrentState())
         tab.addDouble("Target Voltage") { targetVoltage.`in`(Volts) }
     }
 

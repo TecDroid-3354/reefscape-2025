@@ -10,7 +10,7 @@ enum class States(var config: StateConfig) {
     AlgaeState(StateConfig()),
     ScoreState(StateConfig()),
     IntakeState(StateConfig());
-
+/*
     /**
      * Change the states commands. These classes are global, so the config
      * will change for all the instances
@@ -18,10 +18,10 @@ enum class States(var config: StateConfig) {
      */
     fun setConfig(config: StateConfig) {
         this.config = config
-    }
+    }*/
 }
 
-enum class Phase() {
+enum class Phase {
     Teleop,
     Simulation,
     Autonomous,
