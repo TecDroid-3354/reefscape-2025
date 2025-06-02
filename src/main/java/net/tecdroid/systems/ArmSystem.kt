@@ -12,9 +12,7 @@ import edu.wpi.first.units.measure.Distance
 import edu.wpi.first.units.measure.Voltage
 import edu.wpi.first.util.sendable.Sendable
 import edu.wpi.first.util.sendable.SendableBuilder
-import edu.wpi.first.wpilibj.DigitalInput
 import edu.wpi.first.wpilibj.shuffleboard.Shuffleboard
-import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard
 import edu.wpi.first.wpilibj2.command.Command
 import edu.wpi.first.wpilibj2.command.Commands
 import edu.wpi.first.wpilibj2.command.SequentialCommandGroup
@@ -169,7 +167,6 @@ class ArmSystem(wristConfig: WristConfig, elevatorConfig: ElevatorConfig, elevat
     val elevator = Elevator(elevatorConfig)
     val joint = ElevatorJoint(elevatorJointConfig)
     val intake = Intake(intakeConfig)
-    private val sensor = DigitalInput(3)
 
     private var targetVoltage = 0.0.volts
 
@@ -262,7 +259,7 @@ class ArmSystem(wristConfig: WristConfig, elevatorConfig: ElevatorConfig, elevat
     fun publishShuffleBoardData() {
         val tab = Shuffleboard.getTab("Driver Tab")
         tab.addBoolean("Is Algae State", stateMachine.isState(States.AlgaeState))
-        tab.add("State", stateMachine.getCurrentState())
+        tab.addString("State", { stateMachine.getCurrentState().toString() })
         tab.addDouble("Target Voltage") { targetVoltage.`in`(Volts) }
     }
 

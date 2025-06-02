@@ -36,13 +36,18 @@ enum class Phase {
 class StateMachine(private var currentState: States,
                    private var changeStateCommand: Command = Commands.none()) : SubsystemBase() {
     init {
-        this.defaultCommand = currentState.config.defaultCommand
+        val initialDefaultCommand : Command = currentState.config.defaultCommand
+        initialDefaultCommand.addRequirements(this)
+
+        defaultCommand = initialDefaultCommand
+
         currentState.config.initialCommand.execute()
     }
 
     // Change the state default command
     private fun changeStateDefaultCommand(defaultCommand: Command) {
-        this.defaultCommand = defaultCommand
+        defaultCommand.addRequirements(this)
+        setDefaultCommand(defaultCommand)
     }
 
     /**
@@ -54,14 +59,14 @@ class StateMachine(private var currentState: States,
     fun changeState(state: States) {
         // Verify if our state isn't the same
         if (state !=  currentState) {
-            Commands.sequence(
+            /*Commands.sequence(
                 // execute end command
                 currentState.config.endCommand,
                 // execute the general command
                 changeStateCommand,
                 // execute the initial command of the new state
                 state.config.initialCommand
-            ).execute()
+            ).execute()*/
 
             // set the new default command
             changeStateDefaultCommand(state.config.defaultCommand)
@@ -124,7 +129,7 @@ class StateMachine(private var currentState: States,
         }
     }
 
-    override fun periodic() {
+    /*override fun periodic() {
         // Evaluate each condition depending on his execute phase
         if (DriverStation.isAutonomous()) {
             assess(autoConditions)
@@ -136,5 +141,5 @@ class StateMachine(private var currentState: States,
             assess(simulationConditions)
             assess(generalConditions)
         }
-    }
+    }*/
 }
