@@ -66,7 +66,7 @@ class StateMachine(private var currentState: States,
                 changeStateCommand,
                 // execute the initial command of the new state
                 state.config.initialCommand
-            ).execute()*/
+            ).schedule()*/
 
             // set the new default command
             changeStateDefaultCommand(state.config.defaultCommand)

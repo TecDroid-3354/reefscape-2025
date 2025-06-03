@@ -361,6 +361,19 @@ class ArmSystem(wristConfig: WristConfig, elevatorConfig: ElevatorConfig, elevat
             })
         }))
 
+        // Intake
+        controller.rightBumper().onTrue(Commands.runOnce({
+            scheduleCMD(when(stateMachine.getCurrentState()){
+                States.IntakeState, States.AlgaeState, States.ScoreState -> enableIntake()
+                States.CoralState -> Commands.sequence(
+                    setPoseCommand(ArmPoses.CoralStation.pose, ArmOrders.EJW.order)
+                    .andThen({ setIsLow(true) }),
+                    enableIntake(),
+                    Commands.runOnce({ stateMachine.changeState(States.IntakeState)})
+                )
+            })
+        })).onFalse(disableIntake())
+
         // POV down
         controller.povDown().onTrue(
             Commands.sequence(
@@ -389,8 +402,6 @@ class ArmSystem(wristConfig: WristConfig, elevatorConfig: ElevatorConfig, elevat
         )
 
         controller.back().onTrue(setPoseCommand(ArmPoses.L1.pose, ArmOrders.JEW.order))
-
-        controller.rightBumper().onTrue(enableIntake()).onFalse(disableIntake())
 
         controller.leftBumper().onTrue(enableOuttake()).onFalse(disableIntake())
     }
