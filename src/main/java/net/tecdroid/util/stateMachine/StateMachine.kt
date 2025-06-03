@@ -129,17 +129,16 @@ class StateMachine(private var currentState: States,
         }
     }
 
-    /*override fun periodic() {
+    override fun periodic() {
         // Evaluate each condition depending on his execute phase
         if (DriverStation.isAutonomous()) {
             assess(autoConditions)
-            assess(generalConditions)
         } else if (DriverStation.isTeleop()) {
             assess(teleopConditions)
-            assess(generalConditions)
         } else if (DriverStation.isTest()) {
             assess(simulationConditions)
-            assess(generalConditions)
         }
-    }*/
+
+        assess(generalConditions)
+    }
 }

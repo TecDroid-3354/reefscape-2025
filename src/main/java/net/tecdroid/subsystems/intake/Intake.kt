@@ -15,9 +15,8 @@ import edu.wpi.first.wpilibj2.command.button.Trigger
 import net.tecdroid.subsystems.util.generic.TdSubsystem
 import java.sql.Driver
 
-class Intake(private val config: IntakeConfig) : TdSubsystem("Intake") {
+class Intake(private val config: IntakeConfig, private val sensor : DigitalInput) : TdSubsystem("Intake") {
     private val motorController = TalonFX(config.motorControllerId.id)
-    private val sensor = DigitalInput(3)
     private val trigger = Trigger(sensor::get)
 
     override val forwardsRunningCondition = { true }
