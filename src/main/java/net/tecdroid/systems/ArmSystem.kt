@@ -15,6 +15,7 @@ import edu.wpi.first.util.sendable.SendableBuilder
 import edu.wpi.first.wpilibj.shuffleboard.Shuffleboard
 import edu.wpi.first.wpilibj2.command.Command
 import edu.wpi.first.wpilibj2.command.Commands
+import edu.wpi.first.wpilibj2.command.InstantCommand
 import edu.wpi.first.wpilibj2.command.SequentialCommandGroup
 import net.tecdroid.input.CompliantXboxController
 import net.tecdroid.subsystems.drivetrain.SwerveDrive
@@ -263,88 +264,90 @@ class ArmSystem(wristConfig: WristConfig, elevatorConfig: ElevatorConfig, elevat
         tab.addDouble("Target Voltage") { targetVoltage.`in`(Volts) }
     }
 
+    /*fun changeState() {
+        when(stateMachine.getCurrentState()) {
+            States.CoralState -> Commands.runOnce({ stateMachine.changeState(States.AlgaeState) })
+            States.ScoreState -> Commands.runOnce({ stateMachine.changeState(States.AlgaeState) })
+            States.IntakeState -> Commands.runOnce({ stateMachine.changeState(States.AlgaeState) })
+            States.AlgaeState -> Commands.runOnce({ stateMachine.changeState(States.CoralState) })
+        }
+    }*/
+
+    fun changeState() {
+        when(stateMachine.getCurrentState()) {
+            States.CoralState, States.ScoreState, States.IntakeState -> stateMachine.changeState(States.AlgaeState)
+            States.AlgaeState -> stateMachine.changeState(States.CoralState)
+        }
+    }
+
+    // Used to avoid the one command binding of the trigger, and process the logic out of the trigger command
+    fun scheduleCMD(command: Command) : Command = Commands.runOnce({command.schedule()})
+
     fun assignCommands(controller: CompliantXboxController) {
         controller.povLeft().onTrue(
-            when(stateMachine.getCurrentState()) {
-                States.CoralState -> Commands.runOnce({ stateMachine.changeState(States.AlgaeState) })
-                States.ScoreState -> Commands.runOnce({ stateMachine.changeState(States.AlgaeState) })
-                States.IntakeState -> Commands.runOnce({ stateMachine.changeState(States.AlgaeState) })
-                States.AlgaeState -> Commands.runOnce({ stateMachine.changeState(States.IntakeState) })
-            }
+            Commands.runOnce({changeState()})
         )
 
         // Y
         controller.y().onTrue(
-            when(stateMachine.getCurrentState()){
-                States.CoralState -> setPoseCommand(ArmPoses.L4.pose, ArmOrders.JEW.order)
+            scheduleCMD(when(stateMachine.getCurrentState()){
+                States.CoralState, States.ScoreState -> setPoseCommand(ArmPoses.L4.pose, ArmOrders.JEW.order)
                 States.IntakeState -> setPoseCommand(ArmPoses.L4.pose, ArmOrders.JEW.order)
                     .andThen({stateMachine.changeState(States.CoralState)})
-
-                States.ScoreState -> setPoseCommand(ArmPoses.L4.pose, ArmOrders.JEW.order)
                 States.AlgaeState -> Commands.sequence(
-                                        enableIntake(2.0),
-                                        setPoseCommand(
-                                            ArmPoses.Barge.pose,
-                                            ArmOrders.JEW.order
-                                        ).andThen({ setIsLow(false) }),
-                                        disableIntake())
-            }
+                    enableIntake(2.0),
+                    setPoseCommand(
+                        ArmPoses.Barge.pose,
+                        ArmOrders.JEW.order
+                    ).andThen({ setIsLow(false) }),
+                    disableIntake())
+            })
         )
 
         // B
-        controller.b().onTrue(
-            when(stateMachine.getCurrentState()){
-                States.CoralState -> setPoseCommand(ArmPoses.L3.pose, ArmOrders.JEW.order)
-                States.IntakeState -> setPoseCommand(ArmPoses.L3.pose, ArmOrders.JEW.order)
-                                        .andThen({stateMachine.changeState(States.CoralState)})
-
-                States.ScoreState -> setPoseCommand(ArmPoses.L3.pose, ArmOrders.JEW.order)
-                States.AlgaeState -> Commands.sequence(
-                                    enableIntake(2.0),
-                                    setPoseCommand(
-                                        ArmPoses.A2.pose,
-                                        if (isLow()) ArmOrders.JWE.order else ArmOrders.EWJ.order
-                                    ).andThen({ setIsLow(false) }),
-                                    disableIntake())
-            })
+        controller.b().onTrue(scheduleCMD(when(stateMachine.getCurrentState()){
+            States.CoralState, States.ScoreState -> setPoseCommand(ArmPoses.L3.pose, ArmOrders.JEW.order)
+            States.IntakeState -> setPoseCommand(ArmPoses.L3.pose, ArmOrders.JEW.order)
+                .andThen({stateMachine.changeState(States.CoralState)})
+            States.AlgaeState -> Commands.sequence(
+                enableIntake(2.0),
+                setPoseCommand(
+                    ArmPoses.A2.pose,
+                    if (isLow()) ArmOrders.JWE.order else ArmOrders.EWJ.order
+                ).andThen({ setIsLow(false) }),
+                disableIntake())
+        }))
 
         // A
-        controller.a().onTrue(
-            when(stateMachine.getCurrentState()){
-                States.CoralState -> setPoseCommand(ArmPoses.L2.pose, ArmOrders.EJW.order)
-                States.IntakeState -> setPoseCommand(ArmPoses.L2.pose, ArmOrders.EJW.order)
-                                        .andThen({stateMachine.changeState(States.CoralState)})
-
-                States.ScoreState -> setPoseCommand(ArmPoses.L2.pose, ArmOrders.EJW.order)
-                States.AlgaeState -> Commands.sequence(
-                                    enableIntake(2.0),
-                                    setPoseCommand(
-                                        ArmPoses.A1.pose,
-                                        if (isLow()) ArmOrders.JWE.order else ArmOrders.EWJ.order
-                                    ).andThen({ setIsLow(false) }),
-                                    disableIntake())
-            })
+        controller.a().onTrue(scheduleCMD(when(stateMachine.getCurrentState()){
+            States.CoralState, States.ScoreState -> setPoseCommand(ArmPoses.L2.pose, ArmOrders.EJW.order)
+            States.IntakeState -> setPoseCommand(ArmPoses.L2.pose, ArmOrders.EJW.order)
+                .andThen({stateMachine.changeState(States.CoralState)})
+            States.AlgaeState -> Commands.sequence(
+                enableIntake(2.0),
+                setPoseCommand(
+                    ArmPoses.A1.pose,
+                    if (isLow()) ArmOrders.JWE.order else ArmOrders.EWJ.order
+                ).andThen({ setIsLow(false) }),
+                disableIntake())
+        }))
 
         // X
-        controller.x().onTrue(
-            when(stateMachine.getCurrentState()){
-                States.CoralState -> setPoseCommand(ArmPoses.CoralStation.pose, ArmOrders.EJW.order)
-                        .andThen({ setIsLow(true) })
-                        .andThen(Commands.runOnce({ stateMachine.changeState(States.IntakeState)}))
+        controller.x().onTrue(scheduleCMD(when(stateMachine.getCurrentState()){
+            States.CoralState -> setPoseCommand(ArmPoses.CoralStation.pose, ArmOrders.EJW.order)
+                .andThen({ setIsLow(true) })
+                .andThen(Commands.runOnce({ stateMachine.changeState(States.IntakeState)}))
 
-                States.IntakeState -> setPoseCommand(ArmPoses.CoralStation.pose, ArmOrders.EJW.order)
-                                        .andThen({ setIsLow(true) })
+            States.IntakeState, States.ScoreState -> setPoseCommand(ArmPoses.CoralStation.pose, ArmOrders.EJW.order)
+                .andThen({ setIsLow(true) })
 
-                States.ScoreState -> setPoseCommand(ArmPoses.CoralStation.pose, ArmOrders.EJW.order)
-                                        .andThen({ setIsLow(true) })
-
-                States.AlgaeState -> Commands.sequence(
-                                        setPoseCommand(
-                                            ArmPoses.CoralStation.pose,
-                                            ArmOrders.EJW.order
-                                        ),
-                                        Commands.runOnce({ stateMachine.changeState(States.IntakeState)}))
-            })
+            States.AlgaeState -> Commands.sequence(
+                setPoseCommand(
+                    ArmPoses.CoralStation.pose,
+                    ArmOrders.EJW.order
+                ),
+                Commands.runOnce({ stateMachine.changeState(States.IntakeState)}))
+        }))
 
         // POV down
         controller.povDown().onTrue(
