@@ -35,7 +35,10 @@ class Robot : LoggedRobot() {
 
         /** FAT32 formatted USB must be connected to roboRIO */
         when (RobotConstants.currentMode) { // Change data receivers based on the current robot mode
-            RobotMode.REAL -> { Logger.addDataReceiver(WPILOGWriter()); Logger.addDataReceiver(NT4Publisher()) }
+            RobotMode.REAL -> {
+                Logger.addDataReceiver(WPILOGWriter())
+                Logger.addDataReceiver(NT4Publisher())
+            }
             RobotMode.SIMULATION -> { Logger.addDataReceiver(NT4Publisher()) }
             RobotMode.REPLAY -> {
                 setUseTiming(false) // Run as fast as possible

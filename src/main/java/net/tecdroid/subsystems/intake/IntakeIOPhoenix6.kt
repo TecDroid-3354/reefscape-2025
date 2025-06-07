@@ -14,6 +14,7 @@ import edu.wpi.first.units.measure.Temperature
 import edu.wpi.first.units.measure.Voltage
 import edu.wpi.first.wpilibj.DigitalInput
 import edu.wpi.first.wpilibj2.command.button.Trigger
+import net.tecdroid.subsystems.util.motors.KrakenMotors
 import net.tecdroid.util.hertz
 import net.tecdroid.util.volts
 
@@ -23,7 +24,12 @@ import net.tecdroid.util.volts
  */
 class IntakeIOPhoenix6(private val config: IntakeConfig): IntakeIO {
     private val sensorTrigger = Trigger(DigitalInput(config.sensorPort.id)::get)
-    private val motorController = TalonFX(config.motorControllerId.id)
+    private val motorController = KrakenMotors.createTalonWithFullConfig(
+        config.motorControllerId,
+        KrakenMotors.configureMotorOutputs(config.motorNeutralMode, config.motorDirection.toInvertedValue()),
+        KrakenMotors.configureCurrentLimits(config.motorCurrentLimit, null), null,
+        null, null, null, null
+    )
     // Properties stored individually as signals to give them an update frequency different from the controller's.
     private val motorVoltage: StatusSignal<Voltage> = motorController.motorVoltage
     private val motorSupplyCurrent: StatusSignal<Current> = motorController.supplyCurrent
@@ -36,7 +42,6 @@ class IntakeIOPhoenix6(private val config: IntakeConfig): IntakeIO {
      * Called after the primary constructor. Used to configure intake's motor and update frequencies.
      */
     init {
-        configureMotorInterface()
         // Set the signals' update frequency to 50hz to match the robot's periodic cycle.
         BaseStatusSignal.setUpdateFrequencyForAll(50.0.hertz, motorVoltage, motorSupplyCurrent, motorTemperature)
         motorController.optimizeBusUtilization() // Refreshes every 100ms.
@@ -76,25 +81,5 @@ class IntakeIOPhoenix6(private val config: IntakeConfig): IntakeIO {
 
     override fun getMotorPosition(): Angle { return motorController.position.value }
     override fun getMotorVelocity(): AngularVelocity { return motorController.velocity.value }
-    override fun getMotorPower(): Double { return motorController.motorVoltage.valueAsDouble.div(12.0) }
-
-    /**
-     * Takes care of the motor configuration.
-     * TODO(): Generalize motor configuration within the project.
-     */
-    private fun configureMotorInterface() {
-        val talonConfig = TalonFXConfiguration()
-
-        with(talonConfig) {
-            MotorOutput
-                .withNeutralMode(config.motorNeutralMode)
-
-            CurrentLimits
-                .withSupplyCurrentLimitEnable(true)
-                .withSupplyCurrentLimit(config.motorCurrentLimit)
-        }
-
-        motorController.clearStickyFaults()
-        motorController.configurator.apply(talonConfig)
-    }
+    override fun getMotorPower(): Double { return motorController.get() }
 }

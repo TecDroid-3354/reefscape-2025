@@ -1,11 +1,9 @@
 package net.tecdroid.subsystems.elevator
 
-import com.ctre.phoenix6.configs.TalonFXConfiguration
-import com.ctre.phoenix6.controls.Follower
 import com.ctre.phoenix6.controls.MotionMagicVoltage
 import com.ctre.phoenix6.controls.VoltageOut
-import com.ctre.phoenix6.hardware.TalonFX
-import com.ctre.phoenix6.signals.NeutralModeValue
+import com.ctre.phoenix6.signals.NeutralModeValue.Brake
+import com.ctre.phoenix6.signals.NeutralModeValue.Coast
 import edu.wpi.first.units.Units.Meters
 import edu.wpi.first.units.Units.Rotations
 import edu.wpi.first.units.measure.*
@@ -13,6 +11,7 @@ import edu.wpi.first.util.sendable.SendableBuilder
 import edu.wpi.first.wpilibj2.command.Command
 import edu.wpi.first.wpilibj2.command.Commands
 import net.tecdroid.subsystems.util.generic.*
+import net.tecdroid.subsystems.util.motors.KrakenMotors
 
 class Elevator(private val config: ElevatorConfig) :
     TdSubsystem("Elevator"),
@@ -21,15 +20,24 @@ class Elevator(private val config: ElevatorConfig) :
     LoggableSubsystem,
     VoltageControlledSubsystem
 {
-    private val leadMotorController = TalonFX(config.leadMotorControllerId.id)
-    private val followerMotorController = TalonFX(config.followerMotorId.id)
+    private val motorsConfig = KrakenMotors.createTalonFullConfig( // Stores the shared configuration of the motors.
+        KrakenMotors.configureMotorOutputs(Brake, config.motorDirection.toInvertedValue()),
+        KrakenMotors.configureCurrentLimits(config.motorCurrentLimit, null),
+        KrakenMotors.configureSlot0(config.controlGains), config.reduction,
+        null, config.motionTargets, config.sprocket
+    )
+    private val leadMotorController = KrakenMotors.createTalonWithCustomConfig(
+        config.leadMotorControllerId, motorsConfig
+    )
+    private val followerMotorController = KrakenMotors.createFollowerTalonWithCustomConfig(
+        config.followerMotorId, config.leadMotorControllerId, true, motorsConfig
+    )
     private var target: Angle
 
     override val forwardsRunningCondition = { displacement < config.measureLimits.relativeMaximum }
     override val backwardsRunningCondition = { displacement > config.measureLimits.relativeMinimum }
 
     init {
-        configureMotorsInterface()
         publishToShuffleboard()
         target = motorPosition
     }
@@ -70,51 +78,14 @@ class Elevator(private val config: ElevatorConfig) :
         get() = config.sprocket.angularVelocityToLinearVelocity(config.reduction.apply(motorVelocity))
 
     fun coast(): Command = Commands.runOnce({
-        leadMotorController.setNeutralMode(NeutralModeValue.Coast)
-        followerMotorController.setNeutralMode(NeutralModeValue.Coast)
+        leadMotorController.setNeutralMode(Coast)
+        followerMotorController.setNeutralMode(Coast)
     })
 
     fun brake(): Command = Commands.runOnce({
-        leadMotorController.setNeutralMode(NeutralModeValue.Brake)
-        followerMotorController.setNeutralMode(NeutralModeValue.Brake)
+        leadMotorController.setNeutralMode(Brake)
+        followerMotorController.setNeutralMode(Brake)
     })
-
-    private fun configureMotorsInterface() {
-        val talonConfig = TalonFXConfiguration()
-
-        with(talonConfig) {
-            MotorOutput
-                .withNeutralMode(NeutralModeValue.Brake)
-                .withInverted(config.motorDirection.toInvertedValue())
-
-            CurrentLimits
-                .withSupplyCurrentLimitEnable(true)
-                .withSupplyCurrentLimit(config.motorCurrentLimit)
-
-            Slot0
-                .withKP(config.controlGains.p)
-                .withKI(config.controlGains.i)
-                .withKD(config.controlGains.d)
-                .withKS(config.controlGains.s)
-                .withKV(config.controlGains.v)
-                .withKA(config.controlGains.a)
-                .withKG(config.controlGains.g)
-
-            MotionMagic
-                .withMotionMagicCruiseVelocity(config.reduction.unapply(config.motionTargets.angularVelocity(config.sprocket)))
-                .withMotionMagicAcceleration(config.reduction.unapply(config.motionTargets.angularAcceleration(config.sprocket)))
-                .withMotionMagicJerk(config.reduction.unapply(config.motionTargets.angularJerk(config.sprocket)))
-        }
-
-
-        leadMotorController.clearStickyFaults()
-        followerMotorController.clearStickyFaults()
-
-        leadMotorController.configurator.apply(talonConfig)
-        followerMotorController.configurator.apply(talonConfig)
-
-        followerMotorController.setControl(Follower(leadMotorController.deviceID, true))
-    }
 
     override fun initSendable(builder: SendableBuilder) {
         with(builder) {

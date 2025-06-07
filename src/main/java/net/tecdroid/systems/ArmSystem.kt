@@ -83,9 +83,7 @@ enum class ArmPoses(var pose: ArmPose) {
         elevatorDisplacement  = 0.01.meters,
         elevatorJointPosition = 0.1622.rotations + 5.0.degrees,
         targetVoltage = 9.0.volts,
-        Optional.of { pose ->
-            0.0.degrees // TODO: Logic
-        }
+        Optional.empty()
     )),
 
     A1(ArmPose(
@@ -109,7 +107,7 @@ enum class ArmPoses(var pose: ArmPose) {
         elevatorDisplacement  = 0.0150.meters,
         elevatorJointPosition = 0.0415.rotations,
         targetVoltage = 8.0.volts,
-        Optional.of { -90.0.degrees }
+        Optional.empty() // -90deg
     )),
 
     AlgaeFloorIntake(ArmPose(
@@ -138,9 +136,8 @@ enum class ArmOrders(val order: ArmOrder) {
     WJE(ArmOrder(ArmWrist, ArmJoint, ArmElevator))
 }
 
-class ArmSystem(wristConfig: WristConfig, elevatorConfig: ElevatorConfig, elevatorJointConfig: ElevatorJointConfig,
+class ArmSystem(val wrist: Wrist, elevatorConfig: ElevatorConfig, elevatorJointConfig: ElevatorJointConfig,
                 val intake: Intake, val swerve: SwerveDrive, val controller: CompliantXboxController) : Sendable {
-    val wrist = Wrist(wristConfig)
     val elevator = Elevator(elevatorConfig)
     val joint = ElevatorJoint(elevatorJointConfig)
     private var targetVoltage = 0.0.volts

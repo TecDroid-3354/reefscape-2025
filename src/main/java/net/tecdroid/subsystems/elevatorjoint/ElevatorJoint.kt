@@ -1,11 +1,9 @@
 package net.tecdroid.subsystems.elevatorjoint
 
-import com.ctre.phoenix6.configs.TalonFXConfiguration
-import com.ctre.phoenix6.controls.Follower
 import com.ctre.phoenix6.controls.MotionMagicVoltage
 import com.ctre.phoenix6.controls.VoltageOut
-import com.ctre.phoenix6.hardware.TalonFX
-import com.ctre.phoenix6.signals.NeutralModeValue
+import com.ctre.phoenix6.signals.NeutralModeValue.Brake
+import com.ctre.phoenix6.signals.NeutralModeValue.Coast
 import edu.wpi.first.units.Units.Rotations
 import edu.wpi.first.units.measure.Angle
 import edu.wpi.first.units.measure.AngularVelocity
@@ -14,6 +12,7 @@ import edu.wpi.first.util.sendable.SendableBuilder
 import edu.wpi.first.wpilibj2.command.Command
 import edu.wpi.first.wpilibj2.command.Commands
 import net.tecdroid.subsystems.util.generic.*
+import net.tecdroid.subsystems.util.motors.KrakenMotors
 import net.tecdroid.wrappers.ThroughBoreAbsoluteEncoder
 
 class ElevatorJoint(private val config: ElevatorJointConfig) :
@@ -23,8 +22,18 @@ class ElevatorJoint(private val config: ElevatorJointConfig) :
     LoggableSubsystem,
     VoltageControlledSubsystem,
     WithThroughBoreAbsoluteEncoder {
-    private val leadMotorController = TalonFX(config.leadMotorControllerId.id)
-    private val followerMotorController = TalonFX(config.followerMotorControllerId.id)
+    private val motorsConfig = KrakenMotors.createTalonFullConfig( // Stores the shared configuration of the motors.
+        KrakenMotors.configureMotorOutputs(Brake, config.motorDirection.toInvertedValue()),
+        KrakenMotors.configureCurrentLimits(config.motorCurrentLimit, null),
+        KrakenMotors.configureSlot0(config.controlGains), config.reduction,
+        config.motionTargets, null, null
+    )
+    private val leadMotorController = KrakenMotors.createTalonWithCustomConfig(
+        config.leadMotorControllerId, motorsConfig
+    )
+    private val followerMotorController = KrakenMotors.createFollowerTalonWithCustomConfig(
+        config.followerMotorControllerId, config.leadMotorControllerId, false, motorsConfig
+    )
     private var target: Angle
 
     override val absoluteEncoder =
@@ -38,7 +47,6 @@ class ElevatorJoint(private val config: ElevatorJointConfig) :
     override val backwardsRunningCondition = { angle > config.measureLimits.relativeMinimum }
 
     init {
-        configureMotorsInterface()
         matchRelativeEncodersToAbsoluteEncoders()
         publishToShuffleboard()
         target = motorPosition
@@ -80,42 +88,6 @@ class ElevatorJoint(private val config: ElevatorJointConfig) :
         leadMotorController.setPosition(config.reduction.unapply(absoluteAngle))
     }
 
-    private fun configureMotorsInterface() {
-        val talonConfig = TalonFXConfiguration()
-
-        with(talonConfig) {
-            MotorOutput
-                .withNeutralMode(NeutralModeValue.Brake)
-                .withInverted(config.motorDirection.toInvertedValue())
-
-            CurrentLimits
-                .withSupplyCurrentLimitEnable(true)
-                .withSupplyCurrentLimit(config.motorCurrentLimit)
-
-            Slot0
-                .withKP(config.controlGains.p)
-                .withKI(config.controlGains.i)
-                .withKD(config.controlGains.d)
-                .withKS(config.controlGains.s)
-                .withKV(config.controlGains.v)
-                .withKA(config.controlGains.a)
-                .withKG(config.controlGains.g)
-
-            MotionMagic
-                .withMotionMagicCruiseVelocity(config.reduction.unapply(config.motionTargets.cruiseVelocity))
-                .withMotionMagicAcceleration(config.reduction.unapply(config.motionTargets.acceleration))
-                .withMotionMagicJerk(config.reduction.unapply(config.motionTargets.jerk))
-        }
-
-        leadMotorController.clearStickyFaults()
-        followerMotorController.clearStickyFaults()
-
-        leadMotorController.configurator.apply(talonConfig)
-        followerMotorController.configurator.apply(talonConfig)
-
-        followerMotorController.setControl(Follower(leadMotorController.deviceID, false))
-    }
-
     override fun initSendable(builder: SendableBuilder) {
         with(builder) {
             addDoubleProperty("Current Angle (Rotations)", { angle.`in`(Rotations) }, {})
@@ -124,12 +96,12 @@ class ElevatorJoint(private val config: ElevatorJointConfig) :
     }
 
     fun coast(): Command = Commands.runOnce({
-        leadMotorController.setNeutralMode(NeutralModeValue.Coast)
-        followerMotorController.setNeutralMode(NeutralModeValue.Coast)
+        leadMotorController.setNeutralMode(Coast)
+        followerMotorController.setNeutralMode(Coast)
     })
 
     fun brake(): Command = Commands.runOnce({
-        leadMotorController.setNeutralMode(NeutralModeValue.Brake)
-        followerMotorController.setNeutralMode(NeutralModeValue.Brake)
+        leadMotorController.setNeutralMode(Brake)
+        followerMotorController.setNeutralMode(Brake)
     })
 }

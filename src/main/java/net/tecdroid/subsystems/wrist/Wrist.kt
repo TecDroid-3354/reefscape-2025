@@ -14,112 +14,72 @@ import edu.wpi.first.wpilibj2.command.Command
 import edu.wpi.first.wpilibj2.command.Commands
 import net.tecdroid.subsystems.util.generic.*
 import net.tecdroid.wrappers.ThroughBoreAbsoluteEncoder
+import org.littletonrobotics.junction.Logger
 
-class Wrist(private val config: WristConfig) :
+class Wrist(private val io: WristIO, private val config: WristConfig) :
     TdSubsystem("Wrist"),
     LoggableSubsystem,
     WithThroughBoreAbsoluteEncoder,
     AngularSubsystem {
-    private val motorController = TalonFX(config.motorControllerId.id)
-    private var target : Angle
+        private var inputs: WristIO.WristIOInputs = WristIO.WristIOInputs() // Used to log all the subsystem's inputs.
 
-    override val absoluteEncoder = ThroughBoreAbsoluteEncoder(
-        port = config.absoluteEncoderPort,
-        offset = config.absoluteEncoderOffset,
-        inverted = config.absoluteEncoderIsInverted
-    )
+        override val absoluteEncoder = io.getAbsoluteEncoderInstance()
 
-    override val forwardsRunningCondition  = { angle < config.measureLimits.relativeMaximum }
-    override val backwardsRunningCondition = { angle > config.measureLimits.relativeMinimum }
+        override val forwardsRunningCondition  = { angle < config.measureLimits.relativeMaximum }
+        override val backwardsRunningCondition = { angle > config.measureLimits.relativeMinimum }
 
-    init {
-        configureMotorInterface()
-        matchRelativeEncodersToAbsoluteEncoders()
-        publishToShuffleboard()
-        target = motorPosition
-    }
-
-    override fun setVoltage(voltage: Voltage) {
-        val request = VoltageOut(voltage)
-        motorController.setControl(request)
-    }
-
-    override fun setAngle(targetAngle: Angle) {
-        val clampedAngle = config.measureLimits.coerceIn(targetAngle) as Angle
-        val transformedAngle = config.reduction.unapply(clampedAngle)
-        val request = MotionMagicVoltage(transformedAngle).withSlot(0)
-
-        target = transformedAngle
-        motorController.setControl(request)
-    }
-
-    fun getPositionError(): Angle =
-        if (target > motorPosition) target - motorPosition else motorPosition - target
-
-    override val power: Double
-        get() = motorController.get()
-
-    override val motorPosition: Angle
-        get() = motorController.position.value
-
-    override val motorVelocity: AngularVelocity
-        get() = motorController.velocity.value
-
-    override val angle: Angle
-        get() = config.reduction.apply(motorPosition)
-
-    override val angularVelocity: AngularVelocity
-        get() = config.reduction.apply(motorVelocity)
-
-    override fun onMatchRelativeEncodersToAbsoluteEncoders() {
-        motorController.setPosition(config.reduction.unapply(absoluteAngle))
-    }
-
-    private fun configureMotorInterface() {
-        val talonConfig = TalonFXConfiguration()
-
-        with(talonConfig) {
-            MotorOutput
-                .withNeutralMode(NeutralModeValue.Brake)
-                .withInverted(config.motorDirection.toInvertedValue())
-
-            CurrentLimits
-                .withSupplyCurrentLimitEnable(true)
-                .withSupplyCurrentLimit(config.motorCurrentLimit)
-
-            Slot0
-                .withKP(config.controlGains.p)
-                .withKI(config.controlGains.i)
-                .withKD(config.controlGains.d)
-                .withKS(config.controlGains.s)
-                .withKV(config.controlGains.v)
-                .withKA(config.controlGains.a)
-                .withKG(config.controlGains.g)
-
-            MotionMagic
-                .withMotionMagicCruiseVelocity(config.reduction.unapply(config.motionTargets.cruiseVelocity))
-                .withMotionMagicAcceleration(config.reduction.unapply(config.motionTargets.acceleration))
-                .withMotionMagicJerk(config.reduction.unapply(config.motionTargets.jerk))
+        init {
+            matchRelativeEncodersToAbsoluteEncoders()
+            publishToShuffleboard()
+            io.setTargetAngle(motorPosition)
         }
 
-
-        motorController.clearStickyFaults()
-        motorController.configurator.apply(talonConfig)
-    }
-
-    override fun initSendable(builder: SendableBuilder) {
-        with(builder) {
-            addDoubleProperty("Current Angle (Rotations)", { angle.`in`(Rotations) }, {})
-            addDoubleProperty("Current Absolute Angle (Rotations)", { absoluteAngle.`in`(Rotations) }, {})
+        override fun periodic() {
+            io.updateInputs(inputs)
+            Logger.processInputs("Wrist", inputs)
         }
-    }
 
-    fun coast(): Command = Commands.runOnce({
-        motorController.setNeutralMode(NeutralModeValue.Coast)
-    })
+        override fun setVoltage(voltage: Voltage) {
+            io.setVoltage(voltage)
+        }
 
-    fun brake(): Command = Commands.runOnce({
-        motorController.setNeutralMode(NeutralModeValue.Brake)
-    })
+        override fun setAngle(targetAngle: Angle) {
+            val clampedAngle = config.measureLimits.coerceIn(targetAngle) as Angle
+            val transformedAngle = config.reduction.unapply(clampedAngle)
 
+            io.setTargetAngle(transformedAngle)
+            io.setAngle(transformedAngle)
+        }
+
+        fun getPositionError(): Angle =
+            if (io.getTargetAngle() > motorPosition) io.getTargetAngle() - motorPosition else motorPosition - io.getTargetAngle()
+
+        override val power: Double
+            get() = io.getMotorPower()
+
+        override val motorPosition: Angle
+            get() = io.getMotorPosition()
+
+        override val motorVelocity: AngularVelocity
+            get() = io.getMotorVelocity()
+
+        override val angle: Angle
+            get() = config.reduction.apply(motorPosition)
+
+        override val angularVelocity: AngularVelocity
+            get() = config.reduction.apply(motorVelocity)
+
+        override fun onMatchRelativeEncodersToAbsoluteEncoders() {
+            io.setMotorPosition(config.reduction.unapply(absoluteAngle))
+        }
+
+        fun coast(): Command = Commands.runOnce({ io.coast() })
+        fun brake(): Command = Commands.runOnce({ io.brake() })
+
+        override fun initSendable(builder: SendableBuilder) {
+            with(builder) {
+                addDoubleProperty("Current Angle (Rotations)", { angle.`in`(Rotations) }, {})
+                addDoubleProperty("Current Absolute Angle (Rotations)", { absoluteAngle.`in`(Rotations) }, {})
+            }
+        }
 }

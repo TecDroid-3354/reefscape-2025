@@ -6,6 +6,7 @@ import edu.wpi.first.math.kinematics.ChassisSpeeds
 import edu.wpi.first.networktables.NetworkTableInstance
 import edu.wpi.first.networktables.StructPublisher
 import edu.wpi.first.units.Units.*
+import edu.wpi.first.units.measure.Angle
 import edu.wpi.first.wpilibj.shuffleboard.Shuffleboard
 import edu.wpi.first.wpilibj.shuffleboard.ShuffleboardTab
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard
@@ -20,7 +21,7 @@ import net.tecdroid.subsystems.drivetrain.swerveDriveConfiguration
 import net.tecdroid.subsystems.elevator.elevatorConfig
 import net.tecdroid.subsystems.elevatorjoint.elevatorJointConfig
 import net.tecdroid.subsystems.intake.*
-import net.tecdroid.subsystems.wrist.wristConfig
+import net.tecdroid.subsystems.wrist.*
 import net.tecdroid.systems.ArmSystem
 import net.tecdroid.util.degrees
 import net.tecdroid.vision.limelight.systems.LimeLightChoice
@@ -30,36 +31,59 @@ import net.tecdroid.vision.limelight.systems.LimelightController
 class RobotContainer {
     private val controller = CompliantXboxController(driverControllerId)
     private val swerve = SwerveDrive(swerveDriveConfiguration)
-    private val intake = when (currentMode) {
-        RobotMode.REAL -> Intake(IntakeIOPhoenix6(intakeConfig))
-        RobotMode.SIMULATION -> Intake(IntakeIOSimulation())
-        RobotMode.REPLAY -> Intake(object: IntakeIO{}) // No need for an implementation of IO layer during replay.
-    }
+    private lateinit var intake: Intake
+    private lateinit var wrist: Wrist
 
-    private val arm = ArmSystem(
-        wristConfig,
-        elevatorConfig,
-        elevatorJointConfig,
-        intake,
-        swerve,
-        controller)
-    private val limelightController = LimelightController(
-        swerve,
-        { chassisSpeeds -> swerve.driveRobotOriented(chassisSpeeds) },
-        { swerve.heading.`in`(Degrees) }, swerve.maxSpeeds.times(0.75)
-    )
-    private val autoComposer = AutoComposer(swerve, limelightController, arm)
+    private lateinit var arm: ArmSystem
+    private lateinit var limelightController: LimelightController
+    //private val autoComposer = AutoComposer(swerve, limelightController, arm)
 
     // Advantage Scope log publisher
     private val robotPosePublisher: StructPublisher<Pose2d> = NetworkTableInstance.getDefault()
         .getStructTopic("RobotPose", Pose2d.struct).publish()
 
     init {
+        initializeSubsystems()
+        initializeSystems()
+
         limelightController.shuffleboardData()
         swerve.heading = 0.0.degrees
 
         arm.publishShuffleBoardData()
         arm.assignCommandsToController(controller)
+    }
+
+    private fun initializeSubsystems() {
+        when (currentMode) {
+            RobotMode.REAL -> {
+                intake = Intake(IntakeIOPhoenix6(intakeConfig))
+                wrist = Wrist(WristIOPhoenix6(wristConfig), wristConfig)
+            }
+            RobotMode.SIMULATION -> {
+                intake = Intake(IntakeIOSimulation())
+                wrist = Wrist(WristIOSimulation(), wristConfig)
+            }
+            RobotMode.REPLAY -> { // No need for an implementation of IO layers during replay.
+                intake = Intake(object: IntakeIO{})
+                wrist = Wrist(object: WristIO {override var targetAngle: Angle = 0.0.degrees}, wristConfig)
+            }
+        }
+    }
+
+    private fun initializeSystems() {
+        arm = ArmSystem(
+            wrist,
+            elevatorConfig,
+            elevatorJointConfig,
+            intake,
+            swerve,
+            controller)
+
+        limelightController = LimelightController(
+            swerve,
+            { chassisSpeeds -> swerve.driveRobotOriented(chassisSpeeds) },
+            { swerve.heading.`in`(Degrees) }, swerve.maxSpeeds.times(0.75)
+        )
     }
 
 
@@ -101,6 +125,6 @@ class RobotContainer {
     }
 
     val autonomousCommand: Command
-        get() = autoComposer.selectedAutonomousRoutine
+        get() = Commands.none()//autoComposer.selectedAutonomousRoutine
 
 }

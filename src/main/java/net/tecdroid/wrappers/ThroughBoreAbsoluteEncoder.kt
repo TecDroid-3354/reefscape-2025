@@ -15,5 +15,7 @@ class ThroughBoreAbsoluteEncoder(port: NumericId, private val offset: Angle, pri
     val position: Angle
         get() = (if (inverted) invertReading(reading) else reading) - offset
 
+    fun isConnected(): Boolean { return encoder.isConnected() }
+
     private fun invertReading(angle: Angle) = (1.0.rotations - angle)
 }
