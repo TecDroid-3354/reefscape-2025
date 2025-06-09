@@ -46,6 +46,7 @@ class StateMachine(private var currentState: States,
 
     // Change the state default command
     private fun changeStateDefaultCommand(defaultCommand: Command) {
+        this.removeDefaultCommand()
         defaultCommand.addRequirements(this)
         setDefaultCommand(defaultCommand)
     }
