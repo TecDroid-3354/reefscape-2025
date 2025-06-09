@@ -279,7 +279,18 @@ class ArmSystem(wristConfig: WristConfig, elevatorConfig: ElevatorConfig, elevat
     // Used to avoid the one command binding of the trigger, and process the logic out of the trigger command
     private fun scheduleCMD(command: Command) = command.schedule()
 
+    private fun assignStatesCommands() {
+        // Active passive intake
+        States.AlgaeState.config.initialCommand = intake.setVoltageCommand { 1.5.volts }
+
+        // Go to passive position after score a coral
+        States.ScoreState.config.endCommand = Commands.waitTime(0.5.seconds)
+            .andThen(setPoseCommand(ArmPoses.L2.pose, ArmOrders.EJW.order))
+    }
+
     fun assignCommands(controller: CompliantXboxController) {
+        assignStatesCommands()
+
         // Change state conditions
 
         // Change to score state when coral is detected
@@ -368,8 +379,8 @@ class ArmSystem(wristConfig: WristConfig, elevatorConfig: ElevatorConfig, elevat
                 States.CoralState -> Commands.sequence(
                     setPoseCommand(ArmPoses.CoralStation.pose, ArmOrders.EJW.order)
                     .andThen({ setIsLow(true) }),
-                    enableIntake(),
-                    Commands.runOnce({ stateMachine.changeState(States.IntakeState)})
+                    Commands.runOnce({ stateMachine.changeState(States.IntakeState)}),
+                    enableIntake()
                 )
             })
         })).onFalse(disableIntake())

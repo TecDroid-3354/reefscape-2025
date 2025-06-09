@@ -9,8 +9,8 @@ enum class States(var config: StateConfig) {
     CoralState(StateConfig()),
     AlgaeState(StateConfig()),
     ScoreState(StateConfig()),
-    IntakeState(StateConfig());
-/*
+    IntakeState(StateConfig()),
+    /*
     /**
      * Change the states commands. These classes are global, so the config
      * will change for all the instances
@@ -59,14 +59,12 @@ class StateMachine(private var currentState: States,
     fun changeState(state: States) {
         // Verify if our state isn't the same
         if (state !=  currentState) {
-            /*Commands.sequence(
-                // execute end command
-                currentState.config.endCommand,
+            // execute end command
+            currentState.config.endCommand.schedule()
                 // execute the general command
-                changeStateCommand,
+            changeStateCommand.schedule()
                 // execute the initial command of the new state
-                state.config.initialCommand
-            ).schedule()*/
+            state.config.initialCommand.schedule()
 
             // set the new default command
             changeStateDefaultCommand(state.config.defaultCommand)
