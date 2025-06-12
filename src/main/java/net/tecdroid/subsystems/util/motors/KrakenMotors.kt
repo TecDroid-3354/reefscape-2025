@@ -32,7 +32,7 @@ object KrakenMotors {
                 .withSupplyCurrentLimitEnable(true)
                 .withSupplyCurrentLimit(40.0.amps)
                 .withStatorCurrentLimitEnable(false)
-                .withStatorCurrentLimit(null)
+                .withStatorCurrentLimit(120.0.amps)
         }
     }
 
@@ -230,11 +230,12 @@ object KrakenMotors {
      * @param statorCurrentLimit The desired stator current limit. Optional.
      * @return A [CurrentLimitsConfigs] with the desired supply and stator current limits, if applicable.
      */
-    fun configureCurrentLimits(supplyCurrentLimit: Current, statorCurrentLimit: Current?): CurrentLimitsConfigs {
+    fun configureCurrentLimits(supplyCurrentLimit: Current,
+                               statorCurrentLimitEnabled: Boolean, statorCurrentLimit: Current): CurrentLimitsConfigs {
         return CurrentLimitsConfigs()
             .withSupplyCurrentLimitEnable(true)
             .withSupplyCurrentLimit(supplyCurrentLimit)
-            .withStatorCurrentLimitEnable(statorCurrentLimit != null)
+            .withStatorCurrentLimitEnable(statorCurrentLimitEnabled)
             .withStatorCurrentLimit(statorCurrentLimit)
     }
 

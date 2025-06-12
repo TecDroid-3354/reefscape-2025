@@ -14,34 +14,18 @@ import edu.wpi.first.wpilibj2.command.Commands
 import net.tecdroid.subsystems.util.generic.*
 import net.tecdroid.subsystems.util.motors.KrakenMotors
 import net.tecdroid.wrappers.ThroughBoreAbsoluteEncoder
+import org.littletonrobotics.junction.Logger
 
-class ElevatorJoint(private val config: ElevatorJointConfig) :
+class ElevatorJoint(private val io: ElevatorJointIO, private val config: ElevatorJointConfig) :
     TdSubsystem("Elevator Joint"),
     MeasurableSubsystem,
     AngularSubsystem,
     LoggableSubsystem,
     VoltageControlledSubsystem,
     WithThroughBoreAbsoluteEncoder {
-    private val motorsConfig = KrakenMotors.createTalonFullConfig( // Stores the shared configuration of the motors.
-        KrakenMotors.configureMotorOutputs(Brake, config.motorDirection.toInvertedValue()),
-        KrakenMotors.configureCurrentLimits(config.motorCurrentLimit, null),
-        KrakenMotors.configureSlot0(config.controlGains), config.reduction,
-        config.motionTargets, null, null
-    )
-    private val leadMotorController = KrakenMotors.createTalonWithCustomConfig(
-        config.leadMotorControllerId, motorsConfig
-    )
-    private val followerMotorController = KrakenMotors.createFollowerTalonWithCustomConfig(
-        config.followerMotorControllerId, config.leadMotorControllerId, false, motorsConfig
-    )
-    private var target: Angle
+        private val inputs = ElevatorJointIO.ElevatorJointIOInputs()
 
-    override val absoluteEncoder =
-        ThroughBoreAbsoluteEncoder(
-            port = config.absoluteEncoderPort,
-            offset = config.absoluteEncoderOffset,
-            inverted = config.absoluteEncoderIsInverted
-        )
+    override val absoluteEncoder = io.getAbsoluteEncoderInstance()
 
     override val forwardsRunningCondition  = { angle < config.measureLimits.relativeMaximum }
     override val backwardsRunningCondition = { angle > config.measureLimits.relativeMinimum }
@@ -49,34 +33,36 @@ class ElevatorJoint(private val config: ElevatorJointConfig) :
     init {
         matchRelativeEncodersToAbsoluteEncoders()
         publishToShuffleboard()
-        target = motorPosition
+        io.setTargetAngle(motorPosition)
+    }
+
+    override fun periodic() {
+        Logger.processInputs("ElevatorJoint", inputs)
     }
 
     override fun setVoltage(voltage: Voltage) {
-        val request = VoltageOut(voltage)
-        leadMotorController.setControl(request)
+        io.setVoltage(voltage)
     }
 
     override fun setAngle(targetAngle: Angle) {
         val clampedAngle = config.measureLimits.coerceIn(targetAngle) as Angle
         val transformedAngle = config.reduction.unapply(clampedAngle)
-        val request = MotionMagicVoltage(transformedAngle)
 
-        target = transformedAngle
-        leadMotorController.setControl(request)
+        io.setTargetAngle(transformedAngle)
+        io.setAngle(transformedAngle)
     }
 
     fun getPositionError(): Angle =
-        if (target > motorPosition) target - motorPosition else motorPosition - target
+        if (io.getTargetAngle() > motorPosition) io.getTargetAngle() - motorPosition else motorPosition - io.getTargetAngle()
 
     override val power: Double
-        get() = leadMotorController.get()
+        get() = io.getMotorPower()
 
     override val motorPosition: Angle
-        get() = leadMotorController.position.value
+        get() = io.getMotorPosition()
 
     override val motorVelocity: AngularVelocity
-        get() = leadMotorController.velocity.value
+        get() = io.getMotorVelocity()
 
     override val angle: Angle
         get() = config.reduction.apply(motorPosition)
@@ -85,7 +71,8 @@ class ElevatorJoint(private val config: ElevatorJointConfig) :
         get() = config.reduction.apply(motorVelocity)
 
     override fun onMatchRelativeEncodersToAbsoluteEncoders() {
-        leadMotorController.setPosition(config.reduction.unapply(absoluteAngle))
+        io.setMotorPosition(config.reduction.unapply(absoluteAngle))
+        //leadMotorController.setPosition(config.reduction.unapply(absoluteAngle))
     }
 
     override fun initSendable(builder: SendableBuilder) {
@@ -95,13 +82,7 @@ class ElevatorJoint(private val config: ElevatorJointConfig) :
         }
     }
 
-    fun coast(): Command = Commands.runOnce({
-        leadMotorController.setNeutralMode(Coast)
-        followerMotorController.setNeutralMode(Coast)
-    })
+    fun coast(): Command = Commands.runOnce({ io.coast() })
 
-    fun brake(): Command = Commands.runOnce({
-        leadMotorController.setNeutralMode(Brake)
-        followerMotorController.setNeutralMode(Brake)
-    })
+    fun brake(): Command = Commands.runOnce({ io.brake() })
 }

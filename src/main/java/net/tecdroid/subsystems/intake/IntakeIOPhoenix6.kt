@@ -15,6 +15,7 @@ import edu.wpi.first.units.measure.Voltage
 import edu.wpi.first.wpilibj.DigitalInput
 import edu.wpi.first.wpilibj2.command.button.Trigger
 import net.tecdroid.subsystems.util.motors.KrakenMotors
+import net.tecdroid.util.amps
 import net.tecdroid.util.hertz
 import net.tecdroid.util.volts
 
@@ -27,7 +28,7 @@ class IntakeIOPhoenix6(private val config: IntakeConfig): IntakeIO {
     private val motorController = KrakenMotors.createTalonWithFullConfig(
         config.motorControllerId,
         KrakenMotors.configureMotorOutputs(config.motorNeutralMode, config.motorDirection.toInvertedValue()),
-        KrakenMotors.configureCurrentLimits(config.motorCurrentLimit, null), null,
+        KrakenMotors.configureCurrentLimits(config.motorCurrentLimit, false, 0.0.amps), null,
         null, null, null, null
     )
     // Properties stored individually as signals to give them an update frequency different from the controller's.

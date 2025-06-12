@@ -12,6 +12,7 @@ import edu.wpi.first.units.measure.Current
 import edu.wpi.first.units.measure.Temperature
 import edu.wpi.first.units.measure.Voltage
 import net.tecdroid.subsystems.util.motors.KrakenMotors
+import net.tecdroid.util.amps
 import net.tecdroid.util.degrees
 import net.tecdroid.util.hertz
 import net.tecdroid.util.volts
@@ -21,7 +22,7 @@ class WristIOPhoenix6(private val config: WristConfig): WristIO {
     private val motorController = KrakenMotors.createTalonWithFullConfig(
         config.motorControllerId, // Motor controller ID
         KrakenMotors.configureMotorOutputs(Brake, config.motorDirection.toInvertedValue()), // MotorOutputConfigs
-        KrakenMotors.configureCurrentLimits(config.motorCurrentLimit, null),  // CurrentLimitConfigs
+        KrakenMotors.configureCurrentLimits(config.motorCurrentLimit, false, 0.0.amps),  // CurrentLimitConfigs
         KrakenMotors.configureSlot0(config.controlGains), config.reduction, // Slot0Configs, Subsystem's Reduction
         config.motionTargets, null, null // AngularMotionTargets
     )
@@ -40,7 +41,7 @@ class WristIOPhoenix6(private val config: WristConfig): WristIO {
     private val motionMagicRequest = MotionMagicVoltage(0.0.degrees)
         .withSlot(0) // MotionMagic request initialized here to optimize space.
 
-    override var targetAngle: Angle = 0.0.degrees
+    private var targetAngle: Angle = 0.0.degrees
 
     init {
         // Set the signals' update frequency to 50hz to match the robot's periodic cycle.
@@ -60,8 +61,8 @@ class WristIOPhoenix6(private val config: WristConfig): WristIO {
     override fun getMotorPower(): Double { return motorController.get() }
 
     override fun updateInputs(inputs: WristIO.WristIOInputs) {
-        inputs.isThroughboreConnected = absoluteEncoder.isConnected() // Encoder built-in check.
-        inputs.throughboreAbsolutePosition = absoluteEncoder.position
+        inputs.isThroughBoreConnected = absoluteEncoder.isConnected() // Encoder built-in check.
+        inputs.throughBoreAbsolutePosition = absoluteEncoder.position
 
         inputs.isMotorConnected = BaseStatusSignal.refreshAll(
             motorPosition, motorVoltage, motorSupplyCurrent, motorTemperature

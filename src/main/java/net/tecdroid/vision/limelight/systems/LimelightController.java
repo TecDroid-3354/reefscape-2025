@@ -73,7 +73,6 @@ public class LimelightController {
         Integer[] validIDs = { 21, 20, 19, 18, 17, 22, 10, 11, 6, 7, 8, 9 };
         rightLimelight.setIdFilter(validIDs);
         leftLimelight.setIdFilter(validIDs);
-
     }
 
     private static double clamp(double max, double min, double v)

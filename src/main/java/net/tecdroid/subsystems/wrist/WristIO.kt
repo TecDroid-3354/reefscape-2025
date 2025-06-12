@@ -9,13 +9,10 @@ import edu.wpi.first.units.measure.Temperature
 import edu.wpi.first.units.measure.Voltage
 import net.tecdroid.util.*
 import net.tecdroid.wrappers.ThroughBoreAbsoluteEncoder
-import org.littletonrobotics.junction.AutoLog
 import org.littletonrobotics.junction.LogTable
 import org.littletonrobotics.junction.inputs.LoggableInputs
 
 interface WristIO {
-    var targetAngle: Angle
-
     fun updateInputs(inputs: WristIOInputs) {}
 
     fun setVoltage(voltage: Voltage) {}
@@ -23,11 +20,10 @@ interface WristIO {
     fun setMotorPosition(angle: Angle) {}
     fun setTargetAngle(angle: Angle) {}
 
-    fun getTargetAngle(): Angle {return targetAngle}
+    fun getTargetAngle(): Angle {return Degrees.zero()}
     fun getAbsoluteEncoderInstance(): ThroughBoreAbsoluteEncoder {
         return ThroughBoreAbsoluteEncoder(NumericId(0), 0.0.degrees, false)
     }
-
 
     // Must override during implementation. Just to fill TdSubsystem information. Probably will change later.
     fun getMotorPosition(): Angle {return Degrees.zero()}
@@ -41,8 +37,8 @@ interface WristIO {
      * Intended to store all relevant inputs for the Wrist. These inputs would be shown during replay / simulation
      * in AdvantageScope for every cycle.
      * TODO() = Use @AutoLog instead of implementing LoggableInputs, same but deprecated.
-     * @property isThroughboreConnected Indicates whether the throughbore is connected in this cycle.
-     * @property throughboreAbsolutePosition Absolute position reported by the throughbore in this cycle.
+     * @property isThroughBoreConnected Indicates whether the throughbore is connected in this cycle.
+     * @property throughBoreAbsolutePosition Absolute position reported by the throughbore in this cycle.
      * @property isMotorConnected Indicates whether the motor is connected in this cycle.
      * @property motorPosition Position reported by the motor in this cycle.
      * @property motorVoltage Voltage of the motor in this cycle.
@@ -52,8 +48,8 @@ interface WristIO {
      * @property wristAngle Angle of the wrist in this cycle.
      */
     class WristIOInputs: LoggableInputs {
-        var isThroughboreConnected: Boolean = false
-        var throughboreAbsolutePosition: Angle = Degrees.zero()
+        var isThroughBoreConnected: Boolean = false
+        var throughBoreAbsolutePosition: Angle = Degrees.zero()
         var isMotorConnected: Boolean = false
         var motorPosition: Angle = Degrees.zero()
         var motorVoltage: Voltage = 0.0.volts
@@ -63,8 +59,8 @@ interface WristIO {
         var wristAngle: Angle = Degrees.zero()
 
         override fun toLog(table: LogTable) {
-            table.put("IsThroughboreConnected", isThroughboreConnected)
-            table.put("ThroughboreAbsolutePosition", throughboreAbsolutePosition)
+            table.put("IsThroughBoreConnected", isThroughBoreConnected)
+            table.put("ThroughBoreAbsolutePosition", throughBoreAbsolutePosition)
             table.put("IsMotorConnected", isMotorConnected)
             table.put("MotorPosition", motorPosition)
             table.put("MotorVoltage", motorVoltage)
@@ -75,8 +71,8 @@ interface WristIO {
         }
 
         override fun fromLog(table: LogTable) {
-            isThroughboreConnected = table.get("IsThroughboreConnected").boolean
-            throughboreAbsolutePosition = table.get("ThroughboreAbsolutePosiiton").double.degrees
+            isThroughBoreConnected = table.get("IsThroughboreConnected").boolean
+            throughBoreAbsolutePosition = table.get("ThroughboreAbsolutePosiiton").double.degrees
             isMotorConnected = table.get("IsMotorConnected").boolean
             motorPosition = table.get("MotorPosition").double.degrees
             motorVoltage = table.get("MotorVoltage").double.volts

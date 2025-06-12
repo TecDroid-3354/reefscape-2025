@@ -18,8 +18,10 @@ import net.tecdroid.core.RobotConstants.currentMode
 import net.tecdroid.input.CompliantXboxController
 import net.tecdroid.subsystems.drivetrain.SwerveDrive
 import net.tecdroid.subsystems.drivetrain.swerveDriveConfiguration
+import net.tecdroid.subsystems.elevator.Elevator
+import net.tecdroid.subsystems.elevator.ElevatorIOPhoenix6
 import net.tecdroid.subsystems.elevator.elevatorConfig
-import net.tecdroid.subsystems.elevatorjoint.elevatorJointConfig
+import net.tecdroid.subsystems.elevatorjoint.*
 import net.tecdroid.subsystems.intake.*
 import net.tecdroid.subsystems.wrist.*
 import net.tecdroid.systems.ArmSystem
@@ -33,6 +35,8 @@ class RobotContainer {
     private val swerve = SwerveDrive(swerveDriveConfiguration)
     private lateinit var intake: Intake
     private lateinit var wrist: Wrist
+    private lateinit var elevatorJoint: ElevatorJoint
+    private lateinit var elevator: Elevator
 
     private lateinit var arm: ArmSystem
     private lateinit var limelightController: LimelightController
@@ -58,14 +62,18 @@ class RobotContainer {
             RobotMode.REAL -> {
                 intake = Intake(IntakeIOPhoenix6(intakeConfig))
                 wrist = Wrist(WristIOPhoenix6(wristConfig), wristConfig)
+                elevator = Elevator(ElevatorIOPhoenix6(elevatorConfig), elevatorConfig)
+                elevatorJoint = ElevatorJoint(ElevatorJointIOPhoenix6(elevatorJointConfig), elevatorJointConfig)
             }
             RobotMode.SIMULATION -> {
                 intake = Intake(IntakeIOSimulation())
                 wrist = Wrist(WristIOSimulation(), wristConfig)
+                elevatorJoint = ElevatorJoint(ElevatorJointIOSimulation(), elevatorJointConfig)
             }
             RobotMode.REPLAY -> { // No need for an implementation of IO layers during replay.
-                intake = Intake(object: IntakeIO{})
-                wrist = Wrist(object: WristIO {override var targetAngle: Angle = 0.0.degrees}, wristConfig)
+                intake = Intake(object: IntakeIO {})
+                wrist = Wrist(object: WristIO {}, wristConfig)
+                elevatorJoint = ElevatorJoint(object: ElevatorJointIO {}, elevatorJointConfig)
             }
         }
     }
@@ -73,8 +81,8 @@ class RobotContainer {
     private fun initializeSystems() {
         arm = ArmSystem(
             wrist,
-            elevatorConfig,
-            elevatorJointConfig,
+            elevator,
+            elevatorJoint,
             intake,
             swerve,
             controller)

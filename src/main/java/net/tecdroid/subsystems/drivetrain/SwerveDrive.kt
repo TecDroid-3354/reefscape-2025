@@ -38,8 +38,8 @@ class SwerveDrive(private val config: SwerveDriveConfig) : SubsystemBase() {
     val modules = config.moduleConfigs.map { SwerveModule(it.first) }
     val kinematics = SwerveDriveKinematics(*config.moduleConfigs.map { it.second }.toTypedArray())
 
-    val stateStdDevs: Vector<N3> = VecBuilder.fill(0.005, 0.005, Units.degreesToRadians(2.0))
-    val visionStdDevs: Vector<N3> = VecBuilder.fill(0.005, 0.005, Units.degreesToRadians(2.0))
+    val stateStdDevs: Vector<N3> = VecBuilder.fill(1.0, 1.0, Units.degreesToRadians(2.0))
+    val visionStdDevs: Vector<N3> = VecBuilder.fill(1.0, 1.0, Units.degreesToRadians(2.0))
 
     val poseEstimator = SwerveDrivePoseEstimator(
         kinematics, heading.toRotation2d(), modulePositions.toTypedArray(), Pose2d(),

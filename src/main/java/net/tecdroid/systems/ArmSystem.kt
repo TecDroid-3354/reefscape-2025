@@ -136,10 +136,8 @@ enum class ArmOrders(val order: ArmOrder) {
     WJE(ArmOrder(ArmWrist, ArmJoint, ArmElevator))
 }
 
-class ArmSystem(val wrist: Wrist, elevatorConfig: ElevatorConfig, elevatorJointConfig: ElevatorJointConfig,
+class ArmSystem(val wrist: Wrist, val elevator: Elevator, val joint: ElevatorJoint,
                 val intake: Intake, val swerve: SwerveDrive, val controller: CompliantXboxController) : Sendable {
-    val elevator = Elevator(elevatorConfig)
-    val joint = ElevatorJoint(elevatorJointConfig)
     private var targetVoltage = 0.0.volts
 
     var isScoring = false
