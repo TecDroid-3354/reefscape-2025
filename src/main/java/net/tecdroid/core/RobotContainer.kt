@@ -40,7 +40,7 @@ class RobotContainer {
 
     private lateinit var arm: ArmSystem
     private lateinit var limelightController: LimelightController
-    //private val autoComposer = AutoComposer(swerve, limelightController, arm)
+    private var autoComposer: AutoComposer
 
     // Advantage Scope log publisher
     private val robotPosePublisher: StructPublisher<Pose2d> = NetworkTableInstance.getDefault()
@@ -49,10 +49,10 @@ class RobotContainer {
     init {
         initializeSubsystems()
         initializeSystems()
+        autoComposer = AutoComposer(swerve, limelightController, arm)
 
         limelightController.shuffleboardData()
         swerve.heading = 0.0.degrees
-
         arm.publishShuffleBoardData()
         arm.assignCommandsToController(controller)
     }
@@ -133,6 +133,6 @@ class RobotContainer {
     }
 
     val autonomousCommand: Command
-        get() = Commands.none()//autoComposer.selectedAutonomousRoutine
+        get() = autoComposer.selectedAutonomousRoutine
 
 }

@@ -1,5 +1,6 @@
 package net.tecdroid.vision.limelight.systems;
 
+import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
@@ -11,11 +12,10 @@ import edu.wpi.first.wpilibj.shuffleboard.ShuffleboardTab;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.Subsystem;
+import net.tecdroid.vision.limelight.LimelightHelpers;
 import net.tecdroid.constants.StringConstantsKt;
 import net.tecdroid.util.ControlGains;
-import net.tecdroid.vision.limelight.Limelight;
-import net.tecdroid.vision.limelight.LimelightAprilTagDetector;
-import net.tecdroid.vision.limelight.LimelightConfig;
+import net.tecdroid.vision.limelight.*;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -23,6 +23,7 @@ import java.util.function.Consumer;
 import java.util.function.DoubleSupplier;
 
 import static edu.wpi.first.units.Units.*;
+import static net.tecdroid.vision.limelight.LimelightHelpers.getLatestResults;
 
 public class LimelightController {
     private final LimelightAprilTagDetector leftLimelight  = new LimelightAprilTagDetector(new LimelightConfig(StringConstantsKt.leftLimelightName, new Pose3d()));
@@ -143,6 +144,37 @@ public class LimelightController {
         return limitedYaw;
     }
 
+    public Command driveToNeuralDetection(LimeLightChoice choice, double xSetPoint, double ySetPoint) {
+        return Commands.run(() -> {
+            LimelightHelpers.LimelightTarget_Detector[] results = getLatestResults(choice.name()).targets_Detector;
+            Pose3d cameraPose = getTargetPositionInCameraSpace(choice);
+            double xDisplacement = Math.abs(xSetPoint - cameraPose.getTranslation().getZ());
+            double yDisplacement = Math.abs(ySetPoint - cameraPose.getTranslation().getX());
+            double positionTolerance = 0.01;
+            if ((results[0].confidence < 0.6) || (xDisplacement <= positionTolerance && yDisplacement <= positionTolerance)) {
+                drive.accept(new ChassisSpeeds());
+                return;
+            }
+
+            if (results[0].ta >= 15) {
+                PIDController xPIDController = getXPIDController(choice);
+                PIDController yPIDController = getYPIDController(choice);
+
+                double xFactor = MathUtil.clamp(
+                        xPIDController.calculate(cameraPose.getTranslation().getZ(), xSetPoint), -1.0, 1.0);
+                double yFactor = -MathUtil.clamp(
+                        yPIDController.calculate(cameraPose.getTranslation().getX(), ySetPoint), -1.0, 1.0);
+
+                drive.accept(new ChassisSpeeds(
+                        MetersPerSecond.of(maxSpeeds.vxMetersPerSecond * xFactor),
+                        MetersPerSecond.of(maxSpeeds.vyMetersPerSecond * yFactor),
+                        RadiansPerSecond.of(0.0)
+                ));
+            } else {
+                drive.accept(new ChassisSpeeds());
+            }
+        }, requiredSubsystem);
+    }
     public Command alignRobotXAxis(LimeLightChoice choice, double setPoint) {
         return Commands.run(() -> {
             Pose3d robotPose = getTargetPositionInCameraSpace(choice);

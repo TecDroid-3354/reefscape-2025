@@ -1,9 +1,5 @@
 package net.tecdroid.subsystems.elevatorjoint
 
-import com.ctre.phoenix6.controls.MotionMagicVoltage
-import com.ctre.phoenix6.controls.VoltageOut
-import com.ctre.phoenix6.signals.NeutralModeValue.Brake
-import com.ctre.phoenix6.signals.NeutralModeValue.Coast
 import edu.wpi.first.units.Units.Rotations
 import edu.wpi.first.units.measure.Angle
 import edu.wpi.first.units.measure.AngularVelocity
@@ -12,8 +8,6 @@ import edu.wpi.first.util.sendable.SendableBuilder
 import edu.wpi.first.wpilibj2.command.Command
 import edu.wpi.first.wpilibj2.command.Commands
 import net.tecdroid.subsystems.util.generic.*
-import net.tecdroid.subsystems.util.motors.KrakenMotors
-import net.tecdroid.wrappers.ThroughBoreAbsoluteEncoder
 import org.littletonrobotics.junction.Logger
 
 class ElevatorJoint(private val io: ElevatorJointIO, private val config: ElevatorJointConfig) :
@@ -37,6 +31,7 @@ class ElevatorJoint(private val io: ElevatorJointIO, private val config: Elevato
     }
 
     override fun periodic() {
+        io.updateInputs(inputs)
         Logger.processInputs("ElevatorJoint", inputs)
     }
 

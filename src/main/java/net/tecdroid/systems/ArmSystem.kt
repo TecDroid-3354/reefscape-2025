@@ -107,7 +107,7 @@ enum class ArmPoses(var pose: ArmPose) {
         elevatorDisplacement  = 0.0150.meters,
         elevatorJointPosition = 0.0415.rotations,
         targetVoltage = 8.0.volts,
-        Optional.empty() // -90deg
+        Optional.of { (-90.0).degrees }
     )),
 
     AlgaeFloorIntake(ArmPose(
@@ -123,7 +123,7 @@ enum class ArmPoses(var pose: ArmPose) {
         elevatorDisplacement  = 1.0420.meters,
         elevatorJointPosition = 0.2349.rotations,
         targetVoltage = 8.0.volts,
-        Optional.empty()
+        Optional.of { 0.0.degrees }
     ))
 }
 
