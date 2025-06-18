@@ -229,7 +229,7 @@ class ArmSystem(wristConfig: WristConfig, elevatorConfig: ElevatorConfig, elevat
     }
 
     fun assignCommandsToController(controller: CompliantXboxController) {
-        controller.povLeft().onTrue(Commands.runOnce({ toggleCoralMode() }))
+        //controller.povLeft().onTrue(Commands.runOnce({ toggleCoralMode() }))
 
         controller.y().onTrue(
             Commands.either(
@@ -283,13 +283,13 @@ class ArmSystem(wristConfig: WristConfig, elevatorConfig: ElevatorConfig, elevat
                 pollIsCoralMode
             )
         )
-        controller.povDown().onTrue(
-            setPoseCommand(ArmPoses.AlgaeFloorIntake.pose, ArmOrders.EWJ.order)
-        )
+//        controller.povDown().onTrue(
+//            setPoseCommand(ArmPoses.AlgaeFloorIntake.pose, ArmOrders.EWJ.order)
+//        )
 
-        controller.povRight().onTrue(
-            setPoseCommand(ArmPoses.Processor.pose, ArmOrders.EWJ.order)
-        )
+//        controller.povRight().onTrue(
+//            setPoseCommand(ArmPoses.Processor.pose, ArmOrders.EWJ.order)
+//        )
 
         controller.back().onTrue(setPoseCommand(ArmPoses.Passive.pose, ArmOrders.JEW.order))
 

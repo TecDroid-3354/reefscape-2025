@@ -6,11 +6,10 @@ import edu.wpi.first.math.kinematics.ChassisSpeeds
 import edu.wpi.first.networktables.NetworkTableInstance
 import edu.wpi.first.networktables.StructPublisher
 import edu.wpi.first.units.Units.*
-import edu.wpi.first.wpilibj.shuffleboard.Shuffleboard
-import edu.wpi.first.wpilibj.shuffleboard.ShuffleboardTab
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard
 import edu.wpi.first.wpilibj2.command.Command
 import edu.wpi.first.wpilibj2.command.Commands
+import edu.wpi.first.wpilibj2.command.InstantCommand
 import net.tecdroid.autonomous.AutoComposer
 import net.tecdroid.constants.GenericConstants.driverControllerId
 import net.tecdroid.input.CompliantXboxController
@@ -29,6 +28,8 @@ import net.tecdroid.vision.limelight.systems.LimelightController
 class RobotContainer {
     private val controller = CompliantXboxController(driverControllerId)
     private val swerve = SwerveDrive(swerveDriveConfiguration)
+    private var joystickDriveScalar = 0.85
+    private var joystickDriveAngularScalar = 0.6
     private val arm = ArmSystem(wristConfig, elevatorConfig, elevatorJointConfig, intakeConfig, swerve, controller)
     private val limelightController = LimelightController(
         swerve,
@@ -59,9 +60,9 @@ class RobotContainer {
 
         swerve.defaultCommand = Commands.run(
             {
-                val vx = MathUtil.applyDeadband(controller.leftY, 0.05) * 0.85
-                val vy = MathUtil.applyDeadband(controller.leftX, 0.05) * 0.85
-                val vw = MathUtil.applyDeadband(controller.rightX, 0.05) * 0.85
+                val vx = MathUtil.applyDeadband(controller.leftY, 0.05) * joystickDriveScalar
+                val vy = MathUtil.applyDeadband(controller.leftX, 0.05) * joystickDriveScalar
+                val vw = MathUtil.applyDeadband(controller.rightX, 0.05) * joystickDriveAngularScalar
 
                 val targetXVelocity = swerve.maxLinearVelocity * vx
                 val targetYVelocity = swerve.maxLinearVelocity * vy
@@ -77,6 +78,34 @@ class RobotContainer {
 
         controller.rightTrigger().whileTrue(limelightController.alignRobotAllAxis(LimeLightChoice.Right, 0.215, 0.045))
         controller.leftTrigger().whileTrue(limelightController.alignRobotAllAxis(LimeLightChoice.Left, 0.215, -0.045))
+
+        controller.povUp().onTrue(
+            if (joystickDriveScalar < 0.85 ) {
+                InstantCommand({ joystickDriveScalar += 0.05 })
+            } else {
+                Commands.none()
+            })
+        controller.povDown().onTrue(
+            if (joystickDriveScalar > 0.2) {
+                InstantCommand({ joystickDriveScalar -= 0.05 })
+            } else {
+                Commands.none()
+            }
+        )
+        controller.povRight().onTrue(
+            if (joystickDriveAngularScalar < 0.6) {
+                InstantCommand({ joystickDriveAngularScalar += 0.05 })
+            } else {
+                Commands.none()
+            }
+        )
+        controller.povLeft().onTrue(
+            if (joystickDriveAngularScalar > 0.2) {
+                InstantCommand({ joystickDriveAngularScalar -= 0.05 })
+            } else {
+                Commands.none()
+            }
+        )
     }
 
     private fun advantageScopeLogs() {
