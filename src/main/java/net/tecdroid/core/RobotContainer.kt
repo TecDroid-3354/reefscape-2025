@@ -36,7 +36,7 @@ class RobotContainer {
         { chassisSpeeds -> swerve.driveRobotOriented(chassisSpeeds) },
         { swerve.heading.`in`(Degrees) }, swerve.maxSpeeds.times(0.75)
     )
-    private val autoComposer = AutoComposer(swerve, limelightController, arm)
+    //private val autoComposer = AutoComposer(swerve, limelightController, arm)
 
     // Advantage Scope log publisher
     private val robotPosePublisher: StructPublisher<Pose2d> = NetworkTableInstance.getDefault()
@@ -79,33 +79,10 @@ class RobotContainer {
         controller.rightTrigger().whileTrue(limelightController.alignRobotAllAxis(LimeLightChoice.Right, 0.215, 0.045))
         controller.leftTrigger().whileTrue(limelightController.alignRobotAllAxis(LimeLightChoice.Left, 0.215, -0.045))
 
-        controller.povUp().onTrue(
-            if (joystickDriveScalar < 0.85 ) {
-                InstantCommand({ joystickDriveScalar += 0.05 })
-            } else {
-                Commands.none()
-            })
-        controller.povDown().onTrue(
-            if (joystickDriveScalar > 0.2) {
-                InstantCommand({ joystickDriveScalar -= 0.05 })
-            } else {
-                Commands.none()
-            }
-        )
-        controller.povRight().onTrue(
-            if (joystickDriveAngularScalar < 0.6) {
-                InstantCommand({ joystickDriveAngularScalar += 0.05 })
-            } else {
-                Commands.none()
-            }
-        )
-        controller.povLeft().onTrue(
-            if (joystickDriveAngularScalar > 0.2) {
-                InstantCommand({ joystickDriveAngularScalar -= 0.05 })
-            } else {
-                Commands.none()
-            }
-        )
+        controller.povUp().onTrue(InstantCommand({ if (joystickDriveScalar < 0.85) joystickDriveScalar += 0.5 }))
+        controller.povDown().onTrue(InstantCommand({ if (joystickDriveScalar > 0.2) joystickDriveScalar -= 0.5 }))
+        controller.povRight().onTrue(InstantCommand({ if (joystickDriveAngularScalar < 0.6) joystickDriveAngularScalar += 0.5 }))
+        controller.povLeft().onTrue(InstantCommand({ if (joystickDriveAngularScalar > 0.2) joystickDriveAngularScalar -= 0.5 }))
     }
 
     private fun advantageScopeLogs() {
@@ -114,9 +91,10 @@ class RobotContainer {
 
     fun robotPeriodic() {
         advantageScopeLogs()
+        println("DriveScalar: $joystickDriveScalar.    DriveAngularScalar: $joystickDriveAngularScalar.")
     }
 
     val autonomousCommand: Command
-        get() = autoComposer.selectedAutonomousRoutine
+        get() = Commands.none()//autoComposer.selectedAutonomousRoutine
 
 }
