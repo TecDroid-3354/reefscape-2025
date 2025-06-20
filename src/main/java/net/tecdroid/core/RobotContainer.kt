@@ -79,10 +79,10 @@ class RobotContainer {
         controller.rightTrigger().whileTrue(limelightController.alignRobotAllAxis(LimeLightChoice.Right, 0.215, 0.045))
         controller.leftTrigger().whileTrue(limelightController.alignRobotAllAxis(LimeLightChoice.Left, 0.215, -0.045))
 
-        controller.povUp().onTrue(InstantCommand({ if (joystickDriveScalar < 0.85) joystickDriveScalar += 0.5 }))
-        controller.povDown().onTrue(InstantCommand({ if (joystickDriveScalar > 0.2) joystickDriveScalar -= 0.5 }))
-        controller.povRight().onTrue(InstantCommand({ if (joystickDriveAngularScalar < 0.6) joystickDriveAngularScalar += 0.5 }))
-        controller.povLeft().onTrue(InstantCommand({ if (joystickDriveAngularScalar > 0.2) joystickDriveAngularScalar -= 0.5 }))
+        controller.povUp().onTrue(InstantCommand({ if (joystickDriveScalar < 0.85) joystickDriveScalar += 0.05 }))
+        controller.povDown().onTrue(InstantCommand({ if (joystickDriveScalar > 0.2) joystickDriveScalar -= 0.05 }))
+        controller.povRight().onTrue(InstantCommand({ if (joystickDriveAngularScalar < 0.6) joystickDriveAngularScalar += 0.05 }))
+        controller.povLeft().onTrue(InstantCommand({ if (joystickDriveAngularScalar > 0.2) joystickDriveAngularScalar -= 0.05 }))
     }
 
     private fun advantageScopeLogs() {
@@ -91,7 +91,7 @@ class RobotContainer {
 
     fun robotPeriodic() {
         advantageScopeLogs()
-        println("DriveScalar: $joystickDriveScalar.    DriveAngularScalar: $joystickDriveAngularScalar.")
+        println("DriveScalar: %.2f      ".format(joystickDriveScalar) + "DriveAngularScalar: %.2f".format(joystickDriveAngularScalar))
     }
 
     val autonomousCommand: Command
