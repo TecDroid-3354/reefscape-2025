@@ -86,9 +86,7 @@ enum class ArmPoses(var pose: ArmPose) {
         elevatorDisplacement  = 0.01.meters,
         elevatorJointPosition = 0.1622.rotations + 5.0.degrees,
         targetVoltage = 9.0.volts,
-        Optional.of { pose ->
-            0.0.degrees // TODO: Logic
-        }
+        Optional.empty()
     )),
 
     A1(ArmPose(
@@ -128,7 +126,7 @@ enum class ArmPoses(var pose: ArmPose) {
         elevatorDisplacement  = 1.0420.meters,
         elevatorJointPosition = 0.2349.rotations,
         targetVoltage = 8.0.volts,
-        Optional.empty()
+        Optional.of { 0.0.degrees }
     ))
 }
 
@@ -139,6 +137,13 @@ enum class ArmOrders(val order: ArmOrder) {
     EJW(ArmOrder(ArmElevator, ArmJoint, ArmWrist)),
     WEJ(ArmOrder(ArmWrist, ArmElevator, ArmJoint)),
     WJE(ArmOrder(ArmWrist, ArmJoint, ArmElevator))
+}
+
+enum class PoseCommands(val pose: ArmPose, val order: ArmOrder) {
+    L4(ArmPoses.L4.pose, ArmOrders.JEW.order),
+    L3(ArmPoses.L3.pose, ArmOrders.JEW.order),
+    L2(ArmPoses.L2.pose, ArmOrders.EJW.order),
+    CoralStation(ArmPoses.CoralStation.pose, ArmOrders.EJW.order),
 }
 
 class ArmSystem(wristConfig: WristConfig, elevatorConfig: ElevatorConfig, elevatorJointConfig: ElevatorJointConfig, intakeConfig: IntakeConfig, val swerve: SwerveDrive, val controller: CompliantXboxController) : Sendable {
@@ -211,6 +216,10 @@ class ArmSystem(wristConfig: WristConfig, elevatorConfig: ElevatorConfig, elevat
         )
     }
 
+    fun setPoseCommand(poseCommand: PoseCommands): Command {
+        return setPoseCommand(poseCommand.pose, poseCommand.order)
+    }
+
     override fun initSendable(builder: SendableBuilder) {
         with(builder) {
             addDoubleProperty("Elevator Error (Rotations)", { elevator.getPositionError().`in`(Rotations) }) {}
@@ -233,10 +242,7 @@ class ArmSystem(wristConfig: WristConfig, elevatorConfig: ElevatorConfig, elevat
 
         controller.y().onTrue(
             Commands.either(
-                setPoseCommand(
-                    ArmPoses.L4.pose,
-                    ArmOrders.JEW.order
-                ),
+                setPoseCommand(PoseCommands.L4),
                 setPoseCommand(
                     ArmPoses.Barge.pose,
                     ArmOrders.JEW.order
@@ -247,10 +253,7 @@ class ArmSystem(wristConfig: WristConfig, elevatorConfig: ElevatorConfig, elevat
 
         controller.b().onTrue(
             Commands.either(
-                setPoseCommand(
-                    ArmPoses.L3.pose,
-                    ArmOrders.JEW.order
-                ),
+                setPoseCommand(PoseCommands.L3),
                 setPoseCommand(
                     ArmPoses.A2.pose,
                     if (isLow()) ArmOrders.JWE.order else ArmOrders.EWJ.order
@@ -261,10 +264,7 @@ class ArmSystem(wristConfig: WristConfig, elevatorConfig: ElevatorConfig, elevat
 
         controller.a().onTrue(
             Commands.either(
-                setPoseCommand(
-                    ArmPoses.L2.pose,
-                    ArmOrders.EJW.order
-                ),
+                setPoseCommand(PoseCommands.L2),
                 setPoseCommand(
                     ArmPoses.A1.pose,
                     if (isLow()) ArmOrders.JWE.order else ArmOrders.EWJ.order
@@ -275,10 +275,7 @@ class ArmSystem(wristConfig: WristConfig, elevatorConfig: ElevatorConfig, elevat
 
         controller.x().onTrue(
             Commands.either(
-                setPoseCommand(
-                    ArmPoses.CoralStation.pose,
-                    ArmOrders.EJW.order
-                ).andThen({ setIsLow(true) }),
+                setPoseCommand(PoseCommands.CoralStation).andThen({ setIsLow(true) }),
                 Commands.none(),
                 pollIsCoralMode
             )
@@ -297,10 +294,8 @@ class ArmSystem(wristConfig: WristConfig, elevatorConfig: ElevatorConfig, elevat
             Commands.either(
                 enableIntake(),
                 Commands.either(
-                    setPoseCommand(
-                        ArmPoses.CoralStation.pose,
-                        ArmOrders.EJW.order
-                    ).andThen({ setIsLow(true) }),
+                    setPoseCommand(PoseCommands.CoralStation).andThen(enableIntake())
+                        .andThen({ setIsLow(true) }),
                     Commands.none(),
                     pollIsCoralMode
                 ),
