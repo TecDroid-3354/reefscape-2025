@@ -28,10 +28,9 @@ import edu.wpi.first.wpilibj2.command.SubsystemBase
 import net.tecdroid.safety.pidOutputRange
 import net.tecdroid.util.degrees
 import net.tecdroid.util.toRotation2d
-import kotlin.math.PI
-import kotlin.math.absoluteValue
-import kotlin.math.atan2
-import kotlin.math.sqrt
+import java.math.BigDecimal
+import java.math.RoundingMode
+import kotlin.math.*
 
 class SwerveDrive(private val config: SwerveDriveConfig) : SubsystemBase() {
     val imu = Pigeon2(config.imuId.id)
@@ -80,6 +79,7 @@ class SwerveDrive(private val config: SwerveDriveConfig) : SubsystemBase() {
         poseEstimator.update(heading.toRotation2d(), modulePositions.toTypedArray())
         field.robotPose = pose
         SmartDashboard.putNumber("VW", speeds.omegaRadiansPerSecond)
+        SmartDashboard.putNumber("Heading", heading.`in`(Degrees))
     }
 
      // Core //
@@ -110,7 +110,8 @@ class SwerveDrive(private val config: SwerveDriveConfig) : SubsystemBase() {
         chassisSpeeds.omegaRadiansPerSecond = 0.0
 
         val output = directionPIDController.calculate(heading.`in`(Radians), angle.`in`(Radians)).coerceIn(pidOutputRange)
-        val angularVelocity = maxAngularVelocity * output
+        SmartDashboard.putNumber("PID output", round(output) * 100 / 100)
+        val angularVelocity = maxAngularVelocity * (round(output * 100) / 100)
         lastDirection.mut_replace(angle)
 
         driveFieldOriented(

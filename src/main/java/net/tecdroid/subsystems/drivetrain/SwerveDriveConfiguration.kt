@@ -45,7 +45,7 @@ fun makeSquareChassisConfig(convention: SpatialConvention, moduleConfigs: List<S
 
         )),
         imuId = imuId,
-        directionControlGains = ControlGains(p = 0.5),
+        directionControlGains = ControlGains(p = 0.425,),
         accelerationPeriod = 0.01.seconds,
         decelerationPeriod = 0.01.seconds,
     )
