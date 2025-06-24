@@ -11,6 +11,8 @@ import edu.wpi.first.wpilibj.shuffleboard.ShuffleboardTab
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard
 import edu.wpi.first.wpilibj2.command.Command
 import edu.wpi.first.wpilibj2.command.Commands
+import edu.wpi.first.wpilibj2.command.InstantCommand
+import edu.wpi.first.wpilibj2.command.WaitCommand
 import edu.wpi.first.wpilibj2.command.WaitUntilCommand
 import net.tecdroid.autonomous.AutoComposer
 import net.tecdroid.constants.GenericConstants.driverControllerId
@@ -24,6 +26,7 @@ import net.tecdroid.subsystems.wrist.wristConfig
 import net.tecdroid.systems.ArmSystem
 import net.tecdroid.systems.PoseCommands
 import net.tecdroid.util.degrees
+import net.tecdroid.util.seconds
 import net.tecdroid.vision.limelight.systems.LimeLightChoice
 import net.tecdroid.vision.limelight.systems.LimelightController
 
@@ -90,46 +93,47 @@ class RobotContainer {
         robotPosePublisher.set(swerve.pose)
     }
 
+    private fun alignRobotToAprilTag(choice: LimeLightChoice): Command {
+        return limelightController.alignRobotAllAxis(choice, xLimelightToAprilTagSetPoint,
+            if (choice == LimeLightChoice.Right) yLimelightToAprilTagSetPoint else yLimelightToAprilTagSetPoint.unaryMinus())
+    }
+
+    private fun isLimelightAtSetPoint(choice: LimeLightChoice, xTolerance: Double = 0.0): Boolean {
+        return limelightController.isAtSetPoint(choice, xLimelightToAprilTagSetPoint + xTolerance,
+            if (choice == LimeLightChoice.Right) yLimelightToAprilTagSetPoint else yLimelightToAprilTagSetPoint.unaryMinus())
+    }
+
     private fun assignAutomatedScoringBindings() {
         /*
          * RIGHT LIMELIGHT BINDINGS
          */
         controller.rightTrigger().and(controller.y()).whileTrue(    // L4 BINDING
             Commands.sequence(
-                limelightController.alignRobotAllAxis(LimeLightChoice.Right,
-                    xLimelightToAprilTagSetPoint, yLimelightToAprilTagSetPoint)
-                    .until {
-                        limelightController.isAtSetPoint(LimeLightChoice.Right,
-                            xLimelightToAprilTagSetPoint, yLimelightToAprilTagSetPoint)
-                    },
-                arm.setPoseCommand(PoseCommands.L4),
-                arm.enableIntake().until { arm.intake.hasCoral().not() }.andThen(arm.disableIntake()),
+                alignRobotToAprilTag(LimeLightChoice.Right).until { isLimelightAtSetPoint(LimeLightChoice.Right) },
+                arm.setPoseCommand(PoseCommands.L4).andThen(arm.enableIntake()),
+                WaitUntilCommand { arm.intake.hasCoral().not() }.andThen(arm.disableIntake()),
                 arm.setPoseCommand(PoseCommands.CoralStation)
             )
         )
         controller.rightTrigger().and(controller.b()).whileTrue(    // L3 BINDING
-            Commands.sequence(
-                limelightController.alignRobotAllAxis(LimeLightChoice.Right,
-                    xLimelightToAprilTagSetPoint, yLimelightToAprilTagSetPoint)
-                    .until {
-                        limelightController.isAtSetPoint(LimeLightChoice.Right,
-                            xLimelightToAprilTagSetPoint, yLimelightToAprilTagSetPoint)
-                    },
-                arm.setPoseCommand(PoseCommands.L3),
-                arm.enableIntake().until { arm.intake.hasCoral().not() }.andThen(arm.disableIntake()),
-                arm.setPoseCommand(PoseCommands.CoralStation)
+            Commands.parallel(
+                alignRobotToAprilTag(LimeLightChoice.Right).until { isLimelightAtSetPoint(LimeLightChoice.Right) },
+                Commands.sequence(
+                    WaitUntilCommand { isLimelightAtSetPoint(LimeLightChoice.Right, 0.02) ||
+                            isLimelightAtSetPoint(LimeLightChoice.Right) }.andThen(arm.setPoseCommand(PoseCommands.L3)
+                            .andThen(WaitCommand(0.1.seconds)).andThen(arm.enableIntake())),
+                    WaitUntilCommand { arm.intake.hasCoral().not() }.andThen(WaitCommand(0.05.seconds))
+                        .andThen(arm.disableIntake()),
+                    arm.setPoseCommand(PoseCommands.CoralStation)
+                )
             )
         )
         controller.rightTrigger().and(controller.a()).whileTrue(    // L2 BINDING
             Commands.sequence(
-                limelightController.alignRobotAllAxis(LimeLightChoice.Right,
-                    xLimelightToAprilTagSetPoint, yLimelightToAprilTagSetPoint)
-                    .until {
-                        limelightController.isAtSetPoint(LimeLightChoice.Right,
-                            xLimelightToAprilTagSetPoint, yLimelightToAprilTagSetPoint)
-                    },
-                arm.setPoseCommand(PoseCommands.L2),
-                arm.enableIntake().until { arm.intake.hasCoral().not() }.andThen(arm.disableIntake()),
+                alignRobotToAprilTag(LimeLightChoice.Right).until { isLimelightAtSetPoint(LimeLightChoice.Right) },
+                arm.setPoseCommand(PoseCommands.L2).andThen(WaitCommand(0.05.seconds)).andThen(arm.enableIntake()),
+                WaitUntilCommand { arm.intake.hasCoral().not() }.andThen(WaitCommand(0.1.seconds))
+                    .andThen(arm.disableIntake()),
                 arm.setPoseCommand(PoseCommands.CoralStation)
             )
         )
@@ -139,40 +143,25 @@ class RobotContainer {
          */
         controller.leftTrigger().and(controller.y()).whileTrue(    // L4 BINDING
             Commands.sequence(
-                limelightController.alignRobotAllAxis(LimeLightChoice.Left,
-                    xLimelightToAprilTagSetPoint, yLimelightToAprilTagSetPoint.unaryMinus())
-                    .until {
-                        limelightController.isAtSetPoint(LimeLightChoice.Left,
-                            xLimelightToAprilTagSetPoint, yLimelightToAprilTagSetPoint.unaryMinus())
-                    },
-                arm.setPoseCommand(PoseCommands.L4),
-                arm.enableIntake().until { arm.intake.hasCoral().not() }.andThen(arm.disableIntake()),
+                alignRobotToAprilTag(LimeLightChoice.Left).until { isLimelightAtSetPoint(LimeLightChoice.Left) },
+                arm.setPoseCommand(PoseCommands.L4).andThen(arm.enableIntake()),
+                WaitUntilCommand { arm.intake.hasCoral().not() }.andThen(arm.disableIntake()),
                 arm.setPoseCommand(PoseCommands.CoralStation)
             )
         )
         controller.leftTrigger().and(controller.b()).whileTrue(    // L3 BINDING
             Commands.sequence(
-                limelightController.alignRobotAllAxis(LimeLightChoice.Left,
-                    xLimelightToAprilTagSetPoint, yLimelightToAprilTagSetPoint.unaryMinus())
-                    .until {
-                        limelightController.isAtSetPoint(LimeLightChoice.Left,
-                            xLimelightToAprilTagSetPoint, yLimelightToAprilTagSetPoint.unaryMinus())
-                    },
-                arm.setPoseCommand(PoseCommands.L3),
-                arm.enableIntake().until { arm.intake.hasCoral().not() }.andThen(arm.disableIntake()),
+                alignRobotToAprilTag(LimeLightChoice.Left).until { isLimelightAtSetPoint(LimeLightChoice.Left) },
+                arm.setPoseCommand(PoseCommands.L3).andThen(arm.enableIntake()),
+                WaitUntilCommand { arm.intake.hasCoral().not() }.andThen(arm.disableIntake()),
                 arm.setPoseCommand(PoseCommands.CoralStation)
             )
         )
         controller.leftTrigger().and(controller.a()).whileTrue(    // L2 BINDING
             Commands.sequence(
-                limelightController.alignRobotAllAxis(LimeLightChoice.Left,
-                    xLimelightToAprilTagSetPoint, yLimelightToAprilTagSetPoint.unaryMinus())
-                    .until {
-                        limelightController.isAtSetPoint(LimeLightChoice.Left,
-                            xLimelightToAprilTagSetPoint, yLimelightToAprilTagSetPoint.unaryMinus())
-                    },
-                arm.setPoseCommand(PoseCommands.L2),
-                arm.enableIntake().until { arm.intake.hasCoral().not() }.andThen(arm.disableIntake()),
+                alignRobotToAprilTag(LimeLightChoice.Left).until { isLimelightAtSetPoint(LimeLightChoice.Left) },
+                arm.setPoseCommand(PoseCommands.L2).andThen(arm.enableIntake()),
+                WaitUntilCommand { arm.intake.hasCoral().not() }.andThen(arm.disableIntake()),
                 arm.setPoseCommand(PoseCommands.CoralStation)
             )
         )
