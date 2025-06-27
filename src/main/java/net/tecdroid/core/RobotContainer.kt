@@ -55,9 +55,9 @@ class RobotContainer {
 
         arm.publishShuffleBoardData()
         arm.assignCommandsToController(controller)
+        assignDisplayBindings()
         assignAutomatedScoringBindings()
 
-        assignDisplayBindings()
     }
 
 
@@ -107,9 +107,10 @@ class RobotContainer {
     }
 
     private fun assignDisplayBindings() {
-        controller.povUp().onTrue(swerve.driveFieldOrientedCommand(
-            ChassisSpeeds(0.0.meters.per(Second), 0.0.meters.per(Second), 30.0.degrees.per(Second)))
-        )
+        controller.povUp().whileTrue(Commands.run({ swerve.driveFieldOriented(
+            ChassisSpeeds(MetersPerSecond.zero(), MetersPerSecond.zero(), DegreesPerSecond.of(75.0)))
+            }, swerve)
+        ).onFalse(swerve.stopCommand())
     }
     private fun assignAutomatedScoringBindings() {
         /*
