@@ -26,6 +26,7 @@ import net.tecdroid.subsystems.wrist.wristConfig
 import net.tecdroid.systems.ArmSystem
 import net.tecdroid.systems.PoseCommands
 import net.tecdroid.util.degrees
+import net.tecdroid.util.meters
 import net.tecdroid.util.seconds
 import net.tecdroid.vision.limelight.systems.LimeLightChoice
 import net.tecdroid.vision.limelight.systems.LimelightController
@@ -55,6 +56,8 @@ class RobotContainer {
         arm.publishShuffleBoardData()
         arm.assignCommandsToController(controller)
         assignAutomatedScoringBindings()
+
+        assignDisplayBindings()
     }
 
 
@@ -103,6 +106,11 @@ class RobotContainer {
             if (choice == LimeLightChoice.Right) yLimelightToAprilTagSetPoint else yLimelightToAprilTagSetPoint.unaryMinus())
     }
 
+    private fun assignDisplayBindings() {
+        controller.povUp().onTrue(swerve.driveFieldOrientedCommand(
+            ChassisSpeeds(0.0.meters.per(Second), 0.0.meters.per(Second), 30.0.degrees.per(Second)))
+        )
+    }
     private fun assignAutomatedScoringBindings() {
         /*
          * RIGHT LIMELIGHT BINDINGS
