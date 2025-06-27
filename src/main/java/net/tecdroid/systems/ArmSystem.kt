@@ -17,6 +17,9 @@ import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard
 import edu.wpi.first.wpilibj2.command.Command
 import edu.wpi.first.wpilibj2.command.Commands
 import edu.wpi.first.wpilibj2.command.SequentialCommandGroup
+import edu.wpi.first.wpilibj2.command.WaitCommand
+import edu.wpi.first.wpilibj2.command.WaitUntilCommand
+import net.tecdroid.core.RobotContainer
 import net.tecdroid.input.CompliantXboxController
 import net.tecdroid.subsystems.drivetrain.SwerveDrive
 import net.tecdroid.subsystems.elevator.Elevator
@@ -29,6 +32,7 @@ import net.tecdroid.subsystems.wrist.Wrist
 import net.tecdroid.subsystems.wrist.WristConfig
 import net.tecdroid.systems.ArmMember.*
 import net.tecdroid.util.*
+import net.tecdroid.vision.limelight.systems.LimeLightChoice
 import java.util.Optional
 
 enum class ArmMember {
@@ -146,11 +150,12 @@ enum class PoseCommands(val pose: ArmPose, val order: ArmOrder) {
     CoralStation(ArmPoses.CoralStation.pose, ArmOrders.EJW.order),
 }
 
-class ArmSystem(wristConfig: WristConfig, elevatorConfig: ElevatorConfig, elevatorJointConfig: ElevatorJointConfig, intakeConfig: IntakeConfig, val swerve: SwerveDrive, val controller: CompliantXboxController) : Sendable {
-    val wrist = Wrist(wristConfig)
-    val elevator = Elevator(elevatorConfig)
-    val joint = ElevatorJoint(elevatorJointConfig)
-    val intake = Intake(intakeConfig)
+class ArmSystem(val robotContainer: RobotContainer) : Sendable {
+    val wrist = robotContainer.wrist
+    val elevator = robotContainer.elevator
+    val joint = robotContainer.elevatorJoint
+    val intake = robotContainer.intake
+    val controller = robotContainer.controller
     private var targetVoltage = 0.0.volts
 
     var isScoring = false
@@ -204,13 +209,13 @@ class ArmSystem(wristConfig: WristConfig, elevatorConfig: ElevatorConfig, elevat
                 val vx = MathUtil.applyDeadband(controller.leftY, 0.05) * 0.85
                 val vy = MathUtil.applyDeadband(controller.leftX, 0.05) * 0.85
 
-                val targetXVelocity = swerve.maxLinearVelocity * vx
-                val targetYVelocity = swerve.maxLinearVelocity * vy
+                val targetXVelocity = robotContainer.swerve.maxLinearVelocity * vx
+                val targetYVelocity = robotContainer.swerve.maxLinearVelocity * vy
 
-                swerve.driveDirected(ChassisSpeeds(targetXVelocity, targetYVelocity, RadiansPerSecond.zero()), pose.targetAngle.get()(swerve.pose))
-            }, swerve) else Commands.runOnce({
+                robotContainer.swerve.driveDirected(ChassisSpeeds(targetXVelocity, targetYVelocity, RadiansPerSecond.zero()), pose.targetAngle.get()(robotContainer.swerve.pose))
+            }, robotContainer.swerve) else Commands.runOnce({
                 Commands.runOnce({
-                    swerve.currentCommand.cancel()
+                    robotContainer.swerve.currentCommand.cancel()
                 })
             })
         )
@@ -237,12 +242,27 @@ class ArmSystem(wristConfig: WristConfig, elevatorConfig: ElevatorConfig, elevat
         tab.addDouble("Target Voltage") { targetVoltage.`in`(Volts) }
     }
 
+    private fun scoringSequence(pose: PoseCommands): Command {
+        return SequentialCommandGroup(
+            setPoseCommand(pose).andThen(WaitCommand(0.1.seconds)).andThen(enableIntake()),
+            WaitUntilCommand { intake.hasCoral().not() }.andThen(WaitCommand(0.05.seconds)).andThen(disableIntake()),
+            setPoseCommand(PoseCommands.CoralStation)
+        )
+    }
+
     fun assignCommandsToController(controller: CompliantXboxController) {
         controller.povLeft().onTrue(Commands.runOnce({ toggleCoralMode() }))
 
         controller.y().onTrue(
             Commands.either(
-                setPoseCommand(PoseCommands.L4),
+                Commands.either(
+                    scoringSequence(PoseCommands.L4),
+                    setPoseCommand(PoseCommands.L4),
+                    {
+                        robotContainer.isLimelightAtSetPoint(LimeLightChoice.Right, 0.15) ||
+                                robotContainer.isLimelightAtSetPoint(LimeLightChoice.Left, 0.15)
+                    }
+                ),
                 setPoseCommand(
                     ArmPoses.Barge.pose,
                     ArmOrders.JEW.order
@@ -253,7 +273,14 @@ class ArmSystem(wristConfig: WristConfig, elevatorConfig: ElevatorConfig, elevat
 
         controller.b().onTrue(
             Commands.either(
-                setPoseCommand(PoseCommands.L3),
+                Commands.either(
+                    scoringSequence(PoseCommands.L3),
+                    setPoseCommand(PoseCommands.L3),
+                    {
+                        robotContainer.isLimelightAtSetPoint(LimeLightChoice.Right, 0.125) ||
+                                robotContainer.isLimelightAtSetPoint(LimeLightChoice.Left, 0.125)
+                    }
+                ),
                 setPoseCommand(
                     ArmPoses.A2.pose,
                     if (isLow()) ArmOrders.JWE.order else ArmOrders.EWJ.order
@@ -264,7 +291,14 @@ class ArmSystem(wristConfig: WristConfig, elevatorConfig: ElevatorConfig, elevat
 
         controller.a().onTrue(
             Commands.either(
-                setPoseCommand(PoseCommands.L2),
+                Commands.either(
+                    scoringSequence(PoseCommands.L2),
+                    setPoseCommand(PoseCommands.L2),
+                    {
+                        robotContainer.isLimelightAtSetPoint(LimeLightChoice.Right, 0.05) ||
+                                robotContainer.isLimelightAtSetPoint(LimeLightChoice.Left, 0.05)
+                    }
+                ),
                 setPoseCommand(
                     ArmPoses.A1.pose,
                     if (isLow()) ArmOrders.JWE.order else ArmOrders.EWJ.order
