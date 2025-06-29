@@ -42,14 +42,14 @@ class RobotContainer {
     val elevator = Elevator(elevatorConfig)
     val elevatorJoint = ElevatorJoint(elevatorJointConfig)
     val intake = Intake(intakeConfig)
-    val arm = ArmSystem(this)
+    private val arm = ArmSystem(this)
     val limelightController = LimelightController(
         swerve,
         { chassisSpeeds -> swerve.driveRobotOriented(chassisSpeeds) },
         { swerve.heading.`in`(Degrees) }, swerve.maxSpeeds.times(0.75)
     )
-    val xLimelightToAprilTagSetPoint = 0.215
-    val yLimelightToAprilTagSetPoint = 0.045
+    private val xLimelightToAprilTagSetPoint = 0.215
+    private val yLimelightToAprilTagSetPoint = 0.045
     private val autoComposer = AutoComposer(swerve, limelightController, arm)
 
     // Advantage Scope log publisher
@@ -101,25 +101,11 @@ class RobotContainer {
         robotPosePublisher.set(swerve.pose)
     }
 
-    fun isLimelightAtSetPoint(choice: LimeLightChoice, xToleranceRange: Double = 0.0): Boolean{
-        generateSequence(xToleranceRange) { it - 0.01f }
-            .takeWhile { it >= 0.0 }
-            .forEach {
-                if (limelightController.isAtSetPoint(choice, xLimelightToAprilTagSetPoint + it,
-                        if (choice == LimeLightChoice.Right)
-                            yLimelightToAprilTagSetPoint else yLimelightToAprilTagSetPoint.unaryMinus())) {
-                    return true
-                }
-            }
-        return false
+    fun isLimelightAtSetPoint(choice: LimeLightChoice, xToleranceRange: Double = 0.0): Boolean {
+        return limelightController.isAtSetPoint(choice, xLimelightToAprilTagSetPoint,
+            if (choice == LimeLightChoice.Right) yLimelightToAprilTagSetPoint else yLimelightToAprilTagSetPoint.unaryMinus(),
+            xToleranceRange)
     }
-
-//    fun isLimelightAtSetPoint(choice: LimeLightChoice, xTolerance: Double = 0.0): Boolean {
-//        return limelightController.isAtSetPoint(choice, xLimelightToAprilTagSetPoint + xTolerance,
-//            if (choice == LimeLightChoice.Right) yLimelightToAprilTagSetPoint else yLimelightToAprilTagSetPoint.unaryMinus()) ||
-//                limelightController.isAtSetPoint(choice, xLimelightToAprilTagSetPoint,
-//                    if (choice == LimeLightChoice.Right) yLimelightToAprilTagSetPoint else yLimelightToAprilTagSetPoint.unaryMinus())
-//    }
 
     fun robotPeriodic() {
         advantageScopeLogs()

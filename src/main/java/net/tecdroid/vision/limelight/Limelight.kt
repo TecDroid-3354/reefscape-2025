@@ -15,6 +15,7 @@ import edu.wpi.first.units.measure.Frequency
 import edu.wpi.first.units.measure.Temperature
 import edu.wpi.first.units.measure.Time
 import edu.wpi.first.wpilibj.util.Color
+import frc.robot.LimelightHelpers
 import net.tecdroid.util.*
 
 /**
@@ -193,6 +194,8 @@ open class Limelight(config: LimelightConfig) : LimelightBase(config) {
      */
     val hardwareMetrics: LimelightHardwareMetrics
         get() = LimelightHardwareMetrics.fromRawData(getDoubleArray(LimelightTableKeys.Get.hardwareMetrics))
+
+    fun setThrottle(throttle: Int) {setNumber("throttle_set", throttle)}
 
     //
     // Pipeline Data

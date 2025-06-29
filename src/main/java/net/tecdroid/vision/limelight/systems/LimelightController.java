@@ -91,6 +91,11 @@ public class LimelightController {
         limelightConfiguration();
     }
 
+    public void setThrottle(int throttle) {
+        leftLimelight.setThrottle(throttle);
+        rightLimelight.setThrottle(throttle);
+    }
+
     public Distance getSquaredDistance(LimeLightChoice choice) {
         LimelightAprilTagDetector limelight = (choice == LimeLightChoice.Right) ? rightLimelight : leftLimelight;
         var pos =limelight.getTargetPositionInCameraSpace();
@@ -106,6 +111,15 @@ public class LimelightController {
 
         double positionTolerance = 0.01;
         return hasTarget(choice) && (xDisplacement <= positionTolerance && yDisplacement <= positionTolerance);
+    }
+
+    public boolean isAtSetPoint(LimeLightChoice choice, double xSetPoint, double ySetPoint, double tolerance) {
+        Pose3d robotPose = getTargetPositionInCameraSpace(choice);
+
+        double xDisplacement = Math.abs(xSetPoint - robotPose.getTranslation().getZ());
+        double yDisplacement = Math.abs(ySetPoint - robotPose.getTranslation().getX());
+
+        return hasTarget(choice) && (xDisplacement <= tolerance && yDisplacement <= tolerance);
     }
 
     private Pose3d getTargetPositionInCameraSpace(LimeLightChoice choice) {

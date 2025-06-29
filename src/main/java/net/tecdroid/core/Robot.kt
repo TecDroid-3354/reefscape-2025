@@ -13,6 +13,7 @@ class Robot : TimedRobot() {
 
     override fun robotInit() {
         DriverStation.silenceJoystickConnectionWarning(true)
+        container.limelightController.setThrottle(200)
     }
 
     override fun robotPeriodic() {
@@ -22,6 +23,7 @@ class Robot : TimedRobot() {
 
     override fun disabledInit() {
         CommandScheduler.getInstance().cancelAll()
+        container.limelightController.setThrottle(200)
     }
 
     override fun disabledPeriodic() {
@@ -31,6 +33,7 @@ class Robot : TimedRobot() {
     }
 
     override fun autonomousInit() {
+        container.limelightController.setThrottle(0)
         container.autonomousInit()
         autonomousCommand.schedule()
     }
@@ -39,6 +42,7 @@ class Robot : TimedRobot() {
     }
 
     override fun teleopInit() {
+        container.limelightController.setThrottle(0)
         container.teleopInit()
         if (autonomousCommand.isScheduled) autonomousCommand.cancel()
     }
