@@ -257,12 +257,11 @@ class ArmSystem(val robotContainer: RobotContainer) : Sendable {
             Commands.either(
                 Commands.either(
                     scoringSequence(PoseCommands.L4),
-                    setPoseCommand(PoseCommands.L4),
-                    {
-                        robotContainer.isLimelightAtSetPoint(LimeLightChoice.Right, 0.15) ||
-                                robotContainer.isLimelightAtSetPoint(LimeLightChoice.Left, 0.15)
-                    }
-                ),
+                    setPoseCommand(PoseCommands.L4)
+                ) {
+                    robotContainer.isLimelightAtSetPoint(LimeLightChoice.Right, 0.15) ||
+                            robotContainer.isLimelightAtSetPoint(LimeLightChoice.Left, 0.15)
+                },
                 setPoseCommand(
                     ArmPoses.Barge.pose,
                     ArmOrders.JEW.order
@@ -275,12 +274,11 @@ class ArmSystem(val robotContainer: RobotContainer) : Sendable {
             Commands.either(
                 Commands.either(
                     scoringSequence(PoseCommands.L3),
-                    setPoseCommand(PoseCommands.L3),
-                    {
-                        robotContainer.isLimelightAtSetPoint(LimeLightChoice.Right, 0.125) ||
-                                robotContainer.isLimelightAtSetPoint(LimeLightChoice.Left, 0.125)
-                    }
-                ),
+                    setPoseCommand(PoseCommands.L3)
+                ) {
+                    robotContainer.isLimelightAtSetPoint(LimeLightChoice.Right, 0.125) ||
+                            robotContainer.isLimelightAtSetPoint(LimeLightChoice.Left, 0.125)
+                },
                 setPoseCommand(
                     ArmPoses.A2.pose,
                     if (isLow()) ArmOrders.JWE.order else ArmOrders.EWJ.order
@@ -293,12 +291,11 @@ class ArmSystem(val robotContainer: RobotContainer) : Sendable {
             Commands.either(
                 Commands.either(
                     scoringSequence(PoseCommands.L2),
-                    setPoseCommand(PoseCommands.L2),
-                    {
-                        robotContainer.isLimelightAtSetPoint(LimeLightChoice.Right, 0.05) ||
-                                robotContainer.isLimelightAtSetPoint(LimeLightChoice.Left, 0.05)
-                    }
-                ),
+                    setPoseCommand(PoseCommands.L2)
+                ) {
+                    robotContainer.isLimelightAtSetPoint(LimeLightChoice.Right, 0.05) ||
+                            robotContainer.isLimelightAtSetPoint(LimeLightChoice.Left, 0.05)
+                },
                 setPoseCommand(
                     ArmPoses.A1.pose,
                     if (isLow()) ArmOrders.JWE.order else ArmOrders.EWJ.order
