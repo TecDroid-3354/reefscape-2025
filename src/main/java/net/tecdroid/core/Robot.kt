@@ -12,8 +12,8 @@ class Robot : TimedRobot() {
         get() = container.autonomousCommand
 
     override fun robotInit() {
-        DriverStation.silenceJoystickConnectionWarning(true)
         container.limelightController.setThrottle(200)
+        DriverStation.silenceJoystickConnectionWarning(true)
     }
 
     override fun robotPeriodic() {
@@ -22,8 +22,8 @@ class Robot : TimedRobot() {
     }
 
     override fun disabledInit() {
-        CommandScheduler.getInstance().cancelAll()
         container.limelightController.setThrottle(200)
+        CommandScheduler.getInstance().cancelAll()
     }
 
     override fun disabledPeriodic() {
