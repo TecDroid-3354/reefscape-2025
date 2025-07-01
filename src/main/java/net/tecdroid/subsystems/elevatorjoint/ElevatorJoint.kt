@@ -16,13 +16,29 @@ class ElevatorJoint(private val io: ElevatorJointIO, private val config: Elevato
     AngularSubsystem,
     LoggableSubsystem,
     VoltageControlledSubsystem,
-    WithThroughBoreAbsoluteEncoder {
-        private val inputs = ElevatorJointIO.ElevatorJointIOInputs()
-
+    WithThroughBoreAbsoluteEncoder
+{
     override val absoluteEncoder = io.getAbsoluteEncoderInstance()
 
     override val forwardsRunningCondition  = { angle < config.measureLimits.relativeMaximum }
     override val backwardsRunningCondition = { angle > config.measureLimits.relativeMinimum }
+
+    override val power: Double
+        get() = io.getMotorPower()
+
+    override val motorPosition: Angle
+        get() = io.getMotorPosition()
+
+    override val motorVelocity: AngularVelocity
+        get() = io.getMotorVelocity()
+
+    override val angle: Angle
+        get() = config.reduction.apply(motorPosition)
+
+    override val angularVelocity: AngularVelocity
+        get() = config.reduction.apply(motorVelocity)
+
+    private val inputs = ElevatorJointIOInputsAutoLogged()
 
     init {
         matchRelativeEncodersToAbsoluteEncoders()
@@ -47,28 +63,13 @@ class ElevatorJoint(private val io: ElevatorJointIO, private val config: Elevato
         io.setAngle(transformedAngle)
     }
 
-    fun getPositionError(): Angle =
-        if (io.getTargetAngle() > motorPosition) io.getTargetAngle() - motorPosition else motorPosition - io.getTargetAngle()
-
-    override val power: Double
-        get() = io.getMotorPower()
-
-    override val motorPosition: Angle
-        get() = io.getMotorPosition()
-
-    override val motorVelocity: AngularVelocity
-        get() = io.getMotorVelocity()
-
-    override val angle: Angle
-        get() = config.reduction.apply(motorPosition)
-
-    override val angularVelocity: AngularVelocity
-        get() = config.reduction.apply(motorVelocity)
-
     override fun onMatchRelativeEncodersToAbsoluteEncoders() {
         io.setMotorPosition(config.reduction.unapply(absoluteAngle))
         //leadMotorController.setPosition(config.reduction.unapply(absoluteAngle))
     }
+
+    fun getPositionError(): Angle =
+        if (io.getTargetAngle() > motorPosition) io.getTargetAngle() - motorPosition else motorPosition - io.getTargetAngle()
 
     override fun initSendable(builder: SendableBuilder) {
         with(builder) {
@@ -78,6 +79,5 @@ class ElevatorJoint(private val io: ElevatorJointIO, private val config: Elevato
     }
 
     fun coast(): Command = Commands.runOnce({ io.coast() })
-
     fun brake(): Command = Commands.runOnce({ io.brake() })
 }

@@ -40,7 +40,7 @@ class IntakeIOSimulation: IntakeIO {
      * Properties isMotorConnected and motorTemperature are not updated during simulation.
      * @param inputs Initialized inputs object used within the subsystem.
      */
-    override fun updateInputs(inputs: IntakeIO.IntakeIOInputs) {
+    override fun updateInputs(inputs: IntakeIOInputs) {
         motorController.inputVoltage = appliedVolts.`in`(Volts)
         motorController.update(0.02) // 2ms is the default robot periodic time.
 

@@ -60,7 +60,7 @@ class WristIOPhoenix6(private val config: WristConfig): WristIO {
     override fun getMotorVelocity(): AngularVelocity { return motorController.velocity.value }
     override fun getMotorPower(): Double { return motorController.get() }
 
-    override fun updateInputs(inputs: WristIO.WristIOInputs) {
+    override fun updateInputs(inputs: WristIOInputs) {
         inputs.isThroughBoreConnected = absoluteEncoder.isConnected() // Encoder built-in check.
         inputs.throughBoreAbsolutePosition = absoluteEncoder.position
 

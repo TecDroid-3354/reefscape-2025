@@ -67,7 +67,7 @@ class IntakeIOPhoenix6(private val config: IntakeConfig): IntakeIO {
      * Must be called periodically. Updates all relevant inputs reported by the motor at this cycle.
      * @param inputs Initialized inputs object used within the subsystem.
      */
-    override fun updateInputs(inputs: IntakeIO.IntakeIOInputs) {
+    override fun updateInputs(inputs: IntakeIOInputs) {
         inputs.isSensorTriggered = isSensorTriggered()
         inputs.isMotorConnected = BaseStatusSignal.refreshAll(
             motorVoltage,

@@ -16,10 +16,25 @@ class Elevator(private val io: ElevatorIO, private val config: ElevatorConfig) :
     LoggableSubsystem,
     VoltageControlledSubsystem
 {
-    private val inputs = ElevatorIO.ElevatorIOInputs()
-
     override val forwardsRunningCondition = { displacement < config.measureLimits.relativeMaximum }
     override val backwardsRunningCondition = { displacement > config.measureLimits.relativeMinimum }
+
+    override val power: Double
+        get() = io.getMotorPower()
+
+    override val motorPosition: Angle
+        get() = io.getMotorPosition()
+
+    override val motorVelocity: AngularVelocity
+        get() = io.getMotorVelocity()
+
+    override val displacement: Distance
+        get() = config.sprocket.angularDisplacementToLinearDisplacement(config.reduction.apply(motorPosition))
+
+    override val velocity: LinearVelocity
+        get() = config.sprocket.angularVelocityToLinearVelocity(config.reduction.apply(motorVelocity))
+
+    private val inputs = ElevatorIOInputsAutoLogged()
 
     init {
         publishToShuffleboard()
@@ -47,30 +62,13 @@ class Elevator(private val io: ElevatorIO, private val config: ElevatorConfig) :
     fun getPositionError(): Angle =
         if (io.getTargetAngle() > motorPosition) io.getTargetAngle() - motorPosition else motorPosition - io.getTargetAngle()
 
-    override val power: Double
-        get() = io.getMotorPower()
-
-    override val motorPosition: Angle
-        get() = io.getMotorPosition()
-
-    override val motorVelocity: AngularVelocity
-        get() = io.getMotorVelocity()
-
-    override val displacement: Distance
-        get() = config.sprocket.angularDisplacementToLinearDisplacement(config.reduction.apply(motorPosition))
-
-    override val velocity: LinearVelocity
-        get() = config.sprocket.angularVelocityToLinearVelocity(config.reduction.apply(motorVelocity))
-
-    fun coast(): Command = Commands.runOnce({ io.coast() })
-
-    fun brake(): Command = Commands.runOnce({ io.brake() })
-
     override fun initSendable(builder: SendableBuilder) {
         with(builder) {
             addDoubleProperty("Current Displacement (Meters)", { displacement.`in`(Meters) }, {})
             addDoubleProperty("Inverse Operation (Rotations)", { motorPosition.`in`(Rotations) }, {})
         }
     }
-}
 
+    fun coast(): Command = Commands.runOnce({ io.coast() })
+    fun brake(): Command = Commands.runOnce({ io.brake() })
+}

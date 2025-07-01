@@ -10,8 +10,24 @@ import edu.wpi.first.units.measure.Voltage
 import net.tecdroid.util.*
 import net.tecdroid.wrappers.ThroughBoreAbsoluteEncoder
 import org.littletonrobotics.junction.AutoLog
-import org.littletonrobotics.junction.LogTable
-import org.littletonrobotics.junction.inputs.LoggableInputs
+
+@AutoLog
+open class ElevatorJointIOInputs {
+    @JvmField var isThroughBoreConnected: Boolean = false
+    @JvmField var throughBoreAbsolutePosition: Angle = 0.0.degrees
+    @JvmField var isLeadMotorConnected: Boolean = false
+    @JvmField var isFollowerMotorConnected: Boolean = false
+    @JvmField var leadMotorPosition: Angle = 0.0.degrees
+    @JvmField var followerMotorPosition: Angle = 0.0.degrees
+    @JvmField var leadMotorVoltage: Voltage = 0.0.volts
+    @JvmField var followerMotorVoltage: Voltage = 0.0.volts
+    @JvmField var leadMotorSupplyCurrent: Current = 0.0.amps
+    @JvmField var followerMotorSupplyCurrent: Current = 0.0.amps
+    @JvmField var leadMotorTemperature: Temperature = 0.0.degreesCelsius
+    @JvmField var followerMotorTemperature: Temperature = 0.0.degreesCelsius
+    @JvmField var elevatorJointTargetAngle: Angle = 0.0.degrees
+    @JvmField var elevatorJointAngle: Angle = 0.0.degrees
+}
 
 interface ElevatorJointIO {
     fun updateInputs(inputs: ElevatorJointIOInputs) {}
@@ -33,55 +49,5 @@ interface ElevatorJointIO {
     fun coast() {}
     fun brake() {}
 
-    @AutoLog
-    class ElevatorJointIOInputs: LoggableInputs {
-        var isThroughBoreConnected: Boolean = false
-        var throughBoreAbsolutePosition: Angle = 0.0.degrees
-        var isLeadMotorConnected: Boolean = false
-        var isFollowerMotorConnected: Boolean = false
-        var leadMotorPosition: Angle = 0.0.degrees
-        var followerMotorPosition: Angle = 0.0.degrees
-        var leadMotorVoltage: Voltage = 0.0.volts
-        var followerMotorVoltage: Voltage = 0.0.volts
-        var leadMotorSupplyCurrent: Current = 0.0.amps
-        var followerMotorSupplyCurrent: Current = 0.0.amps
-        var leadMotorTemperature: Temperature = 0.0.degreesCelsius
-        var followerMotorTemperature: Temperature = 0.0.degreesCelsius
-        var elevatorJointTargetAngle: Angle = 0.0.degrees
-        var elevatorJointAngle: Angle = 0.0.degrees
 
-        override fun toLog(table: LogTable) {
-            table.put("IsThroughBoreConnected", isThroughBoreConnected)
-            table.put("ThroughBoreAbsolutePosition", throughBoreAbsolutePosition)
-            table.put("IsLeadMotorConnected", isLeadMotorConnected)
-            table.put("IsFollowerMotorConnected", isFollowerMotorConnected)
-            table.put("LeadMotorPosition", leadMotorPosition)
-            table.put("FollowerMotorPosition", followerMotorPosition)
-            table.put("LeadMotorVoltage", leadMotorVoltage)
-            table.put("FollowerMotorVoltage", followerMotorVoltage)
-            table.put("LeadMotorSupplyCurrent", leadMotorSupplyCurrent)
-            table.put("FollowerMotorSupplyCurrent", followerMotorSupplyCurrent)
-            table.put("LeadMotorTemperature", leadMotorTemperature)
-            table.put("FollowerMotorTemperature", followerMotorTemperature)
-            table.put("ElevatorJointTargetAngle", elevatorJointTargetAngle)
-            table.put("ElevatorJointAngle", elevatorJointAngle)
-        }
-
-        override fun fromLog(table: LogTable) {
-            isThroughBoreConnected = table.get("IsThroughBoreConnected") as Boolean
-            throughBoreAbsolutePosition = table.get("ThroughBoreAbsolutePosition") as Angle
-            isLeadMotorConnected = table.get("IsLeadMotorConnected") as Boolean
-            isFollowerMotorConnected = table.get("IsFollowerMotorConnected") as Boolean
-            leadMotorPosition = table.get("LeadMotorPosition") as Angle
-            followerMotorPosition = table.get("FollowerMotorPosition") as Angle
-            leadMotorVoltage = table.get("LeadMotorVoltage") as Voltage
-            followerMotorVoltage = table.get("FollowerMotorVoltage") as Voltage
-            leadMotorSupplyCurrent = table.get("LeadMotorSupplyCurrent") as Current
-            followerMotorSupplyCurrent = table.get("FollowerMotorSupplyCurrent") as Current
-            leadMotorTemperature = table.get("LeadMotorTemperature") as Temperature
-            followerMotorTemperature = table.get("FollowerMotorTemperature") as Temperature
-            elevatorJointTargetAngle = table.get("ElevatorJointTargetAngle") as Angle
-            elevatorJointAngle = table.get("ElevatorJointAngle") as Angle
-        }
-    }
 }

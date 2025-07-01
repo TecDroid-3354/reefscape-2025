@@ -18,8 +18,6 @@ import net.tecdroid.core.RobotConstants.currentMode
  * @param io The Input Output layer for the subsystem. Any class that implements [IntakeIO] interface is compatible.
  */
 class Intake(private val io: IntakeIO) : TdSubsystem("Intake") {
-    private val inputs = IntakeIO.IntakeIOInputs() // Should be IntakeIOInputsAutoLogged, but @AutoLog isn't working.
-
     override val forwardsRunningCondition = { true }    // SysID running condition
     override val backwardsRunningCondition = { true }   // SysID running condition
 
@@ -31,6 +29,8 @@ class Intake(private val io: IntakeIO) : TdSubsystem("Intake") {
 
     override val power: Double
         get() = io.getMotorPower()
+
+    private val inputs = IntakeIOInputsAutoLogged()
 
     /**
      * Called after the primary constructor. In teleop, a coral inside the intake will cause it to stop automatically.

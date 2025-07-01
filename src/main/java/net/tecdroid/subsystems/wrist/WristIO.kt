@@ -9,8 +9,35 @@ import edu.wpi.first.units.measure.Temperature
 import edu.wpi.first.units.measure.Voltage
 import net.tecdroid.util.*
 import net.tecdroid.wrappers.ThroughBoreAbsoluteEncoder
+import org.littletonrobotics.junction.AutoLog
 import org.littletonrobotics.junction.LogTable
 import org.littletonrobotics.junction.inputs.LoggableInputs
+
+/**
+ * Intended to store all relevant inputs for the Wrist. These inputs would be shown during replay / simulation
+ * in AdvantageScope for every cycle.
+ * @property isThroughBoreConnected Indicates whether the throughbore is connected in this cycle.
+ * @property throughBoreAbsolutePosition Absolute position reported by the throughbore in this cycle.
+ * @property isMotorConnected Indicates whether the motor is connected in this cycle.
+ * @property motorPosition Position reported by the motor in this cycle.
+ * @property motorVoltage Voltage of the motor in this cycle.
+ * @property motorSupplyCurrent Supply current of the motor in this cycle.
+ * @property motorTemperature Temperature of the motor in this cycle.
+ * @property wristTargetAngle Desired angle for the wrist in this cycle.
+ * @property wristAngle Angle of the wrist in this cycle.
+ */
+@AutoLog
+open class WristIOInputs {
+    @JvmField var isThroughBoreConnected: Boolean = false
+    @JvmField var throughBoreAbsolutePosition: Angle = Degrees.zero()
+    @JvmField var isMotorConnected: Boolean = false
+    @JvmField var motorPosition: Angle = Degrees.zero()
+    @JvmField var motorVoltage: Voltage = 0.0.volts
+    @JvmField var motorSupplyCurrent: Current = 0.0.amps
+    @JvmField var motorTemperature: Temperature = 0.0.degreesCelsius
+    @JvmField var wristTargetAngle: Angle = Degrees.zero()
+    @JvmField var wristAngle: Angle = Degrees.zero()
+}
 
 interface WristIO {
     fun updateInputs(inputs: WristIOInputs) {}
@@ -32,54 +59,4 @@ interface WristIO {
 
     fun coast() {}
     fun brake() {}
-
-    /**
-     * Intended to store all relevant inputs for the Wrist. These inputs would be shown during replay / simulation
-     * in AdvantageScope for every cycle.
-     * TODO() = Use @AutoLog instead of implementing LoggableInputs, same but deprecated.
-     * @property isThroughBoreConnected Indicates whether the throughbore is connected in this cycle.
-     * @property throughBoreAbsolutePosition Absolute position reported by the throughbore in this cycle.
-     * @property isMotorConnected Indicates whether the motor is connected in this cycle.
-     * @property motorPosition Position reported by the motor in this cycle.
-     * @property motorVoltage Voltage of the motor in this cycle.
-     * @property motorSupplyCurrent Supply current of the motor in this cycle.
-     * @property motorTemperature Temperature of the motor in this cycle.
-     * @property wristTargetAngle Desired angle for the wrist in this cycle.
-     * @property wristAngle Angle of the wrist in this cycle.
-     */
-    class WristIOInputs: LoggableInputs {
-        var isThroughBoreConnected: Boolean = false
-        var throughBoreAbsolutePosition: Angle = Degrees.zero()
-        var isMotorConnected: Boolean = false
-        var motorPosition: Angle = Degrees.zero()
-        var motorVoltage: Voltage = 0.0.volts
-        var motorSupplyCurrent: Current = 0.0.amps
-        var motorTemperature: Temperature = 0.0.degreesCelsius
-        var wristTargetAngle: Angle = Degrees.zero()
-        var wristAngle: Angle = Degrees.zero()
-
-        override fun toLog(table: LogTable) {
-            table.put("IsThroughBoreConnected", isThroughBoreConnected)
-            table.put("ThroughBoreAbsolutePosition", throughBoreAbsolutePosition)
-            table.put("IsMotorConnected", isMotorConnected)
-            table.put("MotorPosition", motorPosition)
-            table.put("MotorVoltage", motorVoltage)
-            table.put("MotorSupplyCurrent", motorSupplyCurrent)
-            table.put("MotorTemperature", motorTemperature)
-            table.put("WristTargetAngle", wristTargetAngle)
-            table.put("WristAngle", wristAngle)
-        }
-
-        override fun fromLog(table: LogTable) {
-            isThroughBoreConnected = table.get("IsThroughboreConnected").boolean
-            throughBoreAbsolutePosition = table.get("ThroughboreAbsolutePosiiton").double.degrees
-            isMotorConnected = table.get("IsMotorConnected").boolean
-            motorPosition = table.get("MotorPosition").double.degrees
-            motorVoltage = table.get("MotorVoltage").double.volts
-            motorSupplyCurrent = table.get("MotorSupplyCurrent").double.amps
-            motorTemperature = table.get("MotorTemperature").double.degreesCelsius
-            wristTargetAngle = table.get("WristTargetAngle").double.degrees
-            wristAngle = table.get("WristAngle").double.degrees
-        }
-    }
 }

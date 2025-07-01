@@ -50,7 +50,7 @@ class ElevatorIOPhoenix6(private val config: ElevatorConfig): ElevatorIO {
         followerMotorController.optimizeBusUtilization()
     }
 
-    override fun updateInputs(inputs: ElevatorIO.ElevatorIOInputs) {
+    override fun updateInputs(inputs: ElevatorIOInputs) {
         inputs.isLeadMotorConnected = BaseStatusSignal.refreshAll(
             leadMotorPosition, leadMotorVoltage,
             leadMotorSupplyCurrent, leadMotorTemperature

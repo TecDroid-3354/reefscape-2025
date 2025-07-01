@@ -62,7 +62,7 @@ class ElevatorJointIOPhoenix6(private var config: ElevatorJointConfig): Elevator
         followerMotorController.optimizeBusUtilization()
     }
 
-    override fun updateInputs(inputs: ElevatorJointIO.ElevatorJointIOInputs) {
+    override fun updateInputs(inputs: ElevatorJointIOInputs) {
         inputs.isThroughBoreConnected = absoluteEncoder.isConnected()
         inputs.throughBoreAbsolutePosition = absoluteEncoder.position
         inputs.isLeadMotorConnected = BaseStatusSignal.refreshAll(
