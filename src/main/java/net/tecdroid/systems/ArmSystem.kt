@@ -244,7 +244,7 @@ class ArmSystem(val robotContainer: RobotContainer) : Sendable {
 
     private fun scoringSequence(pose: PoseCommands): Command {
         return SequentialCommandGroup(
-            setPoseCommand(pose).andThen(WaitCommand(0.1.seconds)).andThen(enableIntake()),
+            setPoseCommand(pose).andThen(WaitCommand(0.2.seconds)).andThen(enableIntake()),
             WaitUntilCommand { intake.hasCoral().not() }.andThen(WaitCommand(0.05.seconds)).andThen(disableIntake()),
             setPoseCommand(PoseCommands.CoralStation)
         )
@@ -276,8 +276,8 @@ class ArmSystem(val robotContainer: RobotContainer) : Sendable {
                     scoringSequence(PoseCommands.L3),
                     setPoseCommand(PoseCommands.L3)
                 ) {
-                    robotContainer.isLimelightAtSetPoint(LimeLightChoice.Right, 0.125) ||
-                            robotContainer.isLimelightAtSetPoint(LimeLightChoice.Left, 0.125)
+                    robotContainer.isLimelightAtSetPoint(LimeLightChoice.Right, 0.15) ||
+                            robotContainer.isLimelightAtSetPoint(LimeLightChoice.Left, 0.15)
                 },
                 setPoseCommand(
                     ArmPoses.A2.pose,
@@ -293,8 +293,8 @@ class ArmSystem(val robotContainer: RobotContainer) : Sendable {
                     scoringSequence(PoseCommands.L2),
                     setPoseCommand(PoseCommands.L2)
                 ) {
-                    robotContainer.isLimelightAtSetPoint(LimeLightChoice.Right, 0.05) ||
-                            robotContainer.isLimelightAtSetPoint(LimeLightChoice.Left, 0.05)
+                    robotContainer.isLimelightAtSetPoint(LimeLightChoice.Right, 0.1) ||
+                            robotContainer.isLimelightAtSetPoint(LimeLightChoice.Left, 0.1)
                 },
                 setPoseCommand(
                     ArmPoses.A1.pose,

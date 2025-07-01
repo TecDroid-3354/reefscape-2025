@@ -22,8 +22,8 @@ class Robot : TimedRobot() {
     }
 
     override fun disabledInit() {
-        CommandScheduler.getInstance().cancelAll()
         container.limelightController.setThrottle(200)
+        CommandScheduler.getInstance().cancelAll()
     }
 
     override fun disabledPeriodic() {
