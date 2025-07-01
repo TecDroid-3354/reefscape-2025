@@ -12,8 +12,8 @@ class Robot : TimedRobot() {
         get() = container.autonomousCommand
 
     override fun robotInit() {
-        DriverStation.silenceJoystickConnectionWarning(true)
         container.limelightController.setThrottle(200)
+        DriverStation.silenceJoystickConnectionWarning(true)
     }
 
     override fun robotPeriodic() {
