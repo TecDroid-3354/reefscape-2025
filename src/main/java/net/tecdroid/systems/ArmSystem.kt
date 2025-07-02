@@ -88,7 +88,7 @@ enum class ArmPoses(var pose: ArmPose) {
     CoralStation(ArmPose(
         wristPosition         = 0.3601.rotations + 2.5.degrees,
         elevatorDisplacement  = 0.01.meters,
-        elevatorJointPosition = 0.1622.rotations + 5.0.degrees,
+        elevatorJointPosition = 0.1622.rotations + 10.0.degrees,
         targetVoltage = 9.0.volts,
         Optional.empty()
     )),
