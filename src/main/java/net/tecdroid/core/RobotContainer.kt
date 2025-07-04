@@ -18,6 +18,8 @@ import net.tecdroid.subsystems.elevatorjoint.elevatorJointConfig
 import net.tecdroid.subsystems.intake.intakeConfig
 import net.tecdroid.subsystems.wrist.wristConfig
 import net.tecdroid.systems.ArmSystem
+import net.tecdroid.systems.LockPositions
+import net.tecdroid.systems.SwerveRotationLockSystem
 import net.tecdroid.util.degrees
 import net.tecdroid.util.stateMachine.StateMachine
 import net.tecdroid.util.stateMachine.States
@@ -36,6 +38,7 @@ class RobotContainer {
         { swerve.heading.`in`(Degrees) }, swerve.maxSpeeds.times(0.75)
     )
     private val pathPlannerAutonomous = PathPlannerAutonomous(swerve, limelightController, arm)
+    private val swerveRotationLockSystem = SwerveRotationLockSystem(swerve, controller)
 
     // Advantage Scope log publisher
     private val robotPosePublisher: StructPublisher<Pose2d> = NetworkTableInstance.getDefault()
@@ -76,6 +79,9 @@ class RobotContainer {
         controller.leftTrigger().whileTrue(limelightController.alignRobotAllAxis(LimeLightChoice.Left, 0.215, -0.035))
 
         limelightController.setFilterIds(arrayOf(21, 20, 19, 18, 17, 22, 10, 11, 6, 7, 8, 9))
+
+        States.IntakeState.config.defaultCommand = swerveRotationLockSystem.lockRotationCMD(LockPositions.CoralStation)
+        States.IntakeState.config.endCommand = Commands.runOnce({swerve.currentCommand.cancel()})
     }
 
     private fun advantageScopeLogs() {
@@ -83,7 +89,7 @@ class RobotContainer {
     }
 
     fun robotPeriodic() {
-        //advantageScopeLogs()
+        advantageScopeLogs()
         try {
             limelightController.updatePoseLeftLimelight(swerve.poseEstimator)
         } catch (e: Exception) {

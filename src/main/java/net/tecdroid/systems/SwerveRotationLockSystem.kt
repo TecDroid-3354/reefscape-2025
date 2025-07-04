@@ -4,8 +4,11 @@ import edu.wpi.first.math.MathUtil
 import edu.wpi.first.math.controller.PIDController
 import edu.wpi.first.math.kinematics.ChassisSpeeds
 import edu.wpi.first.units.Units
+import edu.wpi.first.units.Units.Volts
 import edu.wpi.first.units.measure.Angle
 import edu.wpi.first.units.measure.Distance
+import edu.wpi.first.wpilibj.shuffleboard.Shuffleboard
+import edu.wpi.first.wpilibj.shuffleboard.ShuffleboardTab
 import edu.wpi.first.wpilibj2.command.Command
 import edu.wpi.first.wpilibj2.command.Commands
 import net.tecdroid.input.CompliantXboxController
@@ -22,8 +25,15 @@ enum class LockPositions {
 }
 
 class SwerveRotationLockSystem (private val swerve: SwerveDrive, private val controller: CompliantXboxController){
-    private val thetaGains = ControlGains(0.0075, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0)
+    private val thetaGains = ControlGains(0.005, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0)
     private val thetaPIDController = PIDController(thetaGains.p, thetaGains.i, thetaGains.d)
+
+    init {
+        val tab = Shuffleboard.getTab("angleTab")
+        tab.addDouble("angle", { getLimitedYaw() })
+
+        thetaPIDController.enableContinuousInput(0.0, 360.0)
+    }
 
     private fun getLimitedYaw(): Double {
         var limitedYaw: Double = swerve.heading.`in`(Units.Degrees) % 360
@@ -44,9 +54,9 @@ class SwerveRotationLockSystem (private val swerve: SwerveDrive, private val con
 
         // If is greater, the robot is on the right side
         if (y > FIELD_WIDTH.baseUnitMagnitude() / 2.0) {
-            return 55.0.degrees
+            return 215.0.degrees
         } else {
-            return 305.0.degrees
+            return 135.0.degrees
         }
     }
 
@@ -63,8 +73,8 @@ class SwerveRotationLockSystem (private val swerve: SwerveDrive, private val con
 
         // Get the target angle according to the target position
         val targetAngle = when (position) {
-            LockPositions.CoralStation -> 140.0.degrees
-            LockPositions.Proccesor -> 55.0.degrees
+            LockPositions.CoralStation -> getCoralStationAngleAccordingToRobotPosition()
+            LockPositions.Proccesor -> 45.0.degrees
         }
         val wFactor = clamp(1.0, -1.0, thetaPIDController.calculate(getLimitedYaw(), targetAngle.`in`(Units.Degrees)))
 
