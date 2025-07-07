@@ -281,11 +281,11 @@ class ArmSystem(wristConfig: WristConfig, elevatorConfig: ElevatorConfig, elevat
 
     private fun assignStatesCommands() {
         // Active passive intake
-        States.AlgaeState.config.initialCommand = intake.setVoltageCommand { 1.5.volts }
+        States.AlgaeState.setInitialCommand(intake.setVoltageCommand { 1.5.volts })
 
         // Go to passive position after score a coral
-        States.ScoreState.config.endCommand = Commands.waitTime(0.5.seconds)
-            .andThen(setPoseCommand(ArmPoses.L2.pose, ArmOrders.EJW.order))
+        States.ScoreState.setEndCommand(Commands.waitTime(0.5.seconds)
+            .andThen(setPoseCommand(ArmPoses.L2.pose, ArmOrders.EJW.order)))
     }
 
     fun assignCommands(controller: CompliantXboxController) {

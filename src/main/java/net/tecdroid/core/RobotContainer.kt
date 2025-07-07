@@ -80,8 +80,8 @@ class RobotContainer {
 
         limelightController.setFilterIds(arrayOf(21, 20, 19, 18, 17, 22, 10, 11, 6, 7, 8, 9))
 
-        States.IntakeState.config.defaultCommand = swerveRotationLockSystem.lockRotationCMD(LockPositions.CoralStation)
-        States.IntakeState.config.endCommand = Commands.runOnce({swerve.currentCommand.cancel()})
+        States.IntakeState.setDefaultCommand(swerveRotationLockSystem.lockRotationCMD(LockPositions.CoralStation))
+        States.IntakeState.setEndCommand(Commands.runOnce({swerve.currentCommand.cancel()}))
     }
 
     private fun advantageScopeLogs() {

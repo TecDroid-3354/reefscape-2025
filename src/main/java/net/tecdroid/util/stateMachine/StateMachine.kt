@@ -9,16 +9,37 @@ enum class States(var config: StateConfig) {
     CoralState(StateConfig()),
     AlgaeState(StateConfig()),
     ScoreState(StateConfig()),
-    IntakeState(StateConfig()),
-    /*
+    IntakeState(StateConfig());
+
     /**
-     * Change the states commands. These classes are global, so the config
+     * Change the initial state command. These classes are global, so the config
      * will change for all the instances
-     * @param config The class of commands
+     * @param command the command that will execute at the beggining of the state
      */
-    fun setConfig(config: StateConfig) {
-        this.config = config
-    }*/
+
+    fun setInitialCommand(command: Command) {
+        this.config.initialCommand = command
+    }
+
+    /**
+     * Change the default state command. These classes are global, so the config
+     * will change for all the instances
+     * @param command the command that will execute periodically during of the state
+     */
+
+    fun setDefaultCommand(command: Command) {
+        this.config.defaultCommand = command
+    }
+
+    /**
+     * Change the end state command. These classes are global, so the config
+     * will change for all the instances
+     * @param command the command that will execute at the end of the state
+     */
+
+    fun setEndCommand(command: Command) {
+        this.config.endCommand = command
+    }
 }
 
 enum class Phase {
@@ -41,7 +62,7 @@ class StateMachine(private var currentState: States,
 
         defaultCommand = initialDefaultCommand
 
-        currentState.config.initialCommand.execute()
+        currentState.config.initialCommand.schedule()
     }
 
     // Change the state default command
