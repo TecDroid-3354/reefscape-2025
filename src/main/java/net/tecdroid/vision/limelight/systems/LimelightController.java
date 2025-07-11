@@ -182,7 +182,7 @@ public class LimelightController {
         return Commands.run(() -> {
             int id = getTargetId(choice);
 
-            if (!hasTarget(choice) || !alignmentAngles.containsKey(id) || isAtSetPoint(choice, xSetPoint, ySetPoint)) {
+            if (!hasTarget(choice) || isAtSetPoint(choice, xSetPoint, ySetPoint)) {
                 drive.accept(new ChassisSpeeds(0.0, 0.0, 0.0));
                 return;
             }
@@ -201,7 +201,7 @@ public class LimelightController {
             LinearVelocity yVelocity = MetersPerSecond.of(maxSpeeds.vyMetersPerSecond * yFactor);
             AngularVelocity wVelocity = DegreesPerSecond.of(Math.toDegrees(maxSpeeds.omegaRadiansPerSecond) * wFactor);
 
-            drive.accept(new ChassisSpeeds(xVelocity, yVelocity, wVelocity));
+            drive.accept(new ChassisSpeeds(xVelocity, yVelocity, DegreesPerSecond.of(0.0)));
 
         }, requiredSubsystem);
     }
