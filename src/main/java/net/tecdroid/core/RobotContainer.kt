@@ -13,10 +13,6 @@ import net.tecdroid.constants.GenericConstants.driverControllerId
 import net.tecdroid.input.CompliantXboxController
 import net.tecdroid.subsystems.drivetrain.SwerveDrive
 import net.tecdroid.subsystems.drivetrain.swerveDriveConfiguration
-import net.tecdroid.subsystems.elevator.elevatorConfig
-import net.tecdroid.subsystems.elevatorjoint.elevatorJointConfig
-import net.tecdroid.subsystems.intake.intakeConfig
-import net.tecdroid.subsystems.wrist.wristConfig
 import net.tecdroid.systems.ArmSystem
 import net.tecdroid.systems.LockPositions
 import net.tecdroid.systems.SwerveRotationLockSystem
@@ -31,7 +27,7 @@ class RobotContainer {
     private val controller = CompliantXboxController(driverControllerId)
     private val swerve = SwerveDrive(swerveDriveConfiguration)
     private val stateMachine = StateMachine(States.CoralState)
-    private val arm = ArmSystem(wristConfig, elevatorConfig, elevatorJointConfig, intakeConfig, swerve, controller, stateMachine)
+    private val arm = ArmSystem(stateMachine, ::limeLightIsAtSetPoint)
     private val limelightController = LimelightController(
         swerve,
         { chassisSpeeds -> swerve.driveRobotOriented(chassisSpeeds) },
@@ -39,6 +35,9 @@ class RobotContainer {
     )
     private val pathPlannerAutonomous = PathPlannerAutonomous(swerve, limelightController, arm)
     private val swerveRotationLockSystem = SwerveRotationLockSystem(swerve, controller)
+
+    private val xLimelightToAprilTagSetPoint = 0.215
+    private val yLimelightToAprilTagSetPoint = 0.045
 
     // Advantage Scope log publisher
     private val robotPosePublisher: StructPublisher<Pose2d> = NetworkTableInstance.getDefault()
@@ -87,6 +86,12 @@ class RobotContainer {
     private fun advantageScopeLogs() {
         robotPosePublisher.set(swerve.pose)
     }
+
+    fun limeLightIsAtSetPoint(xToleranceRange: Double = 0.0): Boolean {
+        return limelightController.isAtSetPoint(LimeLightChoice.Right, xLimelightToAprilTagSetPoint, yLimelightToAprilTagSetPoint, xToleranceRange) ||
+                limelightController.isAtSetPoint(LimeLightChoice.Right, xLimelightToAprilTagSetPoint, yLimelightToAprilTagSetPoint.unaryMinus(), xToleranceRange)
+    }
+
 
     fun robotPeriodic() {
         advantageScopeLogs()

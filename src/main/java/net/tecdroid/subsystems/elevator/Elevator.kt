@@ -14,13 +14,14 @@ import edu.wpi.first.wpilibj2.command.Command
 import edu.wpi.first.wpilibj2.command.Commands
 import net.tecdroid.subsystems.util.generic.*
 
-class Elevator(private val config: ElevatorConfig) :
+class Elevator :
     TdSubsystem("Elevator"),
     MeasurableSubsystem,
     LinearSubsystem,
     LoggableSubsystem,
     VoltageControlledSubsystem
 {
+    private val config = elevatorConfig
     private val leadMotorController = TalonFX(config.leadMotorControllerId.id)
     private val followerMotorController = TalonFX(config.followerMotorId.id)
     private var target: Angle

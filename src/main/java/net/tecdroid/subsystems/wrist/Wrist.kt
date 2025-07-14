@@ -18,11 +18,12 @@ import net.tecdroid.subsystems.util.generic.*
 import net.tecdroid.util.rotations
 import net.tecdroid.wrappers.ThroughBoreAbsoluteEncoder
 
-class Wrist(private val config: WristConfig) :
+class Wrist :
     TdSubsystem("Wrist"),
     LoggableSubsystem,
     WithThroughBoreAbsoluteEncoder,
     AngularSubsystem {
+    private val config = wristConfig
     private val motorController = TalonFX(config.motorControllerId.id)
     private var target : Angle
 

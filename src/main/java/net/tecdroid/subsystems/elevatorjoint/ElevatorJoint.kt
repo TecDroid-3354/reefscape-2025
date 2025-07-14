@@ -19,13 +19,15 @@ import net.tecdroid.subsystems.util.generic.*
 import net.tecdroid.util.rotations
 import net.tecdroid.wrappers.ThroughBoreAbsoluteEncoder
 
-class ElevatorJoint(private val config: ElevatorJointConfig) :
+class ElevatorJoint:
     TdSubsystem("Elevator Joint"),
     MeasurableSubsystem,
     AngularSubsystem,
     LoggableSubsystem,
     VoltageControlledSubsystem,
     WithThroughBoreAbsoluteEncoder {
+
+    private val config = elevatorJointConfig
     private val leadMotorController = TalonFX(config.leadMotorControllerId.id)
     private val followerMotorController = TalonFX(config.followerMotorControllerId.id)
     private var target: Angle
