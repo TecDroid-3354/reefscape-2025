@@ -60,24 +60,24 @@ enum class ArmPoses(var pose: ArmPose) {
     L2(ArmPose(
         wristPosition         = 0.3528.rotations,
         elevatorDisplacement  = 0.0367.meters,
-        elevatorJointPosition = 0.25.rotations + 1.5.degrees,
-        targetVoltage = 9.0.volts,
+        elevatorJointPosition = 0.24.rotations,
+        targetVoltage = 10.0.volts,
         Optional.empty()
     )),
 
     L3(ArmPose(
         wristPosition         = 0.3528.rotations,
         elevatorDisplacement  = 0.4281.meters - 2.0.inches,
-        elevatorJointPosition = 0.25.rotations + 1.5.degrees,
-        targetVoltage = 9.0.volts,
+        elevatorJointPosition = 0.24.rotations,
+        targetVoltage = 10.0.volts,
         Optional.empty()
     )),
 
     L4(ArmPose(
         wristPosition         = 0.3528.rotations,
         elevatorDisplacement  = 1.0283.meters,
-        elevatorJointPosition = 0.25.rotations + 1.5.degrees,
-        targetVoltage = 9.0.volts,
+        elevatorJointPosition = 0.24.rotations,
+        targetVoltage = 10.0.volts,
         Optional.empty()
     )),
 
@@ -85,7 +85,7 @@ enum class ArmPoses(var pose: ArmPose) {
         wristPosition         = 0.3601.rotations + 2.5.degrees,
         elevatorDisplacement  = 0.01.meters,
         elevatorJointPosition = 0.1622.rotations + 5.0.degrees,
-        targetVoltage = 9.0.volts,
+        targetVoltage = 10.5.volts,
         Optional.empty()
     )),
 
