@@ -298,8 +298,8 @@ class ArmSystem(wristConfig: WristConfig, elevatorConfig: ElevatorConfig, elevat
                         .andThen({ setIsLow(true) }),
                     Commands.none(),
                     pollIsCoralMode
-                ),
-                { intake.hasCoral() || !isScoring })
+                )
+            ) { intake.hasCoral() || !isScoring }
         ).onFalse(disableIntake())
 
         controller.leftBumper().onTrue(enableOuttake()).onFalse(disableIntake())
@@ -320,5 +320,4 @@ class ArmSystem(wristConfig: WristConfig, elevatorConfig: ElevatorConfig, elevat
             joint.coast()
         )
     }
-
 }
