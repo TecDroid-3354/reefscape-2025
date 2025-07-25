@@ -249,6 +249,7 @@ class ArmSystem(val stateMachine: StateMachine, val limeLightIsAtSetPoint: (Doub
     fun publishShuffleBoardData() {
         val tab = Shuffleboard.getTab("Driver Tab")
         tab.addBoolean("coral", { getSensorRead() })
+        tab.addBoolean("llIsAtSetPoint", { limeLightIsAtSetPoint(0.75)})
         tab.addString("State", { stateMachine.getCurrentState().toString() })
         tab.addDouble("Target Voltage") { targetVoltage.`in`(Volts) }
     }
@@ -283,8 +284,9 @@ class ArmSystem(val stateMachine: StateMachine, val limeLightIsAtSetPoint: (Doub
 
         // Go to passive position after score a coral
         States.ScoreState.setEndCommand(SequentialCommandGroup(
-            WaitCommand(0.05.seconds).andThen(disableIntake()),
-            setPoseCommand(ArmPoses.L2.pose, ArmOrders.EJW.order)))
+            WaitCommand(0.05.seconds),
+            disableIntake(),
+            setPoseCommand(PoseCommands.CoralStation)))
 
         // Change state conditions
 
@@ -370,11 +372,11 @@ class ArmSystem(val stateMachine: StateMachine, val limeLightIsAtSetPoint: (Doub
         // X
         controller.x().onTrue(Commands.runOnce({
             scheduleCMD(when(stateMachine.getCurrentState()){
-                States.CoralState -> setPoseCommand(ArmPoses.CoralStation.pose, ArmOrders.EJW.order)
+                States.CoralState -> setPoseCommand(PoseCommands.CoralStation)
                     .andThen({ setIsLow(true) })
                     .andThen(Commands.runOnce({ stateMachine.changeState(States.IntakeState)}))
 
-                States.IntakeState, States.ScoreState -> setPoseCommand(ArmPoses.CoralStation.pose, ArmOrders.EJW.order)
+                States.IntakeState, States.ScoreState -> setPoseCommand(PoseCommands.CoralStation)
                     .andThen({ setIsLow(true) })
 
                 States.AlgaeState -> Commands.sequence(
@@ -389,13 +391,13 @@ class ArmSystem(val stateMachine: StateMachine, val limeLightIsAtSetPoint: (Doub
         // Intake
         controller.rightBumper().onTrue(Commands.runOnce({
             scheduleCMD(when(stateMachine.getCurrentState()){
-                States.IntakeState, States.AlgaeState, States.ScoreState -> enableIntake()
                 States.CoralState -> Commands.sequence(
-                    setPoseCommand(ArmPoses.CoralStation.pose, ArmOrders.EJW.order)
-                    .andThen({ setIsLow(true) }),
+                    setPoseCommand(PoseCommands.CoralStation)
+                        .andThen({ setIsLow(true) }),
                     Commands.runOnce({ stateMachine.changeState(States.IntakeState)}),
                     enableIntake()
                 )
+                else -> enableIntake()
             })
         })).onFalse(disableIntake())
 
