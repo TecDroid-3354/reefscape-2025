@@ -4,6 +4,10 @@ import edu.wpi.first.wpilibj.DriverStation
 import edu.wpi.first.wpilibj2.command.Command
 import edu.wpi.first.wpilibj2.command.Commands
 import edu.wpi.first.wpilibj2.command.SubsystemBase
+import org.jgrapht.Graph
+import org.jgrapht.graph.DefaultDirectedGraph
+import org.jgrapht.graph.DefaultEdge
+
 
 enum class States(var config: StateConfig) {
     CoralState(StateConfig()),
@@ -54,8 +58,7 @@ enum class Phase {
  * @param currentState Initial State
  * @param changeStateCommand Command executed when we change the state
  */
-class StateMachine(private var currentState: States,
-                   private var changeStateCommand: Command = Commands.none()) : SubsystemBase() {
+class StateMachine(private var currentState: States) : SubsystemBase() {
     init {
         val initialDefaultCommand : Command = currentState.config.defaultCommand
         initialDefaultCommand.addRequirements(this)
@@ -64,6 +67,14 @@ class StateMachine(private var currentState: States,
 
         currentState.config.initialCommand.schedule()
     }
+
+    class EdgeCommand : DefaultEdge() {
+        var command: Command = Commands.none()
+        var restricted : Boolean = false
+    }
+
+    private val graph: Graph<States, EdgeCommand> = DefaultDirectedGraph<States, EdgeCommand>(EdgeCommand::class.java)
+
 
     // Change the state default command
     private fun changeStateDefaultCommand(defaultCommand: Command) {
@@ -75,25 +86,60 @@ class StateMachine(private var currentState: States,
     /**
      * Change the state, set the new default command, execute the end command of the last state and
      * execute the change commands (General command executed when we change to another state).
-     * @param state New state
+     * @param targetState New state
      */
 
-    fun changeState(state: States) {
+    fun changeState(targetState: States) {
         // Verify if our state isn't the same
-        if (state !=  currentState) {
+        if (targetState !=  currentState) {
+            transition(targetState)
+        }
+    }
+
+    private fun transition(targetState: States) {
+        val edge = graph.getEdge(currentState, targetState)
+
+        // Check if we have a complex relation
+        if (edge != null && !edge.restricted) {
+            edge.command.schedule()
+
+            // Normal transition
+
             // execute end command
             currentState.config.endCommand.schedule()
-                // execute the general command
-            changeStateCommand.schedule()
-                // execute the initial command of the new state
-            state.config.initialCommand.schedule()
+
+            // execute the initial command of the new state
+            targetState.config.initialCommand.schedule()
 
             // set the new default command
-            changeStateDefaultCommand(state.config.defaultCommand)
+            changeStateDefaultCommand(targetState.config.defaultCommand)
 
             // Change the state
-            currentState = state
+            currentState = targetState
+        } else {
+            // Normal transition
+
+            // execute end command
+            currentState.config.endCommand.schedule()
+
+            // execute the initial command of the new state
+            targetState.config.initialCommand.schedule()
+
+            // set the new default command
+            changeStateDefaultCommand(targetState.config.defaultCommand)
+
+            // Change the state
+            currentState = targetState
         }
+
+    }
+
+    fun addEdge(from: States, to: States, edgeCommand: Command, restricted : Boolean) {
+        val edgeCmd = EdgeCommand()
+        edgeCmd.command = edgeCommand
+        edgeCmd.restricted = restricted
+
+        graph.addEdge(from, to, edgeCmd)
     }
 
     /**
@@ -107,14 +153,6 @@ class StateMachine(private var currentState: States,
      * @return If the param state its equal to the current one
      */
     fun isState(state: States): () -> Boolean = { currentState == state }
-
-    /**
-     * Change the command that its always executed when you change to another state
-     * @param command Change command
-     */
-    fun setChangeCommand(command: Command) {
-        changeStateCommand = command
-    }
 
     // Condition system
     private val generalConditions = mutableListOf<Pair<() -> Boolean, States>>()
