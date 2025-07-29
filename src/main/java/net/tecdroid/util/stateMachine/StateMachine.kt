@@ -4,9 +4,11 @@ import edu.wpi.first.wpilibj.DriverStation
 import edu.wpi.first.wpilibj2.command.Command
 import edu.wpi.first.wpilibj2.command.Commands
 import edu.wpi.first.wpilibj2.command.SubsystemBase
+import net.tecdroid.util.stateMachine.builders.ConditionBuilder
 import org.jgrapht.Graph
 import org.jgrapht.graph.DefaultDirectedGraph
 import org.jgrapht.graph.DefaultEdge
+import net.tecdroid.util.stateMachine.builders.ConditionBuilder.Condition
 
 
 enum class States(var config: StateConfig) {
@@ -90,8 +92,21 @@ class StateMachine(private var currentState: States) : SubsystemBase() {
      */
 
     fun changeState(targetState: States) {
-        // Verify if our state isn't the same
         if (targetState !=  currentState) {
+            transition(targetState)
+        }
+    }
+
+    /**
+     * Change the state, set the new default command, execute the end command of the last state and
+     * execute the change commands (General command executed when we change to another state).
+     * If the unless parameter is true, the transition won't be executed
+     * @param targetState New state
+     * @param unless Unless condition to add special cases in which you don't want to change the state
+     */
+
+    fun changeState(targetState: States, unless: Boolean) {
+        if (targetState !=  currentState && !unless) {
             transition(targetState)
         }
     }
@@ -116,7 +131,7 @@ class StateMachine(private var currentState: States) : SubsystemBase() {
 
             // Change the state
             currentState = targetState
-        } else {
+        } else if (edge == null) {
             // Normal transition
 
             // execute end command
@@ -155,34 +170,42 @@ class StateMachine(private var currentState: States) : SubsystemBase() {
     fun isState(state: States): () -> Boolean = { currentState == state }
 
     // Condition system
-    private val generalConditions = mutableListOf<Pair<() -> Boolean, States>>()
-    private val teleopConditions = mutableListOf<Pair<() -> Boolean, States>>()
-    private val simulationConditions = mutableListOf<Pair<() -> Boolean, States>>()
-    private val autoConditions = mutableListOf<Pair<() -> Boolean, States>>()
+    val generalConditions = mutableListOf<Condition>()
+    val teleopConditions = mutableListOf<Condition>()
+    val simulationConditions = mutableListOf<Condition>()
+    val autoConditions = mutableListOf<Condition>()
 
-    /**
-     * Add a condition that if true, it change the state. This condition is
-     * evaluated periodically depending on his phase execution
-     * @param condition Condition that change the state
-     * @param state Target State
-     * @param executionPhase Phase in which you will evaluate the condition
-     */
-
-    fun addCondition(condition: () -> Boolean, state: States, executionPhase: Phase) {
-        when(executionPhase) {
-            Phase.Teleop -> teleopConditions.add(condition to state)
-            Phase.Simulation -> simulationConditions.add(condition to state)
-            Phase.Autonomous -> autoConditions.add(condition to state)
-            Phase.All -> generalConditions.add(condition to state)
+    fun getConditionList(executionPhase: Phase): MutableList<Condition> {
+        return when(executionPhase) {
+            Phase.Teleop -> teleopConditions
+            Phase.Simulation -> simulationConditions
+            Phase.Autonomous -> autoConditions
+            Phase.All -> generalConditions
         }
     }
 
-    private fun assess(conditions : MutableList<Pair<() -> Boolean, States>>) {
+    /**
+     * Add a condition that if true, it changes the state. This condition is
+     * evaluated periodically depending on his phase execution
+     * @param condition Condition that change the state
+     * @param targetState Target State
+     * @param executionPhase Phase in which you will evaluate the condition
+     */
+
+    fun addCondition(condition: () -> Boolean, targetState: States, executionPhase: Phase): ConditionBuilder {
+        // Create a builder to do the method chaining or DSL
+        val builder = ConditionBuilder(this, condition, targetState, executionPhase)
+        builder.storeCondition()
+
+        return builder
+    }
+
+    private fun assess(conditions : MutableList<Condition>) {
         // Check all the conditions
-        for ((condition, state) in conditions) {
+        for (condition in conditions) {
             // Check if we are not trying to change to the same state
-            if (state != currentState && condition()) {
-                changeState(state)
+            if (condition.targetState != currentState && condition.condition()) {
+                changeState(condition.targetState)
             }
         }
     }

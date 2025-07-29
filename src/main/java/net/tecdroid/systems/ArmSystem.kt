@@ -13,6 +13,7 @@ import edu.wpi.first.wpilibj.DigitalInput
 import edu.wpi.first.wpilibj.shuffleboard.Shuffleboard
 import edu.wpi.first.wpilibj2.command.Command
 import edu.wpi.first.wpilibj2.command.Commands
+import edu.wpi.first.wpilibj2.command.InstantCommand
 import edu.wpi.first.wpilibj2.command.SequentialCommandGroup
 import edu.wpi.first.wpilibj2.command.WaitCommand
 import edu.wpi.first.wpilibj2.command.WaitUntilCommand
@@ -295,6 +296,7 @@ class ArmSystem(val stateMachine: StateMachine, val limeLightIsAtSetPoint: (Doub
 
         // Change to coral state if we are in score state, and we just pull out a coral
         stateMachine.addCondition({ stateMachine.isState(States.ScoreState).invoke() && !getSensorRead() }, States.CoralState, Phase.Teleop)
+
     }
 
     fun assignCommands(controller: CompliantXboxController) {
