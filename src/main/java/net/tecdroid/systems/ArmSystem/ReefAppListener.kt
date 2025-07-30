@@ -13,7 +13,10 @@ data class BranchChoice (
     var levelPose: PoseCommands,
     var sideChoice: LimeLightChoice
 )
-class ReefAppListener: SubsystemBase() {
+
+class ReefAppListener(): SubsystemBase() {
+    private val reefAutoLevelSelector = ReefAutoLevelSelector()
+
     // Network table
     private val table = NetworkTableInstance.getDefault().getTable("ReefAppData")
 
@@ -36,30 +39,26 @@ class ReefAppListener: SubsystemBase() {
         val apriltagId = table.getEntry("ApriltagId").getString("Apriltag id not found")
         val level = table.getEntry("Level").getString("Level not found")
         val side = table.getEntry("Side").getString("Side not found")
+        val action = table.getEntry("ReefAction").getString("Action not found")
 
         // Select apriltag id
-        DriverStation.getAlliance().takeIf { it.isPresent }?.get()?.let {
-            if (it == Alliance.Red) {
-                branchChoice.apriltagId = when(apriltagId) {
-                    "1" -> NumericId(8)
-                    "2" -> NumericId(7)
-                    "3" -> NumericId(6)
-                    "4" -> NumericId(11)
-                    "5" -> NumericId(10)
-                    "6" -> NumericId(9)
-                    else -> NumericId(0)
-                }
-            } else if (it == Alliance.Blue) {
-                branchChoice.apriltagId = when(apriltagId) {
-                    "1" -> NumericId(17)
-                    "2" -> NumericId(18)
-                    "3" -> NumericId(19)
-                    "4" -> NumericId(20)
-                    "5" -> NumericId(21)
-                    "6" -> NumericId(22)
-                    else -> NumericId(0)
-                }
+        val redIds = mapOf(
+            "1" to 8, "2" to 7, "3" to 6,
+            "4" to 11, "5" to 10, "6" to 9
+        )
+
+        val blueIds = mapOf(
+            "1" to 17, "2" to 18, "3" to 19,
+            "4" to 20, "5" to 21, "6" to 22
+        )
+
+        DriverStation.getAlliance().orElse(null)?.let { alliance ->
+            val idMap = when (alliance) {
+                Alliance.Red -> redIds
+                Alliance.Blue -> blueIds
             }
+            val numericId = idMap[apriltagId] ?: 0
+            branchChoice.apriltagId = NumericId(numericId)
         }
 
         // Select level
@@ -67,15 +66,22 @@ class ReefAppListener: SubsystemBase() {
             "L2" -> branchChoice.levelPose = PoseCommands.L2
             "L3" -> branchChoice.levelPose = PoseCommands.L3
             "L4" -> branchChoice.levelPose = PoseCommands.L4
-            else -> branchChoice.levelPose = PoseCommands.L2
+            else -> TODO("Not registered pose")
         }
 
         // Select side
         when (side) {
             "right" -> branchChoice.sideChoice = LimeLightChoice.Right
             "left" -> branchChoice.sideChoice = LimeLightChoice.Left
-            else -> branchChoice.sideChoice = LimeLightChoice.Right
+            else -> TODO("Not registered side")
         }
+
+        when (action) {
+            "fill" -> reefAutoLevelSelector.fillLevel(branchChoice) // Fill level in reef auto level selector
+            "empty" -> reefAutoLevelSelector.emptyLevel(branchChoice) // Fill level in reef auto level selector
+            else -> TODO("Not registered action")
+        }
+
 
     }
 }
