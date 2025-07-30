@@ -16,14 +16,13 @@ import edu.wpi.first.wpilibj2.command.Command
 import edu.wpi.first.wpilibj2.command.Commands
 import edu.wpi.first.wpilibj2.command.ParallelCommandGroup
 import net.tecdroid.subsystems.drivetrain.SwerveDrive
-import net.tecdroid.systems.ArmOrders
-import net.tecdroid.systems.ArmPoses
-import net.tecdroid.systems.ArmSystem
+import net.tecdroid.systems.ArmSystem.ArmOrders
+import net.tecdroid.systems.ArmSystem.ArmPoses
+import net.tecdroid.systems.ArmSystem.ArmSystem
 import net.tecdroid.util.seconds
 import net.tecdroid.vision.limelight.systems.LimeLightChoice
 import net.tecdroid.vision.limelight.systems.LimelightController
 import java.io.IOException
-import java.util.*
 
 class PathPlannerAutonomous(val drive: SwerveDrive, private val limelightController: LimelightController, private val armSystem: ArmSystem) {
     private val autoChooser = SendableChooser<Command>()

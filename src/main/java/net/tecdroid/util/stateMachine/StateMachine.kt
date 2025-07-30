@@ -55,27 +55,19 @@ enum class Phase {
     All
 }
 
+class EdgeCommand : DefaultEdge() {
+    var command: Command = Commands.none()
+    var restricted : Boolean = false
+}
+
 /**
  * The states
  * @param currentState Initial State
  * @param changeStateCommand Command executed when we change the state
  */
 class StateMachine(private var currentState: States) : SubsystemBase() {
-    init {
-        val initialDefaultCommand : Command = currentState.config.defaultCommand
-        initialDefaultCommand.addRequirements(this)
 
-        defaultCommand = initialDefaultCommand
-
-        currentState.config.initialCommand.schedule()
-    }
-
-    class EdgeCommand : DefaultEdge() {
-        var command: Command = Commands.none()
-        var restricted : Boolean = false
-    }
-
-    private val graph: Graph<States, EdgeCommand> = DefaultDirectedGraph<States, EdgeCommand>(EdgeCommand::class.java)
+    private val graph: Graph<States, EdgeCommand> = DefaultDirectedGraph(EdgeCommand::class.java)
 
 
     // Change the state default command
@@ -83,6 +75,15 @@ class StateMachine(private var currentState: States) : SubsystemBase() {
         removeDefaultCommand()
         defaultCommand.addRequirements(this)
         setDefaultCommand(defaultCommand)
+    }
+
+    init {
+        val initialDefaultCommand : Command = currentState.config.defaultCommand
+        initialDefaultCommand.addRequirements(this)
+
+        defaultCommand = initialDefaultCommand
+
+        currentState.config.initialCommand.schedule()
     }
 
     /**
@@ -149,10 +150,13 @@ class StateMachine(private var currentState: States) : SubsystemBase() {
 
     }
 
-    fun addEdge(from: States, to: States, edgeCommand: Command, restricted : Boolean) {
+    fun addEdge(from: States, to: States, edgeCommand: Command, restricted : Boolean = false) {
         val edgeCmd = EdgeCommand()
         edgeCmd.command = edgeCommand
         edgeCmd.restricted = restricted
+
+        graph.addVertex(from)
+        graph.addVertex(to)
 
         graph.addEdge(from, to, edgeCmd)
     }
