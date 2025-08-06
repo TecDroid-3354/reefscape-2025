@@ -17,6 +17,7 @@ import net.tecdroid.subsystems.drivetrain.swerveDriveConfiguration
 import net.tecdroid.systems.ArmSystem.ArmSystem
 import net.tecdroid.systems.ArmSystem.ReefAppListener
 import net.tecdroid.systems.SwerveRotationLockSystem
+import net.tecdroid.util.NumericId
 import net.tecdroid.util.degrees
 import net.tecdroid.util.stateMachine.StateMachine
 import net.tecdroid.util.stateMachine.States
@@ -61,6 +62,8 @@ class RobotContainer {
     fun teleopInit() {
         controller.start().onTrue(swerve.zeroHeadingCommand())
 
+        limelightController.setFilterIds(arrayOf(21, 20, 19, 18, 17, 22, 10, 11, 6, 7, 8, 9))
+
         swerve.defaultCommand = Commands.run(
             {
                 val vx = MathUtil.applyDeadband(controller.leftY, 0.05) * 0.85
@@ -76,17 +79,29 @@ class RobotContainer {
             swerve
         )
 
-        //controller.rightTrigger().whileTrue(limelightController.alignRobotAllAxis(LimeLightChoice.Right, 0.215, 0.035))
-        //controller.leftTrigger().whileTrue(limelightController.alignRobotAllAxis(LimeLightChoice.Left, 0.215, -0.035))
+        controller.rightTrigger().whileTrue(limelightController.alignRobotAllAxis(LimeLightChoice.Right, 0.215, 0.035))
+        controller.leftTrigger().whileTrue(limelightController.alignRobotAllAxis(LimeLightChoice.Left, 0.215, -0.035))
 
-        controller.rightTrigger().whileTrue(limelightController.alignRobotAllAxis(reefAppListener.branchChoice.sideChoice, 0.215, 0.035))
+        controller.rightTrigger().and({ limeLightIsAtSetPoint(0.1, LimeLightChoice.Right) })
+            .onTrue(Commands.runOnce({ betterLevelSequence(LimeLightChoice.Right) }))
 
-        Trigger({ limeLightIsAtSetPoint(0.1) }).onTrue(arm.scoringSequence(reefAppListener.branchChoice.levelPose))
+        controller.leftTrigger().and({ limeLightIsAtSetPoint(0.1, LimeLightChoice.Left) })
+            .onTrue(Commands.runOnce({ betterLevelSequence(LimeLightChoice.Left) }))
 
-        limelightController.setFilterIds(arrayOf(21, 20, 19, 18, 17, 22, 10, 11, 6, 7, 8, 9))
+        //controller.rightTrigger().whileTrue(limelightController.alignRobotAllAxis({ reefAppListener.branchChoice.sideChoice }, 0.215, 0.035))
+        //Trigger({ limeLightIsAtSetPoint(0.1, reefAppListener.branchChoice.sideChoice) }).onTrue(arm.scoringSequence({ reefAppListener.branchChoice.levelPose }))
 
         //States.IntakeState.setDefaultCommand(swerveRotationLockSystem.lockRotationCMD(LockPositions.CoralStation))
         //States.IntakeState.setEndCommand(Commands.runOnce({swerve.currentCommand.cancel()}))
+    }
+
+    private fun betterLevelSequence(choice: LimeLightChoice) {
+        reefAppListener.getBetterLevel(
+            limelightController.getTargetId(choice),
+            choice
+        )?.let {
+            arm.scoringSequence(it).schedule()
+        } ?: Commands.none()
     }
 
     private fun advantageScopeLogs() {
@@ -96,6 +111,13 @@ class RobotContainer {
     fun limeLightIsAtSetPoint(xToleranceRange: Double = 0.0): Boolean {
         return limelightController.isAtSetPoint(LimeLightChoice.Right, xLimelightToAprilTagSetPoint, yLimelightToAprilTagSetPoint, xToleranceRange) ||
                 limelightController.isAtSetPoint(LimeLightChoice.Left, xLimelightToAprilTagSetPoint, yLimelightToAprilTagSetPoint.unaryMinus(), xToleranceRange)
+    }
+
+    fun limeLightIsAtSetPoint(xToleranceRange: Double = 0.0, limeLightChoice: LimeLightChoice): Boolean {
+        return when (limeLightChoice) {
+            LimeLightChoice.Right -> limelightController.isAtSetPoint(LimeLightChoice.Right, xLimelightToAprilTagSetPoint, yLimelightToAprilTagSetPoint, xToleranceRange)
+            LimeLightChoice.Left -> limelightController.isAtSetPoint(LimeLightChoice.Left, xLimelightToAprilTagSetPoint, yLimelightToAprilTagSetPoint.unaryMinus(), xToleranceRange)
+        }
     }
 
 

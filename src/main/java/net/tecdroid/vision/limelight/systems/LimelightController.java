@@ -36,6 +36,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.function.Consumer;
 import java.util.function.DoubleSupplier;
+import java.util.function.Supplier;
 
 import static edu.wpi.first.units.Units.*;
 
@@ -146,7 +147,7 @@ public class LimelightController {
         return limelight.getTargetPositionInCameraSpace();
     }
 
-    private int getTargetId(LimeLightChoice choice) {
+    public int getTargetId(LimeLightChoice choice) {
         LimelightAprilTagDetector limelight = (choice == LimeLightChoice.Right) ? rightLimelight : leftLimelight;
         return limelight.getTargetId();
     }
@@ -218,6 +219,36 @@ public class LimelightController {
 
     public Command alignRobotAllAxis(LimeLightChoice choice, double xSetPoint, double ySetPoint) {
         return Commands.run(() -> {
+            int id = getTargetId(choice);
+
+            if (!hasTarget(choice) || !alignmentAngles.containsKey(id) || isAtSetPoint(choice, xSetPoint, ySetPoint)) {
+                drive.accept(new ChassisSpeeds(0.0, 0.0, 0.0));
+                return;
+            }
+
+            Pose3d robotPose = getTargetPositionInCameraSpace(choice);
+            PIDController xPIDController = getXPIDController(choice);
+            PIDController yPIDController = getYPIDController(choice);
+            PIDController thetaPIDController = getThetaPIDController(choice);
+            double targetAngleDegrees = alignmentAngles.get(id);
+
+            double xFactor = clamp(1.0, -1.0, xPIDController.calculate(robotPose.getTranslation().getZ(), xSetPoint));
+            double yFactor = -clamp(1.0, -1.0, yPIDController.calculate(robotPose.getTranslation().getX(), ySetPoint));
+            double wFactor = clamp(1.0, -1.0, thetaPIDController.calculate(getLimitedYaw(), targetAngleDegrees));
+
+            LinearVelocity xVelocity = MetersPerSecond.of(maxSpeeds.vxMetersPerSecond * xFactor);
+            LinearVelocity yVelocity = MetersPerSecond.of(maxSpeeds.vyMetersPerSecond * yFactor);
+            AngularVelocity wVelocity = DegreesPerSecond.of(Math.toDegrees(maxSpeeds.omegaRadiansPerSecond) * wFactor);
+
+            drive.accept(new ChassisSpeeds(xVelocity, yVelocity, wVelocity));
+
+        }, requiredSubsystem);
+    }
+
+    public Command alignRobotAllAxis(Supplier<LimeLightChoice> limelightChoice, double xSetPoint, double ySetPoint) {
+        return Commands.run(() -> {
+            LimeLightChoice choice = limelightChoice.get();
+
             int id = getTargetId(choice);
 
             if (!hasTarget(choice) || !alignmentAngles.containsKey(id) || isAtSetPoint(choice, xSetPoint, ySetPoint)) {

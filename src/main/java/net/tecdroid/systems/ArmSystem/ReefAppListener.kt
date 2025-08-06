@@ -9,7 +9,7 @@ import net.tecdroid.util.NumericId
 import net.tecdroid.vision.limelight.systems.LimeLightChoice
 
 data class BranchChoice (
-    var apriltagId: NumericId,
+    var apriltagId: Int,
     var levelPose: PoseCommands,
     var sideChoice: LimeLightChoice
 )
@@ -21,7 +21,7 @@ class ReefAppListener(): SubsystemBase() {
     private val table = NetworkTableInstance.getDefault().getTable("ReefAppData")
 
     // Branch choice object
-    val branchChoice = BranchChoice(NumericId(0), PoseCommands.L2, LimeLightChoice.Right)
+    val branchChoice = BranchChoice(0, PoseCommands.L2, LimeLightChoice.Right)
 
     private fun shuffleboardData() {
         val tab = Shuffleboard.getTab("Driver Tab")
@@ -34,6 +34,8 @@ class ReefAppListener(): SubsystemBase() {
     init {
         shuffleboardData()
     }
+
+    fun getBetterLevel(aprilTagId: Int, limeLightChoice: LimeLightChoice): PoseCommands? = reefAutoLevelSelector.getBetterLevel(aprilTagId, limeLightChoice)
 
     override fun periodic() {
         val apriltagId = table.getEntry("ApriltagId").getString("Apriltag id not found")
@@ -58,7 +60,7 @@ class ReefAppListener(): SubsystemBase() {
                 Alliance.Blue -> blueIds
             }
             val numericId = idMap[apriltagId] ?: 0
-            branchChoice.apriltagId = NumericId(numericId)
+            branchChoice.apriltagId = numericId
         }
 
         // Select level
@@ -66,20 +68,20 @@ class ReefAppListener(): SubsystemBase() {
             "L2" -> branchChoice.levelPose = PoseCommands.L2
             "L3" -> branchChoice.levelPose = PoseCommands.L3
             "L4" -> branchChoice.levelPose = PoseCommands.L4
-            else -> TODO("Not registered pose")
+            else -> println("Not registered pose")
         }
 
         // Select side
         when (side) {
             "right" -> branchChoice.sideChoice = LimeLightChoice.Right
             "left" -> branchChoice.sideChoice = LimeLightChoice.Left
-            else -> TODO("Not registered side")
+            else -> println("Not registered side")
         }
 
         when (action) {
             "fill" -> reefAutoLevelSelector.fillLevel(branchChoice) // Fill level in reef auto level selector
             "empty" -> reefAutoLevelSelector.emptyLevel(branchChoice) // Fill level in reef auto level selector
-            else -> TODO("Not registered action")
+            else -> println("Not registered action")
         }
 
 

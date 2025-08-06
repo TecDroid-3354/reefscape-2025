@@ -26,8 +26,8 @@ class ReefAutoLevelSelector {
         9 to reef.side6, 22 to reef.side6
     )
 
-    fun getBetterLevel(aprilTagId: NumericId, limeLightChoice: LimeLightChoice): PoseCommands? {
-        return sideMap[aprilTagId.id]?.let { side ->
+    fun getBetterLevel(aprilTagId: Int, limeLightChoice: LimeLightChoice): PoseCommands? {
+        return sideMap[aprilTagId]?.let { side ->
             val choice = when (limeLightChoice) {
                 LimeLightChoice.Left -> side.leftBranch
                 LimeLightChoice.Right -> side.rightBranch
@@ -40,7 +40,7 @@ class ReefAutoLevelSelector {
     }
 
     fun fillLevel(branchChoice: BranchChoice) {
-        sideMap[branchChoice.apriltagId.id]?.let { side ->
+        sideMap[branchChoice.apriltagId]?.let { side ->
             val choice = when (branchChoice.sideChoice) {
                 LimeLightChoice.Left -> side.leftBranch
                 LimeLightChoice.Right -> side.rightBranch
@@ -56,7 +56,7 @@ class ReefAutoLevelSelector {
     }
 
     fun emptyLevel(branchChoice: BranchChoice) {
-        sideMap[branchChoice.apriltagId.id]?.let { side ->
+        sideMap[branchChoice.apriltagId]?.let { side ->
             val choice = when (branchChoice.sideChoice) {
                 LimeLightChoice.Left -> side.leftBranch
                 LimeLightChoice.Right -> side.rightBranch

@@ -14,6 +14,7 @@ import edu.wpi.first.wpilibj2.command.Command
 import edu.wpi.first.wpilibj2.command.Commands
 import edu.wpi.first.wpilibj2.command.SequentialCommandGroup
 import edu.wpi.first.wpilibj2.command.WaitCommand
+import edu.wpi.first.wpilibj2.command.WaitUntilCommand
 import net.tecdroid.input.CompliantXboxController
 import net.tecdroid.subsystems.elevator.Elevator
 import net.tecdroid.subsystems.elevatorjoint.ElevatorJoint
@@ -277,16 +278,24 @@ class ArmSystem(val stateMachine: StateMachine, val limeLightIsAtSetPoint: (Doub
 
     fun getSensorRead() : Boolean = !sensor.get()
 
-    /*private fun scoringSequence(pose: PoseCommands): Command {
+    fun scoringSequence(pose: PoseCommands): Command {
         return SequentialCommandGroup(
             setPoseCommand(pose).andThen(WaitCommand(0.15.seconds)).andThen(enableIntake()),
             WaitUntilCommand { intake.hasCoral().not() }.andThen(WaitCommand(0.05.seconds)).andThen(disableIntake()),
             setPoseCommand(PoseCommands.CoralStation)
         )
+    }
+
+    /*fun scoringSequence(pose: PoseCommands): Command {
+        return setPoseCommand(pose).andThen(WaitCommand(0.15.seconds)).andThen(enableIntake())
     }*/
 
-    fun scoringSequence(pose: PoseCommands): Command {
-        return setPoseCommand(pose).andThen(WaitCommand(0.15.seconds)).andThen(enableIntake())
+    fun scoringSequence(pose: () -> PoseCommands): Command {
+        return SequentialCommandGroup(
+            setPoseCommand(pose.invoke()).andThen(WaitCommand(0.15.seconds)).andThen(enableIntake()),
+            WaitUntilCommand { intake.hasCoral().not() }.andThen(WaitCommand(0.05.seconds)).andThen(disableIntake()),
+            setPoseCommand(PoseCommands.CoralStation)
+        )
     }
 
     fun changeState() {
@@ -304,10 +313,10 @@ class ArmSystem(val stateMachine: StateMachine, val limeLightIsAtSetPoint: (Doub
         States.AlgaeState.setInitialCommand(intake.setVoltageCommand { 1.5.volts })
 
         // Go to passive position after score a coral
-        States.ScoreState.setEndCommand(SequentialCommandGroup(
+        /*States.ScoreState.setEndCommand(SequentialCommandGroup(
             WaitCommand(0.05.seconds),
             disableIntake(),
-            setPoseCommand(PoseCommands.CoralStation)))
+            setPoseCommand(PoseCommands.CoralStation)))*/
 
         // Change state conditions
 
