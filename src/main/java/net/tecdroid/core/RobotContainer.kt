@@ -14,6 +14,8 @@ import net.tecdroid.constants.GenericConstants.driverControllerId
 import net.tecdroid.input.CompliantXboxController
 import net.tecdroid.subsystems.drivetrain.SwerveDrive
 import net.tecdroid.subsystems.drivetrain.swerveDriveConfiguration
+import net.tecdroid.systems.ArmSystem.ArmOrders
+import net.tecdroid.systems.ArmSystem.ArmPoses
 import net.tecdroid.systems.ArmSystem.ArmSystem
 import net.tecdroid.systems.ArmSystem.ReefAppListener
 import net.tecdroid.systems.SwerveRotationLockSystem
@@ -41,6 +43,8 @@ class RobotContainer {
 
     private val xLimelightToAprilTagSetPoint = 0.215
     private val yLimelightToAprilTagSetPoint = 0.045
+
+    private var autoLevelSelectorMode = true
 
     // Advantage Scope log publisher
     private val robotPosePublisher: StructPublisher<Pose2d> = NetworkTableInstance.getDefault()
@@ -82,10 +86,14 @@ class RobotContainer {
         controller.rightTrigger().whileTrue(limelightController.alignRobotAllAxis(LimeLightChoice.Right, 0.215, 0.035))
         controller.leftTrigger().whileTrue(limelightController.alignRobotAllAxis(LimeLightChoice.Left, 0.215, -0.035))
 
-        controller.rightTrigger().and({ limeLightIsAtSetPoint(0.1, LimeLightChoice.Right) })
+        // Auto Level Selector
+
+        controller.back().onTrue(Commands.runOnce({ autoLevelSelectorMode = !autoLevelSelectorMode }))
+
+        controller.rightTrigger().and({ limeLightIsAtSetPoint(0.1, LimeLightChoice.Right) && autoLevelSelectorMode})
             .onTrue(Commands.runOnce({ betterLevelSequence(LimeLightChoice.Right) }))
 
-        controller.leftTrigger().and({ limeLightIsAtSetPoint(0.1, LimeLightChoice.Left) })
+        controller.leftTrigger().and({ limeLightIsAtSetPoint(0.1, LimeLightChoice.Left) && autoLevelSelectorMode})
             .onTrue(Commands.runOnce({ betterLevelSequence(LimeLightChoice.Left) }))
 
         //controller.rightTrigger().whileTrue(limelightController.alignRobotAllAxis({ reefAppListener.branchChoice.sideChoice }, 0.215, 0.035))

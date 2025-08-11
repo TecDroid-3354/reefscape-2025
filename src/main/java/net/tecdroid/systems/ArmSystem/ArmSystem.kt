@@ -459,8 +459,6 @@ class ArmSystem(val stateMachine: StateMachine, val limeLightIsAtSetPoint: (Doub
             )
         )
 
-        controller.back().onTrue(setPoseCommand(ArmPoses.L1.pose, ArmOrders.JEW.order))
-
         controller.leftBumper().onTrue(enableOuttake()).onFalse(disableIntake())
     }
 
