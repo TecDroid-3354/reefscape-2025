@@ -9,7 +9,7 @@ java {
 }
 
 def ROBOT_MAIN_CLASS = "frc.robot.Main"
-
+// ads
 // Define my targets (RoboRIO) and artifacts (deployable files)
 // This is added by GradleRIO's backing project DeployUtils.
 deploy {
@@ -74,6 +74,9 @@ dependencies {
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 
     implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk8"
+
+    // Jgrapth
+    implementation 'org.jgrapht:jgrapht-core:1.5.1'
 }
 
 test {

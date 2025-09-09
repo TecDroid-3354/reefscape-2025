@@ -1,12 +1,14 @@
 package net.tecdroid.subsystems.elevatorjoint
 
 import com.ctre.phoenix6.configs.TalonFXConfiguration
+import com.ctre.phoenix6.controls.DynamicMotionMagicVoltage
 import com.ctre.phoenix6.controls.Follower
 import com.ctre.phoenix6.controls.MotionMagicVoltage
 import com.ctre.phoenix6.controls.VoltageOut
 import com.ctre.phoenix6.hardware.TalonFX
 import com.ctre.phoenix6.signals.NeutralModeValue
 import edu.wpi.first.units.Units.Rotations
+import edu.wpi.first.units.Units.Second
 import edu.wpi.first.units.measure.Angle
 import edu.wpi.first.units.measure.AngularVelocity
 import edu.wpi.first.units.measure.Voltage
@@ -14,15 +16,18 @@ import edu.wpi.first.util.sendable.SendableBuilder
 import edu.wpi.first.wpilibj2.command.Command
 import edu.wpi.first.wpilibj2.command.Commands
 import net.tecdroid.subsystems.util.generic.*
+import net.tecdroid.util.rotations
 import net.tecdroid.wrappers.ThroughBoreAbsoluteEncoder
 
-class ElevatorJoint(private val config: ElevatorJointConfig) :
+class ElevatorJoint:
     TdSubsystem("Elevator Joint"),
     MeasurableSubsystem,
     AngularSubsystem,
     LoggableSubsystem,
     VoltageControlledSubsystem,
     WithThroughBoreAbsoluteEncoder {
+
+    private val config = elevatorJointConfig
     private val leadMotorController = TalonFX(config.leadMotorControllerId.id)
     private val followerMotorController = TalonFX(config.followerMotorControllerId.id)
     private var target: Angle
@@ -56,6 +61,23 @@ class ElevatorJoint(private val config: ElevatorJointConfig) :
 
         target = transformedAngle
         leadMotorController.setControl(request)
+    }
+
+    override fun setAngle(targetAngle: Angle, slot: Int) {
+        val clampedAngle = config.measureLimits.coerceIn(targetAngle) as Angle
+        val transformedAngle = config.reduction.unapply(clampedAngle)
+        target = transformedAngle
+
+        if (slot == 1) {
+            val request = DynamicMotionMagicVoltage(transformedAngle,
+                config.reduction.unapply(config.algaeMotionTargets.cruiseVelocity),
+                config.reduction.unapply(config.algaeMotionTargets.acceleration),
+                config.reduction.unapply(config.algaeMotionTargets.jerk)).withSlot(1)
+            leadMotorController.setControl(request)
+        } else {
+            val request = MotionMagicVoltage(transformedAngle).withSlot(0)
+            leadMotorController.setControl(request)
+        }
     }
 
     fun getPositionError(): Angle =
@@ -94,6 +116,15 @@ class ElevatorJoint(private val config: ElevatorJointConfig) :
 
             Slot0
                 .withKP(config.controlGains.p)
+                .withKI(config.controlGains.i)
+                .withKD(config.controlGains.d)
+                .withKS(config.controlGains.s)
+                .withKV(config.controlGains.v)
+                .withKA(config.controlGains.a)
+                .withKG(config.controlGains.g)
+
+            Slot1
+                .withKP(0.3)
                 .withKI(config.controlGains.i)
                 .withKD(config.controlGains.d)
                 .withKS(config.controlGains.s)

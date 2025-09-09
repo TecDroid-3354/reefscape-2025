@@ -1,8 +1,20 @@
 package net.tecdroid.vision.limelight.systems;
 
+import com.ctre.phoenix6.StatusSignal;
+import com.ctre.phoenix6.hardware.Pigeon2;
+import edu.wpi.first.cameraserver.CameraServer;
+import edu.wpi.first.cscore.HttpCamera;
+import edu.wpi.first.cscore.MjpegServer;
+import edu.wpi.first.math.VecBuilder;
 import edu.wpi.first.math.controller.PIDController;
+import edu.wpi.first.math.estimator.SwerveDrivePoseEstimator;
+import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Pose3d;
+import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.math.geometry.Translation3d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
+import edu.wpi.first.units.AngularAccelerationUnit;
+import edu.wpi.first.units.Units;
 import edu.wpi.first.units.measure.AngularVelocity;
 import edu.wpi.first.units.measure.Distance;
 import edu.wpi.first.units.measure.LinearVelocity;
@@ -11,16 +23,20 @@ import edu.wpi.first.wpilibj.shuffleboard.ShuffleboardTab;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.Subsystem;
+import frc.robot.LimelightHelpers;
 import net.tecdroid.constants.StringConstantsKt;
 import net.tecdroid.util.ControlGains;
 import net.tecdroid.vision.limelight.Limelight;
 import net.tecdroid.vision.limelight.LimelightAprilTagDetector;
 import net.tecdroid.vision.limelight.LimelightConfig;
 
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.function.Consumer;
 import java.util.function.DoubleSupplier;
+import java.util.function.Supplier;
 
 import static edu.wpi.first.units.Units.*;
 
@@ -47,6 +63,9 @@ public class LimelightController {
     private final DoubleSupplier yaw;
 
     private final ChassisSpeeds maxSpeeds;
+
+    private HttpCamera leftStream = new HttpCamera("lll", "http://10.33.54.201:5800");
+    private HttpCamera rightStream = new HttpCamera("llr", "http://10.33.54.203:5800");
 
     private void angleDictionaryValues() {
         // Blue
@@ -76,9 +95,17 @@ public class LimelightController {
 
     }
 
-    private static double clamp(double max, double min, double v)
-    {
-        return Math.max(min, Math.min(max, v));
+    public void limelightsStream() {
+        ShuffleboardTab driverTab = Shuffleboard.getTab("Driver Tab");
+
+        try {
+            MjpegServer leftServer = CameraServer.startAutomaticCapture(leftStream);
+            MjpegServer rightServer = CameraServer.startAutomaticCapture(rightStream);
+
+            driverTab.add("Left Limelight", leftStream);
+            driverTab.add("Right Limelight", rightStream);
+
+        } catch (Exception ignored) {}
     }
 
     public LimelightController(Subsystem requiredSubsystem, Consumer<ChassisSpeeds> drive, DoubleSupplier yaw, ChassisSpeeds maxSpeeds) {
@@ -89,13 +116,11 @@ public class LimelightController {
 
         angleDictionaryValues();
         limelightConfiguration();
+        //limelightsStream();
     }
 
-    public Distance getSquaredDistance(LimeLightChoice choice) {
-        LimelightAprilTagDetector limelight = (choice == LimeLightChoice.Right) ? rightLimelight : leftLimelight;
-        var pos =limelight.getTargetPositionInCameraSpace();
-        return Meters.of(pos.getX() * pos.getX() + pos.getY() * pos.getY() + pos.getZ() * pos.getZ());
-
+    private static double clamp(double max, double min, double v) {
+        return Math.max(min, Math.min(max, v));
     }
 
     public boolean isAtSetPoint(LimeLightChoice choice, double xSetPoint, double ySetPoint) {
@@ -108,12 +133,21 @@ public class LimelightController {
         return hasTarget(choice) && (xDisplacement <= positionTolerance && yDisplacement <= positionTolerance);
     }
 
+    public boolean isAtSetPoint(LimeLightChoice choice, double xSetPoint, double ySetPoint, double positionTolerance) {
+        Pose3d robotPose = getTargetPositionInCameraSpace(choice);
+
+        double xDisplacement = Math.abs(xSetPoint - robotPose.getTranslation().getZ());
+        double yDisplacement = Math.abs(ySetPoint - robotPose.getTranslation().getX());
+
+        return hasTarget(choice) && (xDisplacement <= positionTolerance && yDisplacement <= positionTolerance);
+    }
+
     private Pose3d getTargetPositionInCameraSpace(LimeLightChoice choice) {
         LimelightAprilTagDetector limelight = (choice == LimeLightChoice.Right) ? rightLimelight : leftLimelight;
         return limelight.getTargetPositionInCameraSpace();
     }
 
-    private int getTargetId(LimeLightChoice choice) {
+    public int getTargetId(LimeLightChoice choice) {
         LimelightAprilTagDetector limelight = (choice == LimeLightChoice.Right) ? rightLimelight : leftLimelight;
         return limelight.getTargetId();
     }
@@ -133,6 +167,11 @@ public class LimelightController {
     public boolean hasTarget(LimeLightChoice choice) {
         Limelight limelight = (choice == LimeLightChoice.Right) ? rightLimelight : leftLimelight;
         return limelight.getHasTarget();
+    }
+
+    public void setFilterIds(Integer[] targetIds) {
+        rightLimelight.setIdFilter(targetIds);
+        leftLimelight.setIdFilter(targetIds);
     }
 
     // Obtain a yaw between the range [0, 360]
@@ -206,14 +245,113 @@ public class LimelightController {
         }, requiredSubsystem);
     }
 
-    public Command alignRobotWithAprilTagChoice(LimeLightChoice choice, double xSetPoint, double ySetPoint, int aprilTagId) {
-        return alignRobotAllAxis(choice, xSetPoint, ySetPoint).onlyIf(() -> getTargetId(choice) == aprilTagId);
+    public Command alignRobotAllAxis(Supplier<LimeLightChoice> limelightChoice, double xSetPoint, double ySetPoint) {
+        return Commands.run(() -> {
+            LimeLightChoice choice = limelightChoice.get();
+
+            int id = getTargetId(choice);
+
+            if (!hasTarget(choice) || !alignmentAngles.containsKey(id) || isAtSetPoint(choice, xSetPoint, ySetPoint)) {
+                drive.accept(new ChassisSpeeds(0.0, 0.0, 0.0));
+                return;
+            }
+
+            Pose3d robotPose = getTargetPositionInCameraSpace(choice);
+            PIDController xPIDController = getXPIDController(choice);
+            PIDController yPIDController = getYPIDController(choice);
+            PIDController thetaPIDController = getThetaPIDController(choice);
+            double targetAngleDegrees = alignmentAngles.get(id);
+
+            double xFactor = clamp(1.0, -1.0, xPIDController.calculate(robotPose.getTranslation().getZ(), xSetPoint));
+            double yFactor = -clamp(1.0, -1.0, yPIDController.calculate(robotPose.getTranslation().getX(), ySetPoint));
+            double wFactor = clamp(1.0, -1.0, thetaPIDController.calculate(getLimitedYaw(), targetAngleDegrees));
+
+            LinearVelocity xVelocity = MetersPerSecond.of(maxSpeeds.vxMetersPerSecond * xFactor);
+            LinearVelocity yVelocity = MetersPerSecond.of(maxSpeeds.vyMetersPerSecond * yFactor);
+            AngularVelocity wVelocity = DegreesPerSecond.of(Math.toDegrees(maxSpeeds.omegaRadiansPerSecond) * wFactor);
+
+            drive.accept(new ChassisSpeeds(xVelocity, yVelocity, wVelocity));
+
+        }, requiredSubsystem);
     }
 
-    public Command alignRobotAuto(LimeLightChoice choice, double xSetPoint, double ySetPoint, double waitSeconds) throws InterruptedException {
-        Command alignRobotCMD = alignRobotAllAxis(choice, xSetPoint, ySetPoint);
-        alignRobotCMD.until(() -> isAtSetPoint(choice, xSetPoint, ySetPoint)).withTimeout(waitSeconds);
-        return alignRobotCMD;
+    public void updatePoseLeftLimelight(SwerveDrivePoseEstimator poseEstimator) {
+        boolean doRejectUpdate = false;
+        LimelightHelpers.PoseEstimate mt1 = leftLimelight.getRobotPoseEstimateWpiBlueMT1();
+
+        if(mt1.tagCount == 1 && mt1.rawFiducials.length == 1)
+        {
+            if(mt1.rawFiducials[0].ambiguity > .7)
+            {
+                doRejectUpdate = true;
+            }
+            if(mt1.rawFiducials[0].distToCamera > 3)
+            {
+                doRejectUpdate = true;
+            }
+        }
+
+        if(mt1.tagCount == 0 || getTargetPositionInCameraSpace(LimeLightChoice.Left).getZ() > 1.5)
+        {
+            doRejectUpdate = true;
+        }
+
+        if(!doRejectUpdate)
+        {
+            poseEstimator.setVisionMeasurementStdDevs(VecBuilder.fill(.3,.3,5.0));
+            poseEstimator.addVisionMeasurement(
+                    mt1.pose,
+                    mt1.timestampSeconds);
+        }
+    }
+
+    public void updatePoseRightLimelight(SwerveDrivePoseEstimator poseEstimator) {
+        boolean doRejectUpdate = false;
+        LimelightHelpers.PoseEstimate mt1 = rightLimelight.getRobotPoseEstimateWpiBlueMT1();
+
+        if(mt1.tagCount == 1 && mt1.rawFiducials.length == 1)
+        {
+            if(mt1.rawFiducials[0].ambiguity > .7)
+            {
+                doRejectUpdate = true;
+            }
+            if(mt1.rawFiducials[0].distToCamera > 3)
+            {
+                doRejectUpdate = true;
+            }
+        }
+
+        if(mt1.tagCount == 0 || getTargetPositionInCameraSpace(LimeLightChoice.Right).getZ() > 1.5)
+        {
+            doRejectUpdate = true;
+        }
+
+        if(!doRejectUpdate)
+        {
+            poseEstimator.setVisionMeasurementStdDevs(VecBuilder.fill(.5,.5,10.0));
+            poseEstimator.addVisionMeasurement(
+                    mt1.pose,
+                    mt1.timestampSeconds);
+        }
+    }
+
+    public void updatePoseMT2(SwerveDrivePoseEstimator poseEstimator, StatusSignal<AngularVelocity> angularVelocity, Rotation2d robotYaw) {
+        boolean doRejectUpdate = false;
+
+        LimelightHelpers.PoseEstimate mt2 = LimelightHelpers.getBotPoseEstimate_wpiBlue_MegaTag2(StringConstantsKt.leftLimelightName);
+        LimelightHelpers.SetRobotOrientation(StringConstantsKt.leftLimelightName, poseEstimator.getEstimatedPosition().getRotation().getDegrees(), 0, 0, 0, 0, 0);
+
+        if(Math.abs(angularVelocity.getValueAsDouble()) > 360 || mt2.tagCount == 0) {
+            doRejectUpdate = true;
+        }
+        if(!doRejectUpdate)
+        {
+            //poseEstimator.setVisionMeasurementStdDevs(VecBuilder.fill(.7,.7,9999999));
+            poseEstimator.addVisionMeasurement(
+                    mt2.pose,
+                    mt2.timestampSeconds);
+
+        }
     }
 
     public void shuffleboardData() {
@@ -224,6 +362,4 @@ public class LimelightController {
         tab.addDouble("RobotYaw", this::getLimitedYaw);
         tab.addInteger("Yaw Objective", rightLimelight::getTargetId);
     }
-
-
 }

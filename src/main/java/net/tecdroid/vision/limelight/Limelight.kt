@@ -15,6 +15,7 @@ import edu.wpi.first.units.measure.Frequency
 import edu.wpi.first.units.measure.Temperature
 import edu.wpi.first.units.measure.Time
 import edu.wpi.first.wpilibj.util.Color
+import frc.robot.LimelightHelpers
 import net.tecdroid.util.*
 
 /**
@@ -39,7 +40,7 @@ data class LimelightConfig(
  *
  * @param config The [LimelightConfig] for this limelight
  */
-abstract class LimelightBase(private val config: LimelightConfig) {
+abstract class LimelightBase(val config: LimelightConfig) {
     private val table = NetworkTableInstance.getDefault().getTable(config.name)
 
     init {
@@ -355,6 +356,8 @@ class LimelightAprilTagDetector(config: LimelightConfig): Limelight(config) {
     val robotPositionInRedFieldSpace: LimelightDetection3d
         get() = LimelightDetection3d.fromRawData(getDoubleArray(LimelightTableKeys.Get.robotPositionInRedFieldSpace))
 
+    val robotPoseEstimateWpiBlueMT1: LimelightHelpers.PoseEstimate
+        get() = LimelightHelpers.getBotPoseEstimate_wpiBlue(config.name)
     /**
      * Returns the robot's position with the origin at the red alliance origin and rotated 180 degrees. Uses MegaTag2
      */

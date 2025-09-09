@@ -26,6 +26,7 @@ data class WristConfig(
     val measureLimits: MeasureLimits<AngleUnit>,
     val controlGains: ControlGains,
     val motionTargets: AngularMotionTargets,
+    val algaeMotionTargets: AngularMotionTargets
 )
 
 val wristConfig = WristConfig(
@@ -58,5 +59,11 @@ val wristConfig = WristConfig(
         cruiseVelocity = 0.5.rotations.per(Second),
         accelerationTimePeriod = 0.1.seconds,
         jerkTimePeriod = 0.1.seconds
+    ),
+
+    algaeMotionTargets = AngularMotionTargets(
+        cruiseVelocity = 0.125.rotations.per(Second),
+        accelerationTimePeriod = 0.5.seconds,
+        jerkTimePeriod = 0.3.seconds
     )
 )

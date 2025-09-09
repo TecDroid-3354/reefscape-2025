@@ -18,8 +18,16 @@ interface AngularSubsystem {
     val angularVelocity: AngularVelocity
 
     fun setAngle(targetAngle: Angle)
+    fun setAngle(targetAngle: Angle, slot: Int)
+
     fun setAngleCommand(targetAngle: Angle): Command = Commands.runOnce(
         { setAngle(targetAngle) },
+        if (this is TdSubsystem) this
+        else throw IllegalStateException("Attempted to run an angular position command on a non-subsystem")
+    )
+
+    fun setAngleCommand(targetAngle: Angle, slot: Int): Command = Commands.runOnce(
+        { setAngle(targetAngle, slot) },
         if (this is TdSubsystem) this
         else throw IllegalStateException("Attempted to run an angular position command on a non-subsystem")
     )
