@@ -59,6 +59,8 @@ abstract class LimelightBase(val config: LimelightConfig) {
      */
     private fun getTableEntry(name: String): NetworkTableEntry = table.getEntry(name)
 
+    protected fun setThrottle(value: Long): Boolean = table.getEntry("throttle_set").setInteger(value)
+
     /**
      * Fetches [name] from the associated [NetworkTable] as a [Double]
      */
@@ -459,7 +461,10 @@ class LimelightAprilTagDetector(config: LimelightConfig): Limelight(config) {
             setDoubleArray(LimelightTableKeys.Set.robotOrientation, orientationToRawData(value.first, value.second))
         }
 
-
+    var throttle: Long = 0
+        set(value) {
+            super.setThrottle(value)
+        }
 }
 
 /**

@@ -3,13 +3,16 @@ plugins {
     id "edu.wpi.first.GradleRIO" version "2025.3.2"
     id 'org.jetbrains.kotlin.jvm'
     id 'org.jetbrains.dokka' version '2.0.0'
+    id "com.peterabeles.gversion" version "1.10"
+    //id("com.google.devtools.ksp") version "2.1.21-2.0.1" // KSP (modern-solution) does not seem to work with AK.
+    id "org.jetbrains.kotlin.kapt" version "2.2.0"
 }
 
 java {
 }
 
 def ROBOT_MAIN_CLASS = "frc.robot.Main"
-// ads
+
 // Define my targets (RoboRIO) and artifacts (deployable files)
 // This is added by GradleRIO's backing project DeployUtils.
 deploy {
@@ -47,7 +50,12 @@ def deployArtifact = deploy.targets.roborio.artifacts.frcJava
 wpi.java.debugJni = false
 
 // Set this to true to enable desktop support.
-def includeDesktopSupport = false
+def includeDesktopSupport = true
+
+task(replayWatch, type: JavaExec) {
+    mainClass = "org.littletonrobotics.junction.ReplayWatch"
+    classpath = sourceSets.main.runtimeClasspath
+}
 
 // Defining my dependencies. In this case, WPILib (+ friends), and vendor libraries.
 // Also defines JUnit 5.
@@ -75,8 +83,9 @@ dependencies {
 
     implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk8"
 
-    // Jgrapth
-    implementation 'org.jgrapht:jgrapht-core:1.5.1'
+    def akitJson = new groovy.json.JsonSlurper().parseText(new File(projectDir.getAbsolutePath() + "/vendordeps/AdvantageKit.json").text)
+    //annotationProcessor "org.littletonrobotics.akit:akit-autolog:$akitJson.version"
+    kapt "org.littletonrobotics.akit:akit-autolog:$akitJson.version"
 }
 
 test {
@@ -98,6 +107,16 @@ jar {
     duplicatesStrategy = DuplicatesStrategy.INCLUDE
 }
 
+project.compileJava.dependsOn(createVersionFile)
+gversion {
+    srcDir       = "src/main/java/"
+    classPackage = "frc.robot"
+    className    = "BuildInfo"
+    dateFormat   = "yyyy-MM-dd HH:mm:ss z"
+    timeZone     = "America/Mexico_City" // Use preferred time zone
+    indent       = "  "
+}
+
 // Configure jar and deploy tasks
 deployArtifact.jarTask = jar
 wpi.java.configureExecutableTasks(jar)
@@ -108,7 +127,9 @@ tasks.withType(JavaCompile) {
     options.compilerArgs.add '-XDstringConcat=inline'
 }
 repositories {
-    mavenCentral()
+    maven {
+        url = uri("https://frcmaven.wpi.edu/artifactory/littletonrobotics-mvn-release")
+    }
 }
 kotlin {
     jvmToolchain(17)

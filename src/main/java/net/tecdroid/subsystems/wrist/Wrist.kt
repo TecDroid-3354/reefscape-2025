@@ -1,13 +1,11 @@
 package net.tecdroid.subsystems.wrist
 
 import com.ctre.phoenix6.configs.TalonFXConfiguration
-import com.ctre.phoenix6.controls.DynamicMotionMagicVoltage
 import com.ctre.phoenix6.controls.MotionMagicVoltage
 import com.ctre.phoenix6.controls.VoltageOut
 import com.ctre.phoenix6.hardware.TalonFX
 import com.ctre.phoenix6.signals.NeutralModeValue
 import edu.wpi.first.units.Units.Rotations
-import edu.wpi.first.units.Units.Second
 import edu.wpi.first.units.measure.Angle
 import edu.wpi.first.units.measure.AngularVelocity
 import edu.wpi.first.units.measure.Voltage
@@ -15,77 +13,28 @@ import edu.wpi.first.util.sendable.SendableBuilder
 import edu.wpi.first.wpilibj2.command.Command
 import edu.wpi.first.wpilibj2.command.Commands
 import net.tecdroid.subsystems.util.generic.*
-import net.tecdroid.util.rotations
 import net.tecdroid.wrappers.ThroughBoreAbsoluteEncoder
+import org.littletonrobotics.junction.Logger
 
-class Wrist :
+class Wrist(private val io: WristIO, private val config: WristConfig) :
     TdSubsystem("Wrist"),
     LoggableSubsystem,
     WithThroughBoreAbsoluteEncoder,
-    AngularSubsystem {
-    private val config = wristConfig
-    private val motorController = TalonFX(config.motorControllerId.id)
-    private var target : Angle
-
-    override val absoluteEncoder = ThroughBoreAbsoluteEncoder(
-        port = config.absoluteEncoderPort,
-        offset = config.absoluteEncoderOffset,
-        inverted = config.absoluteEncoderIsInverted
-    )
+    AngularSubsystem
+{
+    override val absoluteEncoder = io.getAbsoluteEncoderInstance()
 
     override val forwardsRunningCondition  = { angle < config.measureLimits.relativeMaximum }
     override val backwardsRunningCondition = { angle > config.measureLimits.relativeMinimum }
 
-    init {
-        configureMotorInterface()
-        matchRelativeEncodersToAbsoluteEncoders()
-        publishToShuffleboard()
-        target = motorPosition
-    }
-
-    override fun setVoltage(voltage: Voltage) {
-        val request = VoltageOut(voltage)
-        motorController.setControl(request)
-    }
-
-    override fun setAngle(targetAngle: Angle) {
-        val clampedAngle = config.measureLimits.coerceIn(targetAngle) as Angle
-        val transformedAngle = config.reduction.unapply(clampedAngle)
-        val request = MotionMagicVoltage(transformedAngle).withSlot(0)
-
-        target = transformedAngle
-        motorController.setControl(request)
-    }
-
-    override fun setAngle(targetAngle: Angle, slot: Int) {
-        val clampedAngle = config.measureLimits.coerceIn(targetAngle) as Angle
-        val transformedAngle = config.reduction.unapply(clampedAngle)
-
-        target = transformedAngle
-
-        if (slot == 1) {
-            val request = DynamicMotionMagicVoltage(transformedAngle,
-                config.reduction.unapply(config.algaeMotionTargets.cruiseVelocity),
-                config.reduction.unapply(config.algaeMotionTargets.acceleration),
-                config.reduction.unapply(config.algaeMotionTargets.jerk)).withSlot(1)
-            motorController.setControl(request)
-        } else {
-            val request = MotionMagicVoltage(transformedAngle).withSlot(0)
-            motorController.setControl(request)
-        }
-    }
-
-    fun getPositionError(): Angle =
-        if (target > motorPosition) target - motorPosition else motorPosition - target
-
     override val power: Double
-        get() = motorController.get()
+        get() = io.getMotorPower()
 
     override val motorPosition: Angle
-        get() = motorController.position.value
+        get() = io.getMotorPosition()
 
     override val motorVelocity: AngularVelocity
-        get() = motorController.velocity.value
+        get() = io.getMotorVelocity()
 
     override val angle: Angle
         get() = config.reduction.apply(motorPosition)
@@ -93,50 +42,36 @@ class Wrist :
     override val angularVelocity: AngularVelocity
         get() = config.reduction.apply(motorVelocity)
 
+    private var inputs = WristIOInputsAutoLogged() // Used to log all the subsystem's inputs.
+
+    init {
+        matchRelativeEncodersToAbsoluteEncoders()
+        publishToShuffleboard()
+        io.setTargetAngle(motorPosition)
+    }
+
+    override fun periodic() {
+        io.updateInputs(inputs)
+        Logger.processInputs("Wrist", inputs)
+    }
+
+    override fun setVoltage(voltage: Voltage) {
+        io.setVoltage(voltage)
+    }
+
+    override fun setAngle(targetAngle: Angle) {
+        val clampedAngle = config.measureLimits.coerceIn(targetAngle) as Angle
+        val transformedAngle = config.reduction.unapply(clampedAngle)
+        io.setTargetAngle(transformedAngle)
+        io.setAngle(transformedAngle)
+    }
+
     override fun onMatchRelativeEncodersToAbsoluteEncoders() {
-        motorController.setPosition(config.reduction.unapply(absoluteAngle))
+        io.setMotorPosition(config.reduction.unapply(absoluteAngle))
     }
 
-    private fun configureMotorInterface() {
-        val talonConfig = TalonFXConfiguration()
-
-        with(talonConfig) {
-            MotorOutput
-                .withNeutralMode(NeutralModeValue.Brake)
-                .withInverted(config.motorDirection.toInvertedValue())
-
-            CurrentLimits
-                .withSupplyCurrentLimitEnable(true)
-                .withSupplyCurrentLimit(config.motorCurrentLimit)
-
-            Slot0
-                .withKP(config.controlGains.p)
-                .withKI(config.controlGains.i)
-                .withKD(config.controlGains.d)
-                .withKS(config.controlGains.s)
-                .withKV(config.controlGains.v)
-                .withKA(config.controlGains.a)
-                .withKG(config.controlGains.g)
-
-            Slot1
-                .withKP(0.05)
-                .withKI(config.controlGains.i)
-                .withKD(config.controlGains.d)
-                .withKS(config.controlGains.s)
-                .withKV(config.controlGains.v)
-                .withKA(config.controlGains.a)
-                .withKG(config.controlGains.g)
-
-            MotionMagic
-                .withMotionMagicCruiseVelocity(config.reduction.unapply(config.motionTargets.cruiseVelocity))
-                .withMotionMagicAcceleration(config.reduction.unapply(config.motionTargets.acceleration))
-                .withMotionMagicJerk(config.reduction.unapply(config.motionTargets.jerk))
-        }
-
-
-        motorController.clearStickyFaults()
-        motorController.configurator.apply(talonConfig)
-    }
+    fun getPositionError(): Angle =
+        if (io.getTargetAngle() > motorPosition) io.getTargetAngle() - motorPosition else motorPosition - io.getTargetAngle()
 
     override fun initSendable(builder: SendableBuilder) {
         with(builder) {
@@ -145,12 +80,6 @@ class Wrist :
         }
     }
 
-    fun coast(): Command = Commands.runOnce({
-        motorController.setNeutralMode(NeutralModeValue.Coast)
-    })
-
-    fun brake(): Command = Commands.runOnce({
-        motorController.setNeutralMode(NeutralModeValue.Brake)
-    })
-
+    fun coast(): Command = Commands.runOnce({ io.coast() })
+    fun brake(): Command = Commands.runOnce({ io.brake() })
 }
