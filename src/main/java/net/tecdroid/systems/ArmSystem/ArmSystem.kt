@@ -462,4 +462,16 @@ class ArmSystem(val stateMachine: StateMachine, val limeLightIsAtSetPoint: (Doub
         controller.leftBumper().onTrue(enableOuttake()).onFalse(disableIntake())
     }
 
+    fun coast() {
+        wrist.coast()
+        elevator.coast()
+        joint.coast()
+    }
+
+    fun brake() {
+        wrist.brake()
+        elevator.brake()
+        joint.brake()
+    }
+
 }

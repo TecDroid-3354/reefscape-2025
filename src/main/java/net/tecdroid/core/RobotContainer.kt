@@ -6,8 +6,11 @@ import edu.wpi.first.math.kinematics.ChassisSpeeds
 import edu.wpi.first.networktables.NetworkTableInstance
 import edu.wpi.first.networktables.StructPublisher
 import edu.wpi.first.units.Units.*
+import edu.wpi.first.wpilibj.DriverStation
+import edu.wpi.first.wpilibj.RobotBase
 import edu.wpi.first.wpilibj2.command.Command
 import edu.wpi.first.wpilibj2.command.Commands
+import edu.wpi.first.wpilibj2.command.InstantCommand
 import edu.wpi.first.wpilibj2.command.button.Trigger
 import net.tecdroid.autonomous.PathPlannerAutonomous
 import net.tecdroid.constants.GenericConstants.driverControllerId
@@ -58,6 +61,16 @@ class RobotContainer {
         arm.assignCommands(controller)
     }
 
+    fun robotInit() {
+        // Composed with DriverStation.isDisabled() just because a() is already used in other command, composing
+        // it makes it a whole other command, not interfering with the main one.
+        controller.a().and { DriverStation.isDisabled() }.onTrue(
+            InstantCommand({arm.coast()}).ignoringDisable(true)
+        )
+        controller.b().and { DriverStation.isDisabled() }.onTrue(
+            InstantCommand({arm.brake()}).ignoringDisable(true)
+        )
+    }
 
     fun autonomousInit() {
         swerve.removeDefaultCommand()

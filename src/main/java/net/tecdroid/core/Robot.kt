@@ -13,6 +13,7 @@ class Robot : TimedRobot() {
 
     override fun robotInit() {
         DriverStation.silenceJoystickConnectionWarning(true)
+        container.robotInit()
     }
 
     override fun robotPeriodic() {
