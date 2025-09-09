@@ -7,22 +7,17 @@ import edu.wpi.first.networktables.NetworkTableInstance
 import edu.wpi.first.networktables.StructPublisher
 import edu.wpi.first.units.Units.*
 import edu.wpi.first.wpilibj.DriverStation
-import edu.wpi.first.wpilibj.RobotBase
 import edu.wpi.first.wpilibj2.command.Command
 import edu.wpi.first.wpilibj2.command.Commands
 import edu.wpi.first.wpilibj2.command.InstantCommand
-import edu.wpi.first.wpilibj2.command.button.Trigger
 import net.tecdroid.autonomous.PathPlannerAutonomous
 import net.tecdroid.constants.GenericConstants.driverControllerId
 import net.tecdroid.input.CompliantXboxController
 import net.tecdroid.subsystems.drivetrain.SwerveDrive
 import net.tecdroid.subsystems.drivetrain.swerveDriveConfiguration
-import net.tecdroid.systems.ArmSystem.ArmOrders
-import net.tecdroid.systems.ArmSystem.ArmPoses
 import net.tecdroid.systems.ArmSystem.ArmSystem
 import net.tecdroid.systems.ArmSystem.ReefAppListener
 import net.tecdroid.systems.SwerveRotationLockSystem
-import net.tecdroid.util.NumericId
 import net.tecdroid.util.degrees
 import net.tecdroid.util.stateMachine.StateMachine
 import net.tecdroid.util.stateMachine.States
@@ -61,15 +56,16 @@ class RobotContainer {
         arm.assignCommands(controller)
     }
 
-    fun robotInit() {
+    fun disableInit() {
         // Composed with DriverStation.isDisabled() just because these bindings are already used in other commands,
         // composing them creates brand new commands, not interfering with the main one.
         controller.a().and { DriverStation.isDisabled() }.onTrue(
             InstantCommand({arm.coast()}).ignoringDisable(true)
         )
         controller.b().and { DriverStation.isDisabled() }.onTrue(
-            InstantCommand({arm.brake()}).ignoringDisable(true)
+          InstantCommand({arm.brake()}).ignoringDisable(true)
         )
+
     }
 
     fun autonomousInit() {

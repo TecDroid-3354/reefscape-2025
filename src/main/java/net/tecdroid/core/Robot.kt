@@ -4,7 +4,6 @@ import edu.wpi.first.wpilibj.DriverStation
 import edu.wpi.first.wpilibj.TimedRobot
 import edu.wpi.first.wpilibj2.command.Command
 import edu.wpi.first.wpilibj2.command.CommandScheduler
-import net.tecdroid.util.volts
 
 class Robot : TimedRobot() {
     private val container = RobotContainer()
@@ -13,7 +12,6 @@ class Robot : TimedRobot() {
 
     override fun robotInit() {
         DriverStation.silenceJoystickConnectionWarning(true)
-        container.robotInit()
     }
 
     override fun robotPeriodic() {
@@ -23,6 +21,7 @@ class Robot : TimedRobot() {
 
     override fun disabledInit() {
         CommandScheduler.getInstance().cancelAll()
+        container.disableInit() // Not in robotInit as it starts working only after the first enabled.
     }
 
     override fun disabledPeriodic() {

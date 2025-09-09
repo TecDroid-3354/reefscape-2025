@@ -70,15 +70,15 @@ class Elevator :
     override val velocity: LinearVelocity
         get() = config.sprocket.angularVelocityToLinearVelocity(config.reduction.apply(motorVelocity))
 
-    fun coast(): Command = Commands.runOnce({
+    fun coast() {
         leadMotorController.setNeutralMode(NeutralModeValue.Coast)
         followerMotorController.setNeutralMode(NeutralModeValue.Coast)
-    })
+    }
 
-    fun brake(): Command = Commands.runOnce({
+    fun brake() {
         leadMotorController.setNeutralMode(NeutralModeValue.Brake)
         followerMotorController.setNeutralMode(NeutralModeValue.Brake)
-    })
+    }
 
     private fun configureMotorsInterface() {
         val talonConfig = TalonFXConfiguration()

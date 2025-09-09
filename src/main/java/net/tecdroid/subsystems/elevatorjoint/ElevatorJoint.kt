@@ -15,6 +15,7 @@ import edu.wpi.first.units.measure.Voltage
 import edu.wpi.first.util.sendable.SendableBuilder
 import edu.wpi.first.wpilibj2.command.Command
 import edu.wpi.first.wpilibj2.command.Commands
+import edu.wpi.first.wpilibj2.command.InstantCommand
 import net.tecdroid.subsystems.util.generic.*
 import net.tecdroid.util.rotations
 import net.tecdroid.wrappers.ThroughBoreAbsoluteEncoder
@@ -154,13 +155,13 @@ class ElevatorJoint:
         }
     }
 
-    fun coast(): Command = Commands.runOnce({
+    fun coast() {
         leadMotorController.setNeutralMode(NeutralModeValue.Coast)
         followerMotorController.setNeutralMode(NeutralModeValue.Coast)
-    })
+    }
 
-    fun brake(): Command = Commands.runOnce({
+    fun brake() {
         leadMotorController.setNeutralMode(NeutralModeValue.Brake)
         followerMotorController.setNeutralMode(NeutralModeValue.Brake)
-    })
+    }
 }

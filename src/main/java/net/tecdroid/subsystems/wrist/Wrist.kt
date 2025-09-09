@@ -145,12 +145,12 @@ class Wrist :
         }
     }
 
-    fun coast(): Command = Commands.runOnce({
+    fun coast() {
         motorController.setNeutralMode(NeutralModeValue.Coast)
-    })
+    }
 
-    fun brake(): Command = Commands.runOnce({
+    fun brake() {
         motorController.setNeutralMode(NeutralModeValue.Brake)
-    })
+    }
 
 }
