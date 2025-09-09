@@ -62,8 +62,8 @@ class RobotContainer {
     }
 
     fun robotInit() {
-        // Composed with DriverStation.isDisabled() just because a() is already used in other command, composing
-        // it makes it a whole other command, not interfering with the main one.
+        // Composed with DriverStation.isDisabled() just because these bindings are already used in other commands,
+        // composing them creates brand new commands, not interfering with the main one.
         controller.a().and { DriverStation.isDisabled() }.onTrue(
             InstantCommand({arm.coast()}).ignoringDisable(true)
         )
@@ -77,6 +77,7 @@ class RobotContainer {
     }
 
     fun teleopInit() {
+        arm.brake()
         controller.start().onTrue(swerve.zeroHeadingCommand())
 
         limelightController.setFilterIds(arrayOf(21, 20, 19, 18, 17, 22, 10, 11, 6, 7, 8, 9))
