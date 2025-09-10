@@ -53,7 +53,7 @@ class RobotContainer {
         swerve.heading = 0.0.degrees
 
         arm.publishShuffleBoardData()
-        arm.assignCommands(controller)
+        //arm.assignCommands(controller)
     }
 
     fun disableInit() {

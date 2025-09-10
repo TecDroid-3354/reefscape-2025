@@ -42,111 +42,112 @@ data class ArmOrder(
     val third: ArmMember
 )
 
+// TODO: Find new wrist & joint positions, as absolute encoders are no longer available in this code version.
 enum class ArmPoses(var pose: ArmPose) {
     Passive(
         ArmPose(
-        wristPosition         = 0.021.rotations + 5.0.degrees,
+        wristPosition         = 0.0.rotations, //0.021.rotations + 5.0.degrees,
         elevatorDisplacement  = 0.01.meters,
-        elevatorJointPosition = 0.25.rotations + 3.5.degrees,
+        elevatorJointPosition = 0.0.rotations, //0.0.rotations,//0.25.rotations + 3.5.degrees,
         targetVoltage = 0.0.volts
     )
     ),
 
     L1(
         ArmPose(
-        wristPosition         = 0.3528.rotations - 55.0.degrees,
+        wristPosition         = 0.0.rotations, //0.3528.rotations - 55.0.degrees,
         elevatorDisplacement  = 0.01.meters,
-        elevatorJointPosition = 0.263.rotations,
+        elevatorJointPosition = 0.0.rotations, //0.263.rotations,
         targetVoltage = 3.5.volts
     )
     ),
 
     L2(
         ArmPose(
-        wristPosition         = 0.3528.rotations,
+        wristPosition         = 0.0.rotations, //0.3528.rotations,
         elevatorDisplacement  = 0.0367.meters + 0.0125.meters,
-        elevatorJointPosition = 0.263.rotations,
+        elevatorJointPosition = 0.0.rotations, //0.263.rotations,
         targetVoltage = 8.0.volts
     )
     ),
 
     L3(
         ArmPose(
-        wristPosition         = 0.3528.rotations - 0.5.degrees,
+        wristPosition         = 0.0.rotations, //0.3528.rotations - 0.5.degrees,
         elevatorDisplacement  = 0.4281.meters,
-        elevatorJointPosition = 0.263.rotations, //elevatorJointPosition = 0.25.rotations + 3.5.degrees,
+        elevatorJointPosition = 0.0.rotations, //0.263.rotations, //elevatorJointPosition = 0.25.rotations + 3.5.degrees,
         targetVoltage = 7.0.volts
     )
     ),
 
     L4(
         ArmPose(
-        wristPosition         = 0.3528.rotations,
+        wristPosition         = 0.0.rotations, //0.3528.rotations,
         elevatorDisplacement  = 1.0283.meters,
-        elevatorJointPosition = 0.263.rotations, //0.25.rotations + 3.5.degrees,
+        elevatorJointPosition = 0.0.rotations, //0.263.rotations, //0.25.rotations + 3.5.degrees,
         targetVoltage = 8.0.volts
     )
     ),
 
     CoralStation(
         ArmPose(
-        wristPosition         = 0.3601.rotations + 2.5.degrees,
+        wristPosition         = 0.0.rotations, //0.3601.rotations + 2.5.degrees,
         elevatorDisplacement  = 0.01.meters,
-        elevatorJointPosition = 0.1622.rotations + 10.5.degrees,
+        elevatorJointPosition = 0.0.rotations, //0.1622.rotations + 10.5.degrees,
         targetVoltage = 9.0.volts
     )
     ),
 
     A1(
         ArmPose(
-        wristPosition         = 0.2798.rotations,
+        wristPosition         = 0.0.rotations, //0.2798.rotations,
         elevatorDisplacement  = 0.1457.meters,
-        elevatorJointPosition = 0.1772.rotations - 1.5.degrees,
+        elevatorJointPosition = 0.0.rotations, //0.1772.rotations - 1.5.degrees,
         targetVoltage = 12.0.volts
     )
     ),
 
     A2(
         ArmPose(
-        wristPosition         = 0.2628.rotations,
+        wristPosition         = 0.0.rotations, //0.2628.rotations,
         elevatorDisplacement  = 0.4920.meters,
-        elevatorJointPosition = 0.1968.rotations - 1.5.degrees,
+        elevatorJointPosition = 0.0.rotations, //0.1968.rotations - 1.5.degrees,
         targetVoltage = 12.0.volts
     )
     ),
 
     Processor(
         ArmPose(
-        wristPosition         = 0.3705.rotations,
+        wristPosition         = 0.0.rotations, //0.3705.rotations,
         elevatorDisplacement  = 0.0150.meters,
-        elevatorJointPosition = 0.0415.rotations + 5.0.degrees,
+        elevatorJointPosition = 0.0.rotations, //0.0415.rotations + 5.0.degrees,
         targetVoltage = 8.0.volts
     )
     ),
 
     AlgaeFloorIntake(
         ArmPose(
-        wristPosition         = 0.3705.rotations - 24.0.degrees,
+        wristPosition         = 0.0.rotations, //0.3705.rotations - 24.0.degrees,
         elevatorDisplacement  = 0.0150.meters,
-        elevatorJointPosition = 0.0415.rotations,
+        elevatorJointPosition = 0.0.rotations, //0.0415.rotations,
         targetVoltage = 8.0.volts
     )
     ),
 
     coralFloorIntake(
         ArmPose(
-        wristPosition         = 0.358.rotations - 0.5.degrees,
+        wristPosition         = 0.0.rotations, //0.358.rotations - 0.5.degrees,
         elevatorDisplacement  = 0.01.meters,
-        elevatorJointPosition = 0.0153.rotations,
+        elevatorJointPosition = 0.0.rotations, //0.0153.rotations,
         targetVoltage = 9.0.volts
     )
     ),
 
     Barge(
         ArmPose(
-        wristPosition         = 0.3476.rotations,
+        wristPosition         = 0.0.rotations, //0.3476.rotations,
         elevatorDisplacement  = 1.0420.meters,
-        elevatorJointPosition = 0.263.rotations,
+        elevatorJointPosition = 0.0.rotations, //0.263.rotations,
         targetVoltage = 8.0.volts
     )
     )
@@ -184,11 +185,6 @@ class ArmSystem(val stateMachine: StateMachine, val limeLightIsAtSetPoint: (Doub
     private var isLow = { false }
     fun setIsLow(value: Boolean) {
         isLow = { value }
-    }
-
-    init {
-        wrist.matchRelativeEncodersToAbsoluteEncoders()
-        joint.matchRelativeEncodersToAbsoluteEncoders()
     }
 
     fun setJointAngle(angle: Angle): Command = joint.setAngleCommand(angle)

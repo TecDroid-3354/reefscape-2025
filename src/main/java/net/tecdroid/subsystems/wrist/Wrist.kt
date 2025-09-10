@@ -16,29 +16,20 @@ import edu.wpi.first.wpilibj2.command.Command
 import edu.wpi.first.wpilibj2.command.Commands
 import net.tecdroid.subsystems.util.generic.*
 import net.tecdroid.util.rotations
-import net.tecdroid.wrappers.ThroughBoreAbsoluteEncoder
 
 class Wrist :
     TdSubsystem("Wrist"),
     LoggableSubsystem,
-    WithThroughBoreAbsoluteEncoder,
     AngularSubsystem {
     private val config = wristConfig
     private val motorController = TalonFX(config.motorControllerId.id)
     private var target : Angle
-
-    override val absoluteEncoder = ThroughBoreAbsoluteEncoder(
-        port = config.absoluteEncoderPort,
-        offset = config.absoluteEncoderOffset,
-        inverted = config.absoluteEncoderIsInverted
-    )
 
     override val forwardsRunningCondition  = { angle < config.measureLimits.relativeMaximum }
     override val backwardsRunningCondition = { angle > config.measureLimits.relativeMinimum }
 
     init {
         configureMotorInterface()
-        matchRelativeEncodersToAbsoluteEncoders()
         publishToShuffleboard()
         target = motorPosition
     }
@@ -93,10 +84,6 @@ class Wrist :
     override val angularVelocity: AngularVelocity
         get() = config.reduction.apply(motorVelocity)
 
-    override fun onMatchRelativeEncodersToAbsoluteEncoders() {
-        motorController.setPosition(config.reduction.unapply(absoluteAngle))
-    }
-
     private fun configureMotorInterface() {
         val talonConfig = TalonFXConfiguration()
 
@@ -141,7 +128,6 @@ class Wrist :
     override fun initSendable(builder: SendableBuilder) {
         with(builder) {
             addDoubleProperty("Current Angle (Rotations)", { angle.`in`(Rotations) }, {})
-            addDoubleProperty("Current Absolute Angle (Rotations)", { absoluteAngle.`in`(Rotations) }, {})
         }
     }
 

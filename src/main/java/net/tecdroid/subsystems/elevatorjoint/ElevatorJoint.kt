@@ -18,34 +18,24 @@ import edu.wpi.first.wpilibj2.command.Commands
 import edu.wpi.first.wpilibj2.command.InstantCommand
 import net.tecdroid.subsystems.util.generic.*
 import net.tecdroid.util.rotations
-import net.tecdroid.wrappers.ThroughBoreAbsoluteEncoder
 
 class ElevatorJoint:
     TdSubsystem("Elevator Joint"),
     MeasurableSubsystem,
     AngularSubsystem,
     LoggableSubsystem,
-    VoltageControlledSubsystem,
-    WithThroughBoreAbsoluteEncoder {
+    VoltageControlledSubsystem {
 
     private val config = elevatorJointConfig
     private val leadMotorController = TalonFX(config.leadMotorControllerId.id)
     private val followerMotorController = TalonFX(config.followerMotorControllerId.id)
     private var target: Angle
 
-    override val absoluteEncoder =
-        ThroughBoreAbsoluteEncoder(
-            port = config.absoluteEncoderPort,
-            offset = config.absoluteEncoderOffset,
-            inverted = config.absoluteEncoderIsInverted
-        )
-
     override val forwardsRunningCondition  = { angle < config.measureLimits.relativeMaximum }
     override val backwardsRunningCondition = { angle > config.measureLimits.relativeMinimum }
 
     init {
         configureMotorsInterface()
-        matchRelativeEncodersToAbsoluteEncoders()
         publishToShuffleboard()
         target = motorPosition
     }
@@ -99,10 +89,6 @@ class ElevatorJoint:
     override val angularVelocity: AngularVelocity
         get() = config.reduction.apply(motorVelocity)
 
-    override fun onMatchRelativeEncodersToAbsoluteEncoders() {
-        leadMotorController.setPosition(config.reduction.unapply(absoluteAngle))
-    }
-
     private fun configureMotorsInterface() {
         val talonConfig = TalonFXConfiguration()
 
@@ -151,7 +137,6 @@ class ElevatorJoint:
     override fun initSendable(builder: SendableBuilder) {
         with(builder) {
             addDoubleProperty("Current Angle (Rotations)", { angle.`in`(Rotations) }, {})
-            addDoubleProperty("Current Absolute Angle (Rotations)", { absoluteAngle.`in`(Rotations) }, {})
         }
     }
 
